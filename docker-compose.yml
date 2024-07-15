@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+  api:
+    build: .
+    command: python manage.py runserver ${HOST:-0.0.0.0}:8000
+    environment:
+      - DJANGO_HOST=${HOST:-localhost}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-changeme}
+    volumes:
+      - ${PRIMARY_DATA_DIR:-./data}:/data
+    ports:
+      - "8000:8000"
+    networks:
+      - postgres_network
+    depends_on:
+      - postgres
+
+  postgres:
+    image: ${POSTGIS_IMAGE:-postgis/postgis:latest}
+    environment:
+      - POSTGRES_USER=neslter
+      - POSTGRES_PASSWORD=neslter
+      - POSTGRES_DB=neslter
+    volumes:
+      - neslter-postgis-data:/var/lib/postgresql/data
+    networks:
+      - postgres_network
+
+networks:
+  postgres_network:
+    driver: bridge
+
+volumes:
+  neslter-postgis-data:
+    name: ${POSTGIS_VOLUME:-neslter-postgis-data}
