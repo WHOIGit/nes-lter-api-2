@@ -88,6 +88,20 @@ class Station(models.Model):
             return None
 
     @classmethod
+    def get_locations(cls, timestamp=None):
+        if timestamp is None:
+            timestamp = timezone.now()
+
+        locations = []
+
+        for station in cls.objects.all():
+            location = station.get_location(timestamp)
+            if location is not None:
+                locations.append(location)
+
+        return locations
+    
+    @classmethod
     def distances(cls, latitude, longitude, timestamp):
         from django.contrib.gis.db.models.functions import Distance
 
