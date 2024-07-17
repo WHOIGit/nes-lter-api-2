@@ -3,7 +3,8 @@ from datetime import datetime
 
 from ninja import Router
 
-from .services import StationService, StationInput, StationLocationInput, StationQueryOutput, NearestStationQueryInput, NearestStationQueryOutput
+from .services import StationService, StationInput, StationLocationInput, StationQueryOutput, \
+    NearestStationQueryInput, NearestStationQueryOutput, AddNearestStationInput, AddNearestStationOutput
 
 
 router = Router()
@@ -33,3 +34,12 @@ def create_station(request, input: StationInput):
 def set_location(request, input: StationLocationInput):
     StationService.set_location(input)
     return 204
+
+
+@router.post('/add_nearest', response=AddNearestStationOutput)
+def add_nearest_station(request, input: AddNearestStationInput):
+    return StationService.add_nearest_station(
+        latitude=input.latitude,
+        longitude=input.longitude,
+        timestamp=input.timestamp
+    )

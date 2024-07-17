@@ -127,5 +127,20 @@ class Station(models.Model):
             return None
         
 
+    @classmethod
+    def add_nearest_station(cls, latitude, longitude, timestamp):
+        nearest_station_name = []
+        nearest_station_distance = []
+        for latitude, longitude, timestamp in zip(latitude, longitude, timestamp):
+            location = cls.nearest_location(latitude, longitude, timestamp)
+            if location is not None:
+                nearest_station_name.append(location.content_object.name)
+                nearest_station_distance.append(location.distance.km)
+            else:
+                nearest_station_name.append(None)
+                nearest_station_distance.append(None)
+        return nearest_station_name, nearest_station_distance
+
+
     def __str__(self):
         return self.name

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 from pydantic import BaseModel
@@ -53,6 +53,17 @@ class NearestStationQueryOutput(BaseModel):
     distance: float
 
 
+class AddNearestStationInput(BaseModel):
+    latitude: List[float]
+    longitude: List[float]
+    timestamp: List[datetime]
+
+
+class AddNearestStationOutput(BaseModel):
+    station: List[str]
+    distance_km: List[float]
+
+
 class StationService:
     @staticmethod
     def serialize_station_location(location: StationLocation) -> StationQueryOutput:
@@ -103,3 +114,16 @@ class StationService:
     def get_stations(cls, timestamp: datetime = None) -> list[StationQueryOutput]:
         station_locations = Station.get_locations(timestamp)
         return [cls.serialize_station_location(location) for location in station_locations]
+    
+
+    @staticmethod
+    def add_nearest_station(latitude: List[float], longitude: List[float], timestamp: List[datetime]) -> AddNearestStationOutput:
+        station_name, distance_km = Station.add_nearest_station(
+            latitude=latitude,
+            longitude=longitude,
+            timestamp=timestamp
+        )
+        return AddNearestStationOutput(
+            station=station_name,
+            distance_km=distance_km
+        )
