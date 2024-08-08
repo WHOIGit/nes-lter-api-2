@@ -5,6 +5,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from django.utils import timezone
+from django.db.models import UniqueConstraint
 
 
 # Ability to add a timestamp to any model instance
@@ -147,7 +148,7 @@ class Station(models.Model):
 
 
 class Vessel(models.Model):
-    designation = models.CharField(max_length=32, unique=True) # e.g., "R/V"
+    designation = models.CharField(max_length=32) # e.g., "R/V"
     name = models.CharField(max_length=100, unique=True) # e.g., "Neil Armstrong"
     short_name = models.CharField(max_length=32, unique=True) # e.g., "Armstrong"
     code = models.CharField(max_length=32, unique=True) # e.g., "AR"
@@ -173,6 +174,11 @@ class Cast(models.Model):
     geolocation = gis_models.PointField()
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['cruise', 'number'], name='unique_cruise_cast_number')
+        ]
 
     def __str__(self):
         return '{} cast {}'.format(self.cruise, self.number)
@@ -183,6 +189,11 @@ class Niskin(models.Model):
     number = models.PositiveIntegerField()
     depth = models.FloatField()
     geolocation = gis_models.PointField(null=True, blank=True)
+    
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['cast', 'number'], name='unique_cast_niskin_number')
+        ]
 
     def __str__(self):
         return '{} niskin {}'.format(self.cast, self.number)
