@@ -5,6 +5,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from django.utils import timezone
+from django.db.models import UniqueConstraint
 
 
 # Ability to add a timestamp to any model instance
@@ -12,7 +13,7 @@ class TimeStampedModelInstance(models.Model):
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
-    start_time = models.DateTimeField()
+    start_time = models.DateTimeField(null=True, blank=True)
     end_time = models.DateTimeField(null=True, blank=True)
 
     class Meta:
@@ -144,3 +145,55 @@ class Station(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Vessel(models.Model):
+    designation = models.CharField(max_length=32) # e.g., "R/V"
+    name = models.CharField(max_length=100, unique=True) # e.g., "Neil Armstrong"
+    short_name = models.CharField(max_length=32, unique=True) # e.g., "Armstrong"
+    code = models.CharField(max_length=32, unique=True) # e.g., "AR"
+
+    def __str__(self):
+        return self.name
+    
+
+class Cruise(models.Model):
+    name = models.CharField(max_length=100, unique=True) # e.g. "EN627"
+    vessel = models.ForeignKey(Vessel, on_delete=models.CASCADE)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+    
+
+class Cast(models.Model):
+    cruise = models.ForeignKey(Cruise, on_delete=models.CASCADE, related_name='casts')
+    number = models.CharField(max_length=32) # string to handle cases like "5a"
+    depth = models.FloatField() # nominal depth
+    geolocation = gis_models.PointField()
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['cruise', 'number'], name='unique_cruise_cast_number')
+        ]
+
+    def __str__(self):
+        return '{} cast {}'.format(self.cruise, self.number)
+
+
+class Niskin(models.Model):
+    cast = models.ForeignKey(Cast, on_delete=models.CASCADE, related_name='niskins')
+    number = models.PositiveIntegerField()
+    depth = models.FloatField()
+    geolocation = gis_models.PointField(null=True, blank=True)
+    
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['cast', 'number'], name='unique_cast_niskin_number')
+        ]
+
+    def __str__(self):
+        return '{} niskin {}'.format(self.cast, self.number)
