@@ -6,6 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from django.utils import timezone
 from django.db.models import UniqueConstraint
+from simple_history.models import HistoricalRecords
 
 
 # Ability to add a timestamp to any model instance
@@ -197,3 +198,25 @@ class Niskin(models.Model):
 
     def __str__(self):
         return '{} niskin {}'.format(self.cast, self.number)
+
+
+class Event(models.Model):
+    cruise = models.ForeignKey(Cruise, on_delete=models.CASCADE, related_name='events')
+    number = models.IntegerField()
+    instrument = models.CharField(max_length=100)
+    action = models.CharField(max_length=32)
+    station = models.CharField(max_length=100)  #link to station model?
+    cast = models.CharField(max_length=32)      #link to cast model?
+    comment = models.CharField(max_length=200)
+    geolocation = gis_models.PointField()
+    datetime = models.DateTimeField()
+    history = HistoricalRecords()
+    
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['cruise', 'number'], name='unique_cruise_event_number')
+        ]
+
+
+    def __str__(self):
+        return '{} event {}'.format(self.cruise, self.number)
