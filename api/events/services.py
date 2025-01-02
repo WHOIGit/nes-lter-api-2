@@ -89,7 +89,7 @@ class EventService:
                             cast=row['Cast'],
                             comment=row['Comment'],
                             geolocation=geolocation,
-                            datetime = datetime.strptime(row['Date'], '%a  %d %b %Y %H:%M:%S %z')
+                            datetime = datetime.strptime(row['dateTime8601'], '%Y-%m-%dT%H:%M:%S%z')
                         )
                     return {"status": "success", "message": "Events have been successfully imported."}
             else:
@@ -106,7 +106,7 @@ class EventService:
     def get_events(cls, cruise_name: str) -> List[EventOutput]:
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name) 
-            events = Event.objects.filter(cruise=cruise)
+            events = Event.objects.filter(cruise=cruise).order_by('datetime')
             return [EventService.serialize_event(event) for event in events]
         except Cruise.DoesNotExist:
            raise Http404(f"Cruise {cruise_name} not found.")    

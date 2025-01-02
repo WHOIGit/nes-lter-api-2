@@ -2,3 +2,4 @@ django-ninja
 djangorestframework
 psycopg2
 django-simple-history
+pandas

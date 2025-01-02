@@ -205,8 +205,8 @@ class Event(models.Model):
     number = models.IntegerField()
     instrument = models.CharField(max_length=100)
     action = models.CharField(max_length=32)
-    station = models.CharField(max_length=100)  #link to station model?
-    cast = models.CharField(max_length=32)      #link to cast model?
+    station = models.CharField(max_length=100)  #link to station model? can be nan
+    cast = models.CharField(max_length=32)      #link to cast model? can be nan
     comment = models.CharField(max_length=200)
     geolocation = gis_models.PointField()
     datetime = models.DateTimeField()
@@ -217,6 +217,15 @@ class Event(models.Model):
             UniqueConstraint(fields=['cruise', 'number'], name='unique_cruise_event_number')
         ]
 
-
     def __str__(self):
         return '{} event {}'.format(self.cruise, self.number)
+
+class Underway(models.Model):
+    cruise = models.ForeignKey(Cruise, on_delete=models.CASCADE, related_name='underway')
+    start_month = models.IntegerField()
+    start_year = models.IntegerField()
+    end_month = models.IntegerField()
+    end_year = models.IntegerField()
+
+    def __str__(self):
+        return self.cruise
