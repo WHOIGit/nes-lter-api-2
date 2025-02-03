@@ -202,11 +202,11 @@ class Niskin(models.Model):
 
 class Event(models.Model):
     cruise = models.ForeignKey(Cruise, on_delete=models.CASCADE, related_name='events')
-    number = models.IntegerField()
+    message_id = models.IntegerField()
     instrument = models.CharField(max_length=100)
     action = models.CharField(max_length=32)
-    station = models.CharField(max_length=100)  #link to station model? can be nan
-    cast = models.CharField(max_length=32)      #link to cast model? can be nan
+    station = models.CharField(max_length=100)
+    cast = models.CharField(max_length=32)
     comment = models.CharField(max_length=200)
     geolocation = gis_models.PointField()
     datetime = models.DateTimeField()
@@ -214,7 +214,7 @@ class Event(models.Model):
     
     class Meta:
         constraints = [
-            UniqueConstraint(fields=['cruise', 'number'], name='unique_cruise_event_number')
+            UniqueConstraint(fields=['cruise', 'message_id'], name='unique_cruise_message_id')
         ]
 
     def __str__(self):
@@ -222,10 +222,8 @@ class Event(models.Model):
 
 class Underway(models.Model):
     cruise = models.ForeignKey(Cruise, on_delete=models.CASCADE, related_name='underway')
-    start_month = models.IntegerField()
-    start_year = models.IntegerField()
-    end_month = models.IntegerField()
-    end_year = models.IntegerField()
+    start_datetime = models.DateTimeField(null=True, blank=True)
+    end_datetime = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.cruise

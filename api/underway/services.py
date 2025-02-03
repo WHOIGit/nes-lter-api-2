@@ -1,157 +1,118 @@
 import csv
 import os
 import glob
+import dotenv
+
+from io import BytesIO, StringIO
+
+from django.conf import settings
 from datetime import datetime
 from django.http import JsonResponse
 from django.http import HttpResponse
 
 from pydantic import BaseModel
+from django.db.models import Q
 import pandas as pd
 
 from core.models import Cruise
+from core.models import Underway
 
 from django.db import IntegrityError
 from django.http import FileResponse, Http404
 from ninja.errors import HttpError
 
 from storage.fs import FilesystemStore
-import io
-from core.models import Underway
+from storage.mediastore import MediaStore
+from storage.utils import PrefixStore
 
 class UnderwayOutput(BaseModel):
     file_name: str
 
 class UnderwayService:
 
-    UNDERWAY_DATA_DIR = '/data/underway'
-    object_store = FilesystemStore(UNDERWAY_DATA_DIR)
+    dotenv.load_dotenv()
+    URL = os.getenv("URL")
+    TOKEN = os.getenv("TOKEN")
 
     FILE_SUFFIX = '_underway.csv'
-
-    def __init__(self):
-        os.makedirs(self.UNDERWAY_DATA_DIR, exist_ok=True)
-
-    @classmethod
-    def read_data(cls, cruise_name: str):
-
-        # do we want to store the column headers as metadata for every underway file?
-
-        underway_metadata = {
-           'ar': {'read_csv_args': {'skiprows': 1}, 'date_column': 'DATE_GMT', 'date_format': '%Y/%m/%d'},
-           'at': {'read_csv_args': {'skiprows': 1}, 'date_column': 'DATE_GMT', 'date_format': '%Y/%m/%d'},
-           'en': {'read_csv_args': {'comment': '#'}, 'date_column': 'DateTime_ISO8601', 'date_format': None},
-           'hrs': {'read_csv_args': {'header': [0]}, 'date_column': 'date', 'date_format': '%Y-%m-%d %H:%M:%S%z'}
-}
-        try:
-            cruise = Cruise.objects.get(name__iexact=cruise_name)
-            #temporary local mount until can access vast nfs mount on a vm
-            directory = f'/vast/raw/{cruise_name}/underway/'
-            file_pattern = os.path.join(directory, '*')
-            files = glob.glob(file_pattern)
-            underway_files = [f for f in files if "README" not in os.path.basename(f)]
-            if not underway_files:
-                raise Http404(f"Cruise {cruise_name} underway data not found.")
-
-            # Concatenate the CSV files
-            cruise_prefix = next((key for key in underway_metadata if cruise_name.startswith(key)), None)
-            if cruise_prefix:
-                metadata = underway_metadata[cruise_prefix]
-                data_frames = []
-                for file in underway_files:
-                    df = pd.read_csv(file, **metadata['read_csv_args'])
-                    data_frames.append(df)
-
-                combined_data = pd.concat(data_frames, ignore_index=True)
-
-                date_column = metadata['date_column']
-                date_format = metadata['date_format']
-                if date_format:
-                    start_date = pd.to_datetime(combined_data[date_column].iloc[0], format=date_format)
-                    end_date = pd.to_datetime(combined_data[date_column].iloc[-1], format=date_format)
-                else:
-                    start_date = pd.to_datetime(combined_data[date_column].iloc[0])
-                    end_date = pd.to_datetime(combined_data[date_column].iloc[-1])
-            else:
-                raise ValueError(f"Unsupported cruise type for cruise_name: {cruise_name}")
- 
-            start_year = start_date.year
-            start_month = start_date.month
-            end_year = end_date.year
-            end_month = end_date.month
-
-            Underway.objects.create(
-                    cruise=cruise,
-                    start_month=start_month,
-                    start_year=start_year,
-                    end_month=end_month,
-                    end_year=end_year
-                    )       
-
-            # Generate CSV content in memory
-            csv_buffer = io.StringIO()
-            combined_data.to_csv(csv_buffer, index=False)
-            csv_binary = csv_buffer.getvalue().encode('utf-8')
-            # Use the put method to store the CSV
-            object_key = f"{cruise_name}{cls.FILE_SUFFIX}"
-            cls.object_store.put(object_key, csv_binary)
-            return {"status": "success", "message": "Underway Data successfully imported."}
-        except Cruise.DoesNotExist:
-           raise Http404(f"Cruise {cruise_name} not found.")
-        except Exception as e:
-            raise HttpError(500, f"An error occurred: {str(e)}")
- 
     
     @classmethod
     def get_data(cls, cruise_name: str) -> FileResponse:
         try:
-            cruise = Cruise.objects.get(name__iexact=cruise_name) 
-            object_key = f"{cruise_name}{cls.FILE_SUFFIX}"
-            data = cls.object_store.get(object_key)
-            response = HttpResponse(data, content_type='text/csv')
-            response['Content-Disposition'] = f'attachment; filename="{object_key}"'
-            return response
-        except FileNotFoundError:
-           raise Http404(f"Underway data not imported.")    
+            cruise = Cruise.objects.get(name__iexact=cruise_name)
+            if Underway.objects.filter(cruise=cruise).exists():
+                object_key = f"{cruise_name}{cls.FILE_SUFFIX}"
+                with MediaStore(cls.URL, token=cls.TOKEN) as store:
+                    prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+                    try:
+                        data = prefix.get(object_key)
+                    except Exception as e:
+                        print(e, flush=True)
+                        raise
+                csv_buffer = BytesIO(data)
+                response = HttpResponse(csv_buffer, content_type='text/csv')
+                response['Content-Disposition'] = f'attachment; filename="{object_key}"'
+                return response
+            else:
+                raise Http404(f"Underway data not imported. Import using manage.py importunderwaydata")    
         except Cruise.DoesNotExist:
            raise Http404(f"Cruise {cruise_name} not found.")   
        
     @classmethod
     def get_column_headers(cls, cruise_name: str) -> JsonResponse:
         try:
-            cruise = Cruise.objects.get(name__iexact=cruise_name) 
-            object_key = f"{cruise_name}{cls.FILE_SUFFIX}"
-            data = cls.object_store.get(object_key)
-            csv_buffer = io.BytesIO(data)
-            df = pd.read_csv(csv_buffer)
-            columns = df.columns.tolist()
-            response = {
-                "metadata": {
-                    "columns": columns,
-                    "num_columns": len(columns),
-                },
-                "data": None
-            }    
-            return JsonResponse(response, safe=False)
-        except FileNotFoundError:
-           raise Http404(f"Underway data not imported.")    
+            cruise = Cruise.objects.get(name__iexact=cruise_name)
+            if Underway.objects.filter(cruise=cruise).exists(): 
+                object_key = f"{cruise_name}{cls.FILE_SUFFIX}"
+                with MediaStore(cls.URL, token=cls.TOKEN) as store:
+                    prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+                    try:
+                        data = prefix.get(object_key)
+                    except Exception as e:
+                        print(e, flush=True)
+                        raise
+                csv_buffer = BytesIO(data)
+                df = pd.read_csv(csv_buffer)
+                columns = df.columns.tolist()
+                response = {
+                    "metadata": {
+                        "columns": columns,
+                        "num_columns": len(columns),
+                    },
+                    "data": None
+                }    
+                return JsonResponse(response, safe=False)
+            else:
+               raise Http404(f"Underway data not imported.")    
         except Cruise.DoesNotExist:
            raise Http404(f"Cruise {cruise_name} not found.")   
 
     @classmethod
-    def find_underway_files(cls, month: int, year: int) -> list[UnderwayOutput]:
+    def find_underway_files(cls, start_timestamp: datetime, end_timestamp: datetime) -> list[UnderwayOutput]:
+        # datetime format yyyy-mm-dd hh:mm:ss
+        if end_timestamp < start_timestamp:
+            raise HttpError(500, f"end_timestamp must be greater than or equal to start_timestamp")
         responses = []
-        underway_objects = Underway.objects.all()
+        underway_objects = Underway.objects.filter(
+            Q(start_datetime__lte=end_timestamp) & Q(end_datetime__gte=start_timestamp)
+        )
         for underway in underway_objects:
-            if underway.start_month == month and underway.start_year == year \
-              or underway.end_month == month and underway.end_year == year :
-                object_key = f"{underway.cruise.name}{cls.FILE_SUFFIX}"
-                data = cls.object_store.get(object_key)
-                response = HttpResponse(data, content_type='text/csv')
-                response['Content-Disposition'] = f'attachment; filename="{object_key}"'
-                responses.append(response)
+            object_key = f"{underway.cruise.name}{cls.FILE_SUFFIX}"
+            with MediaStore(cls.URL, token=cls.TOKEN) as store:
+                prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+                try:
+                    data = prefix.get(object_key)
+                except Exception as e:
+                    print(e, flush=True)
+                    raise
+            csv_buffer = BytesIO(data)
+            response = HttpResponse(csv_buffer, content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="{object_key}"'
+            #responses.append(response)
+            responses.append(UnderwayOutput(file_name=object_key))
         if not responses:
-            raise Http404(f"Underway data files not found for month {month } and year {year}.")   
+            raise Http404(f"Underway data files not found between start timestamp {start_timestamp} and {end_timestamp}.")   
         else:
-            return response
+            return responses
 
     
