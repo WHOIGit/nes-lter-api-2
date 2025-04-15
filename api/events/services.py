@@ -65,6 +65,8 @@ class EventService:
     URL = os.getenv("URL")
     TOKEN = os.getenv("TOKEN")
 
+    FILE_SUFFIX = '_elog.csv'
+    
     @staticmethod
     def serialize_event(event: Event) -> EventOutput:
         if event.geolocation and isinstance(event.geolocation, Point) and not event.geolocation.empty:
