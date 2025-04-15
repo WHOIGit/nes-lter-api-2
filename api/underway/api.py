@@ -1,9 +1,7 @@
 from typing import List
 from datetime import datetime
 from ninja import Router
-from django.http import FileResponse, Http404, JsonResponse
 from .services import UnderwayService, UnderwayOutput
-from pydantic import BaseModel, Field, validator
 
 router = Router()
 

@@ -1,6 +1,4 @@
 from typing import List
-from datetime import datetime
-
 from ninja import Router
 
 from .services import CtdService, NiskinInput, VesselOutput, AddVesselInput, \
@@ -80,7 +78,7 @@ def get_casts(request, cruise_name: str):
     return CtdService.get_casts(cruise_name)
 
 
-@router.get("cast/get/{cruise_name}/{cast_number}", response=CastOutput)
+@router.get("cast/get/{cruise_name}/{cast_number}")
 def get_cast(request, cruise_name: str, cast_number: str):
     return CtdService.get_cast(cruise_name, cast_number)
 
@@ -145,4 +143,16 @@ def delete_niskin(request, cruise_name: str, cast_number: str, niskin_number: in
         return result
     except ValueError as e:
         return {"status": "error", "message": str(e)}
+
+@router.get("bottles/{cruise_id}")
+def get_bottles(request, cruise_id: str):
+    return CtdService.get_bottles(cruise_id)
+
+@router.get("bottle_summary/{cruise_id}")
+def get_bottle_summary(request, cruise_id: str):
+    return CtdService.get_bottle_summary(cruise_id)
+
+@router.get("metadata/{cruise_id}")
+def get_metadata(request, cruise_id: str):
+    return CtdService.get_metadata(cruise_id)
 

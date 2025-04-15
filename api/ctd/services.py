@@ -1,8 +1,9 @@
+import io, os
+import dotenv
 from typing import Optional, List, Tuple
 from datetime import datetime
-from django.contrib.gis.db.models import PointField
 
-from django.contrib.gis.geos import Point, point
+from django.contrib.gis.geos import Point
 
 from pydantic import BaseModel
 
@@ -11,6 +12,12 @@ from core.models import Vessel, Cruise, Cast, Niskin
 from django.db import IntegrityError
 from django.http import Http404
 from ninja.errors import HttpError
+from django.http import HttpResponse
+from django.http import FileResponse
+
+from storage.mediastore import MediaStore
+from storage.utils import PrefixStore
+from django.conf import settings
 
 class VesselOutput(BaseModel):
     designation: str
@@ -36,7 +43,7 @@ class CruiseOutput(BaseModel):
     name: str
     vessel_name: str
     start_time: datetime
-    end_time: datetime
+    end_time: Optional[datetime] = None
 
 
 class AddCruiseInput(BaseModel):
@@ -103,7 +110,11 @@ class UpdateNiskinInput(BaseModel):
 
     
 class CtdService:
-    
+
+    dotenv.load_dotenv()
+    URL = os.getenv("URL")
+    TOKEN = os.getenv("TOKEN")
+
     @staticmethod
     def serialize_vessel(vessel: Vessel) -> VesselOutput:
         return VesselOutput(
@@ -195,7 +206,7 @@ class CtdService:
     @classmethod
     def get_cruise(cls, cruise_name: str) -> CruiseOutput:
         try:
-            cruise = Cruise.objects.get(name__iexact=cruise_name)  # Case-insensitive search
+            cruise = Cruise.objects.get(name__iexact=cruise_name)
             return cls.serialize_cruise(cruise)
         except Cruise.DoesNotExist:
             raise Http404(f"Cruise {cruise_name} not found.")
@@ -268,12 +279,23 @@ class CtdService:
             raise Http404(f"Cast not found for {cruise_name} .")
 
         
-    @staticmethod
-    def get_cast(cruise_name: str, cast_number: str) -> CastOutput:
+    @classmethod
+    def get_cast(cls, cruise_name: str, cast_number: str) -> FileResponse:
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
             cast = Cast.objects.get(cruise=cruise, number__iexact=cast_number)
-            return CtdService.serialize_cast(cast)
+            object_key = f"{cruise_name}{"_ctd_cast_"}{cast.number}{".csv"}"
+            with MediaStore(cls.URL, token=cls.TOKEN) as store:
+                prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+                try:
+                    data = prefix.get(object_key)
+                except Exception as e:
+                    print(e, flush=True)
+                    raise
+            csv_buffer = io.BytesIO(data)
+            response = HttpResponse(csv_buffer, content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="{object_key}"'
+            return response
         except Cruise.DoesNotExist:
             raise Http404(f"Cruise {cruise_name} not found.")
         except Cast.DoesNotExist:
@@ -432,3 +454,65 @@ class CtdService:
             raise Http404(f"Cast not found for cruise {cruise_name} .")
         except Niskin.DoesNotExist:
             raise Http404(f"Niskin not found for cruise {cruise_name} cast {cast_number} .")
+
+    @classmethod
+    def get_bottles(cls, cruise_name: str) -> FileResponse:
+        FILE_SUFFIX = '_ctd_bottles.csv'
+        try:
+            Cruise.objects.get(name__iexact=cruise_name) 
+            object_key = f"{cruise_name}{FILE_SUFFIX}"
+            with MediaStore(cls.URL, token=cls.TOKEN) as store:
+                prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+                try:
+                    data = prefix.get(object_key)
+                except Exception as e:
+                    print(e, flush=True)
+                    raise
+            csv_buffer = io.BytesIO(data)
+            response = HttpResponse(csv_buffer, content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="{object_key}"'
+            return response
+        except Cruise.DoesNotExist:
+           raise Http404(f"Cruise {cruise_name} not found.")    
+
+    @classmethod
+    def get_bottle_summary(cls, cruise_name: str) -> FileResponse:
+        FILE_SUFFIX = '_ctd_bottle_summary.csv'
+        try:
+            Cruise.objects.get(name__iexact=cruise_name) 
+            object_key = f"{cruise_name}{FILE_SUFFIX}"
+            with MediaStore(cls.URL, token=cls.TOKEN) as store:
+                prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+                try:
+                    data = prefix.get(object_key)
+                except Exception as e:
+                    print(e, flush=True)
+                    raise
+            csv_buffer = io.BytesIO(data)
+            response = HttpResponse(csv_buffer, content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="{object_key}"'
+            return response
+        except Cruise.DoesNotExist:
+           raise Http404(f"Cruise {cruise_name} not found.")    
+
+    @classmethod
+    def get_metadata(cls, cruise_name: str) -> FileResponse:
+        FILE_SUFFIX = '_ctd_metadata.csv'
+        try:
+            Cruise.objects.get(name__iexact=cruise_name) 
+            object_key = f"{cruise_name}{FILE_SUFFIX}"
+            with MediaStore(cls.URL, token=cls.TOKEN) as store:
+                prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+                try:
+                    data = prefix.get(object_key)
+                except Exception as e:
+                    print(e, flush=True)
+                    raise
+            csv_buffer = io.BytesIO(data)
+            response = HttpResponse(csv_buffer, content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="{object_key}"'
+            return response
+        except Cruise.DoesNotExist:
+           raise Http404(f"Cruise {cruise_name} not found.")    
+
+

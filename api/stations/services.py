@@ -1,10 +1,17 @@
+import io
+import os
+import dotenv
 from typing import Optional, List
 from datetime import datetime
+from django.http import FileResponse, HttpResponse
 
 from pydantic import BaseModel
 
 from core.models import Station, StationLocation
 
+from storage.mediastore import MediaStore
+from storage.utils import PrefixStore
+from django.conf import settings
 
 class StationInput(BaseModel):
     name: str
@@ -65,6 +72,11 @@ class AddNearestStationOutput(BaseModel):
 
 
 class StationService:
+
+    dotenv.load_dotenv()
+    URL = os.getenv("URL")
+    TOKEN = os.getenv("TOKEN")
+
     @staticmethod
     def serialize_station_location(location: StationLocation) -> StationQueryOutput:
         return StationQueryOutput(
@@ -115,6 +127,22 @@ class StationService:
         station_locations = Station.get_locations(timestamp)
         return [cls.serialize_station_location(location) for location in station_locations]
     
+    @classmethod
+    def get_station_file(cls) -> FileResponse:
+        FILE_SUFFIX = 'stations.csv'
+
+        object_key = f"{FILE_SUFFIX}"
+        with MediaStore(cls.URL, token=cls.TOKEN) as store:
+            prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+            try:
+                data = prefix.get(object_key)
+            except Exception as e:
+                print(e, flush=True)
+                raise
+        csv_buffer = io.BytesIO(data)
+        response = HttpResponse(csv_buffer, content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="{object_key}"'
+        return response
 
     @staticmethod
     def add_nearest_station(latitude: List[float], longitude: List[float], timestamp: List[datetime]) -> AddNearestStationOutput:

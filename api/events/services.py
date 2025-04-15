@@ -2,6 +2,7 @@ import csv
 import os
 import glob
 import pandas as pd
+import numpy as np
 from django.conf import settings
 from typing import Optional, List, Tuple
 from datetime import datetime
@@ -24,14 +25,18 @@ import io
 from storage.utils import PrefixStore
 import dotenv
 
+FILE_SUFFIX = '_elog.csv'
+DATETIME = 'dateTime8601'
+MESSAGE_ID = 'Message ID'  
+
 class EventOutput(BaseModel):
     message_id: int
     instrument: str
     action: str
     station: str
     cast: str
-    latitude: float
-    longitude: float
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     comment: str
     datetime: datetime
 
@@ -60,33 +65,37 @@ class EventService:
     URL = os.getenv("URL")
     TOKEN = os.getenv("TOKEN")
 
-    FILE_SUFFIX = '_elog.csv'
-    
     @staticmethod
     def serialize_event(event: Event) -> EventOutput:
+        if event.geolocation and isinstance(event.geolocation, Point) and not event.geolocation.empty:
+            latitude = event.geolocation.y
+            longitude = event.geolocation.x
+        else:
+            latitude = None
+            longitude = None
+
         return EventOutput(
                 message_id=event.message_id,
                 instrument=event.instrument,
                 action=event.action,
                 station=event.station,
                 cast=event.cast,
-                latitude=event.geolocation.y,
-                longitude=event.geolocation.x,
+                latitude = latitude,
+                longitude = longitude,
                 comment=event.comment,
                 datetime=event.datetime
         )
 
-    @classmethod
-    def store_csv_file(cls, cruise_name, csv_data):
+    def store_csv_file(self, cruise_name, csv_data):
         df = pd.DataFrame(csv_data)
-        df['dateTime8601'] = pd.to_datetime(df['dateTime8601'])
-        df = df.sort_values(by='dateTime8601')
+        df[DATETIME] = pd.to_datetime(df[DATETIME])
+        df = df.sort_values(by=DATETIME)
         csv_buffer = io.StringIO()
         df.to_csv(csv_buffer, index=False)
         csv_binary = csv_buffer.getvalue().encode("utf-8")
         # Use the put method to store the CSV in the vast media store
-        object_key = f"{cruise_name}{cls.FILE_SUFFIX}"
-        with MediaStore(cls.URL, token=cls.TOKEN) as store:
+        object_key = f"{cruise_name}{FILE_SUFFIX}"
+        with MediaStore(self.URL, token=self.TOKEN) as store:
             prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
             try:
                 prefix.put(object_key, csv_binary)
@@ -94,18 +103,67 @@ class EventService:
                 print(e, flush=True)
                 raise
 
+    def apply_corrections(self, path):
+        corr = pd.read_excel(path)
+        corr[DATETIME] = pd.to_datetime(corr[DATETIME], utc=True)
+        corr.pop('Instrument')
+        corr.pop('Action')
+        return corr
+
+    def apply_additions(self, addns_path):
+        addns = pd.read_excel(addns_path)
+        addns[DATETIME] = pd.to_datetime(addns[DATETIME], utc=True, format="ISO8601")
+        # add placeholder columns
+        addns.insert(4, MESSAGE_ID, np.nan)
+        addns.insert(4, 'Longitude', np.nan)
+        addns.insert(4, 'Latitude', np.nan)
+        addns.insert(4, 'Cast', np.nan)
+        return addns
+
     @classmethod
     def read_events(cls, cruise_name: str):
         csv_data = []
+        df = pd.DataFrame()
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
             #temporary local mount until can access vast nfs mount on a vm
-            directory = f'/vast/raw/{cruise_name}/elog/'
-            file_pattern = os.path.join(directory, 'R2R_ELOG*')
-            matching_files = glob.glob(file_pattern)
-            if matching_files:
-                file_path = matching_files[0]
-                df = pd.read_csv(file_path, parse_dates=['dateTime8601'], dtype={'Station': str, 'Cast': str})
+            directory = f'/vast/corrected/{cruise_name}/elog/'
+            file_pattern = os.path.join(directory, '*_elog.csv')
+            matching_file = glob.glob(file_pattern)
+            if matching_file:
+                file_path = matching_file[0]
+                df = pd.read_csv(file_path, parse_dates=[DATETIME], dtype={'Station': str, 'Cast': str})
+                df[MESSAGE_ID] = range(1, len(df) + 1)   # assign message ids
+            else:
+                directory = f'/vast/raw/{cruise_name}/elog/'
+                file_pattern = os.path.join(directory, 'R2R_ELOG*FINAL*')
+                matching_file = glob.glob(file_pattern)
+                if matching_file:
+                    file_path = matching_file[0]
+                    df = pd.read_csv(file_path, parse_dates=[DATETIME], dtype={'Station': str, 'Cast': str})
+                
+                    file_pattern = os.path.join(directory, 'R2R_ELOG*corrections.xlsx')
+                    matching_file = glob.glob(file_pattern)
+                    if matching_file:
+                        corr = cls.apply_corrections(cls, matching_file[0])
+                        merged = df.merge(corr, on=MESSAGE_ID, how='left')
+                        DATETIME_X = '{}_x'.format(DATETIME)
+                        DATETIME_Y = '{}_y'.format(DATETIME)
+                        merged[DATETIME] = pd.to_datetime(merged[DATETIME_Y].combine_first(merged[DATETIME_X]), utc=True)
+                        df = merged
+                
+                    file_pattern = os.path.join(directory, 'R2R_ELOG*additions.xlsx')
+                    matching_file = glob.glob(file_pattern)
+                    if matching_file:
+                        addns = cls.apply_additions(cls, matching_file[0])
+                        df = pd.concat([df, addns])
+                        max_message_id = int(df[MESSAGE_ID].max())
+                        new_ids = range(max_message_id + 1, max_message_id + 1 + df[MESSAGE_ID].isna().sum())
+                        df.loc[df[MESSAGE_ID].isna(), MESSAGE_ID] = new_ids
+                        df = df.reset_index(drop=True)
+                        df[MESSAGE_ID] = df[MESSAGE_ID].astype(pd.Int64Dtype())
+
+            if not df.empty:
                 df['Comment'] = df['Comment'].fillna('')
 
                 for _, row in df.iterrows():
@@ -114,22 +172,23 @@ class EventService:
                     if longitude == "NaN" or latitude == "NaN" or longitude == "NO_GPS" or latitude == "NO_GPS":
                         geolocation = Point(0.0, 0.0, srid=4326)
                     else:
-                        geolocation = Point(float(longitude), float(latitude), srid=4326)                    
-                    event = Event.objects.create(
+                        geolocation = Point(float(longitude), float(latitude), srid=4326) 
+
+                    event, created = Event.objects.update_or_create(
                             cruise=cruise,
-                            message_id=row['Message ID'],
+                            message_id=row[MESSAGE_ID],
                             instrument=row['Instrument'],
                             action=row['Action'],
                             station=row['Station'],
                             cast=row['Cast'],
                             comment=row['Comment'],
                             geolocation=geolocation,
-                            datetime=row['dateTime8601']
+                            datetime=row[DATETIME]
                         )
 
                     csv_data.append({
-                        "Message ID": event.message_id,
-                        "dateTime8601": event.datetime,
+                        MESSAGE_ID: event.message_id,
+                        DATETIME: event.datetime,
                         "Instrument": event.instrument,
                         "Action": event.action,
                         "Station": event.station,
@@ -139,13 +198,13 @@ class EventService:
                         "Comment": event.comment,
                     })
 
-                cls.store_csv_file(cruise_name, csv_data)
+                cls.store_csv_file(cls, cruise_name, csv_data)
 
                 return {"status": "success", "message": "Events have been successfully imported."}
             else:
                 raise Http404(f"Cruise {cruise_name} event log not found.")
         except IntegrityError:
-            raise HttpError(409, f"error': f'Cruise with event id {row['Message ID']} already exists.")
+            raise HttpError(409, f"error': f'Cruise with event id {row[MESSAGE_ID]} already exists.")
         except Cruise.DoesNotExist:
            raise Http404(f"Cruise {cruise_name} not found.")
         except Exception as e:
@@ -157,7 +216,7 @@ class EventService:
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name) 
             if Event.objects.filter(cruise=cruise).exists():
-                object_key = f"{cruise_name}{cls.FILE_SUFFIX}"
+                object_key = f"{cruise_name}{FILE_SUFFIX}"
                 with MediaStore(cls.URL, token=cls.TOKEN) as store:
                     prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
                     try:
@@ -170,7 +229,7 @@ class EventService:
                 response['Content-Disposition'] = f'attachment; filename="{object_key}"'
                 return response
             else:
-                raise Http404(f"Underway data not imported.")    
+                raise Http404(f"Event data not imported.")    
         except Cruise.DoesNotExist:
            raise Http404(f"Cruise {cruise_name} not found.")    
         
@@ -219,20 +278,20 @@ class EventService:
             events = Event.objects.filter(cruise=cruise)
             data = [
                 {
-                    "Message ID": e.message_id,
-                    "dateTime8601": e.datetime,
+                    MESSAGE_ID: e.message_id,
+                    DATETIME: e.datetime,
                     "Instrument": e.instrument,
                     "Action": e.action,
                     "Station": e.station,
                     "Cast": e.cast,
-                    "Latitude": e.geolocation.y,
-                    "Longitude": e.geolocation.x,
+                    "Latitude": e.geolocation.y if not e.geolocation.empty else None,
+                    "Longitude": e.geolocation.x if not e.geolocation.empty else None,
                     "Comment": e.comment
                 }
                 for e in events
             ]
 
-            cls.store_csv_file(cruise_name, data)
+            cls.store_csv_file(cls, cruise_name, data)
             
             return cls.serialize_event(event)
         except Cruise.DoesNotExist:
@@ -266,7 +325,10 @@ class EventService:
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
             events = Event.objects.filter(cruise=cruise)
-            events.delete()
+            if not events.exists():
+                return {"status": "success", "message": f"No events on cruise {cruise_name} to delete."}   
+            else:
+                events.delete()
             return {"status": "success", "message": f"Events on cruise {cruise_name} deleted."}   
         except Cruise.DoesNotExist:
             raise Http404(f"Cruise {cruise_name} not found.")

@@ -45,7 +45,10 @@ INSTALLED_APPS = [
     'stations',
     'ctd',
     'events',
-    'underway'
+    'underway',
+    'hplc',
+    'nut',
+    'chl'
 ]
 
 MIDDLEWARE = [
@@ -137,3 +140,7 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIASTORE_PREFIX = 'NES-LTER-'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / "uploads"
+

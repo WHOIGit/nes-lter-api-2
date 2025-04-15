@@ -7,6 +7,8 @@ from django.db.models import Q
 from django.utils import timezone
 from django.db.models import UniqueConstraint
 from simple_history.models import HistoricalRecords
+from typing import Dict, List
+from pydantic import Field
 
 
 # Ability to add a timestamp to any model instance
@@ -207,7 +209,7 @@ class Event(models.Model):
     action = models.CharField(max_length=32)
     station = models.CharField(max_length=100)
     cast = models.CharField(max_length=32)
-    comment = models.CharField(max_length=200)
+    comment = models.CharField(max_length=500)
     geolocation = gis_models.PointField()
     datetime = models.DateTimeField()
     history = HistoricalRecords()
@@ -227,3 +229,111 @@ class Underway(models.Model):
 
     def __str__(self):
         return self.cruise
+
+
+class HPLC(models.Model):    
+    
+    MAPPINGS: Dict[str, str] = {
+        "Cruise ID": "cruise",
+        "cruise" : "cruise",
+        "Unnamed: 1": "date",
+        "Latitude": "latitude",
+        "lat": "latitude",
+        "Longitude": "longitude",
+        "lon": "longitude",
+        "Sampling Depth (meters)": "depth",
+        "Station": "cast",
+        "station": "cast",
+        "Bottle Number": "niskin",
+        "bottle" : "niskin",
+        "Sample Label": "sample_id",
+        "sample": "sample_id",
+        "GSFC Lab sample code": "alternate_sample_id",
+        "hplc_gsfc_id": "alternate_sample_id",
+        "Unnamed: 9": "project_id",
+        "Unnamed: 10": "replicate",
+        "Volume filtered (ml)": "vol_filtered",
+        "volfilt": "vol_filtered",
+        "[Tot_Chl_a]": "Tot_Chl_a",
+        "[Tot_Chl_b]": "Tot_Chl_b",
+        "[Tot_Chl_c]": "Tot_Chl_c",
+        "[Alpha_beta_Car]": "alpha-beta-Car",
+        "Alpha-beta-Car": "alpha-beta-Car",
+        "[But fuco]": "But-fuco",
+        "[Hex fuco]": "Hex-fuco",
+        "[Allo]": "Allo",
+        "[Diadino]": "Diadino",
+        "[Diato]": "Diato",
+        "[Fuco]": "Fuco",
+        "[Perid]": "Perid",
+        "[Zea]": "Zea",
+        "[MV_Chl_a]": "MV_Chl_a",
+        "[DV_Chl_a]": "DV_Chl_a",
+        "[Chlide_a]": "Chlide_a",
+        "[MV_Chl _b]": "MV_Chl_b",
+        "MV_Chl _b": "MV_Chl_b",
+        "[DV_Chl_b]": "DV_Chl_b",
+        "[Chl c1c2]": "Chl_c1c2",
+        "[Chl_c3]": "Chl_c3",
+        "[Lut]": "Lut",
+        "[Neo]": "Neo",
+        "[Viola]": "Viola",
+        "[Phytin_a]": "Phytin_a",
+        "[Phide_a]": "Phide_a",
+        "[Pras]": "Pras",
+        "[Gyro]": "Gyro",
+        "[TChl]": "TChl",
+        "Tchl": "TChl",
+        "[PPC]": "PPC",
+        "[PSC]": "PSC",
+        "[PSP]": "PSP",
+        "[TCar]": "TCar",
+        "Tcar": "TCar",
+        "[TAcc]": "TAcc",
+        "Tacc": "TAcc",
+        "[TPg]": "TPg",
+        "Tpg": "TPg",
+        "[DP]": "DP",
+        "[TAcc]/[Tchla]": "TAcc_TChla",
+        "Tacc_Tchla": "TAcc_TChla",
+        "[PSC]/[TCar]": "PSC_TCar",
+        "PSC_Tcar": "PSC_TCar",
+        "[PPC]/[TCar]": "PPC_TCar",
+        "PPC_Tcar": "PPC_TCar",
+        "[TChl]/[TCar]": "TChl_TCar",
+        "Tchl_Tcar": "TChl_TCar",
+        "[PPC]/[Tpg]": "PPC_TPg",
+        "PPC_Tpg": "PPC_TPg",
+        "[PSP]/[TPg]": "PSP_TPg",
+        "PSP_Tpg": "PSP_TPg",
+        "[TChl a]/[TPg]": "TChla_Tpg",
+        "Tchl a_Tpg": "TChla_Tpg",
+        "comments": "comments",
+        "other": "comments2",
+        "other.1": "comments3",
+        "Indicate if filters are replicates": "R",     
+        "indicate if filters are replicates": "R"
+    }
+
+    COLUMNS: List[str] = [
+        "cruise", "date", "latitude", "longitude", "depth", "cast", "niskin",
+        "sample_id", "alternate_sample_id", "project_id", "replicate",
+        "vol_filtered", "Tot_Chl_a", "Tot_Chl_b", "Tot_Chl_c", "alpha-beta-Car",
+        "But-fuco", "Hex-fuco", "Allo", "Diadino", "Diato", "Fuco", "Perid",
+        "Zea", "MV_Chl_a", "DV_Chl_a", "Chlide_a", "MV_Chl_b", "DV_Chl_b",
+        "Chl_c1c2", "Chl_c3", "Lut", "Neo", "Viola", "Phytin_a", "Phide_a",
+        "Pras", "Gyro", "TChl", "PPC", "PSC", "PSP", "TCar", "TAcc", "TPg",
+        "DP", "TAcc_TChla", "PSC_TCar", "PPC_TCar", "TChl_TCar", "PPC_TPg",
+        "PSP_TPg", "TChla_Tpg", "comments", "comments2", "comments3"
+    ]
+
+    @classmethod
+    def get_mappings(cls) -> Dict[str, str]:
+        return cls.MAPPINGS
+
+    @classmethod
+    def get_columns(cls) -> List[str]:
+        return cls.COLUMNS
+
+    def __str__(self):
+        return f"HPLC Mapping for {self.name}"
