@@ -1,0 +1,3 @@
+PRIMARY_DATA_DIR=/data
+
+VAST_DATA_DIR=/path-to-your-local-vast-mount

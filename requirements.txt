@@ -1,3 +1,10 @@
 django-ninja
 djangorestframework
 psycopg2
+django-simple-history
+pandas
+python-dotenv
+requests
+openpyxl
+streamlit
+matplotlib

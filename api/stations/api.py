@@ -2,6 +2,7 @@ from typing import List
 from datetime import datetime
 
 from ninja import Router
+from django.http import FileResponse
 
 from .services import StationService, StationInput, StationLocationInput, StationQueryOutput, \
     NearestStationQueryInput, NearestStationQueryOutput, AddNearestStationInput, AddNearestStationOutput
@@ -18,6 +19,9 @@ def get_stations_now(request):
 def get_stations(request, timestamp: datetime):
     return StationService.get_stations(timestamp)
 
+@router.get("/file")
+def get_stations_file(request):
+    return StationService.get_station_file()
 
 @router.post('/nearest', response=NearestStationQueryOutput)
 def get_nearest_station(request, query: NearestStationQueryInput):

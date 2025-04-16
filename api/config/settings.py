@@ -40,8 +40,15 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'ninja',
+    'simple_history',
     'core',
     'stations',
+    'ctd',
+    'events',
+    'underway',
+    'hplc',
+    'nut',
+    'chl'
 ]
 
 MIDDLEWARE = [
@@ -52,6 +59,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'simple_history.middleware.HistoryRequestMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -130,3 +138,9 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+MEDIASTORE_PREFIX = 'NES-LTER-'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / "uploads"
+

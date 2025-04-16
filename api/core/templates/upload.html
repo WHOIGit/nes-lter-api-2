@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Drag and Drop File Upload</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.css">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 2em;
+        }
+
+        #upload-messages {
+            margin-top: 1em;
+            padding: 1em;
+            background-color: #e6ffe6;
+            border: 1px solid #b2d8b2;
+            border-radius: 4px;
+            color: #2d662d;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>📂 Drag and Drop Your Files</h1>
+
+    <!-- Upload messages container -->
+    <div id="upload-messages"></div>
+
+    <!-- Dropzone form -->
+    <form action="{% url 'file-upload' %}" class="dropzone" id="myDropzone" enctype="multipart/form-data">
+        {% csrf_token %}
+    </form>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>
+    <script>
+        Dropzone.options.myDropzone = {
+            paramName: "file",
+            maxFilesize: 100, // MB
+            dataType: 'json',
+            init: function () {
+                this.on("success", function (file, response) {
+                    const messagesDiv = document.getElementById("upload-messages");
+                    const msg = document.createElement("p");
+                    msg.textContent = response.message;
+                    messagesDiv.appendChild(msg);
+                });
+            }
+        };
+    </script>
+</body>
+</html>

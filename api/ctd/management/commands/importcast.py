@@ -1,0 +1,163 @@
+import csv
+import os
+import io
+import glob
+import re
+import pandas as pd
+import dotenv
+from django.core.management.base import BaseCommand, CommandError
+from core.models import Cruise
+from core.models import Cast
+from pathlib import Path
+from django.contrib.gis.geos import Point
+from storage.mediastore import MediaStore
+from storage.utils import PrefixStore
+from django.conf import settings
+
+from core.utils import convert_to_decimal, format_utc_date, \
+                       path_to_cast, parse_lat_lon, parse_time, \
+                       clean_column_names
+
+CRUISE_COL = 'cruise'
+CAST_COL = 'cast'
+DATE_COL = 'date'
+
+class Command(BaseCommand):
+    help = 'Create Cast Model and Cast files. If Cruise Name is not supplied, all Casts for all Cruises will be created.'
+
+    def add_arguments(self, parser):
+        parser.add_argument('--cruise_name', type=str, help='Optional name of the cruise.', default=None)
+
+    def parse_asc_fixed_width(self, asc_path):
+        # do some hacking to determine width of columns
+        # first, read the file without the header to determine how many columns.
+        # we can't do this from the header because in fixed-width files the
+        # column names might not have any whitespace between them.
+        # if this is the case for data values, this whole approach will fail
+        df = pd.read_fwf(asc_path, skiprows=1, nrows=1, header=None, encoding='latin-1')
+        n_cols = len(df.columns)  
+        # now get the length of the first line which contains headers
+        with open(asc_path, encoding='latin-1') as fin:
+            for line in fin.readlines():
+                break
+        # assume all columns are the same width. determine that width
+        line = line.rstrip()
+        col_width = int(len(line) / n_cols)
+        col_widths = [col_width for _ in range(n_cols)]
+        # now parse the fixed-width format
+        # Pandas will automatically append ".1" to any duplicate column name
+        df = pd.read_fwf(asc_path, widths=col_widths, encoding='latin-1')
+        return df
+    
+    def create_cast_file(self, file, cruise, cast, time):
+        dotenv.load_dotenv()
+        URL = os.getenv("URL")
+        TOKEN = os.getenv("TOKEN")
+
+        delimiter = ';'
+        ascfile = file.name.replace(".hdr", ".asc")
+        
+        #read .asc file
+        try:
+            df = pd.read_csv(ascfile, encoding='latin-1', delimiter=delimiter)
+            if len(df.columns) == 1: # whoops, try a different delimiter
+                if delimiter == ',':
+                    delimiter = ';'
+                elif delimiter == ';':
+                    delimiter = ','
+                df = pd.read_csv(ascfile, encoding='latin-1', delimiter=delimiter)
+            if len(df.columns) == 1: # try fixed-width
+                df = self.parse_asc_fixed_width(ascfile)
+            df = clean_column_names(df)
+
+            df[CRUISE_COL] = cruise
+            df[CAST_COL] = cast
+            # move to front
+            cols = df.columns.tolist()
+            cols = cols[-2:] + cols[:-2]
+            df = df[cols]
+            if 'times' in df.columns:
+                timestamp = pd.to_datetime(time) + pd.to_timedelta(df['times'], unit='s')
+                df[DATE_COL] = timestamp
+
+            # write cast csv file to media store
+            csv_buffer = io.StringIO()
+            df.to_csv(csv_buffer, index=False, na_rep="NaN")
+            csv_binary = csv_buffer.getvalue().encode("utf-8")
+
+            object_key = f"{cruise}{"_ctd_cast_"}{cast}{".csv"}"
+            with MediaStore(URL, token=TOKEN) as store:
+                prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+                try:
+                    prefix.put(object_key, csv_binary)
+                except Exception as e:
+                    print(e, flush=True)
+                    raise        
+        except FileNotFoundError:
+            self.stdout.write(self.style.ERROR(f'No .asc file found for cruise {cruise} cast {cast}.'))
+        except pd.errors.ParserError as e:
+            self.stdout.write(self.style.ERROR(f"{ascfile} not parsable."))
+
+    def handle(self, *args, **options):
+        cruise_name = options['cruise_name']
+
+        if cruise_name is None:
+            parent_dir = Path('/vast/raw')
+            cruises = [f.name for f in parent_dir.iterdir() if f.is_dir() and f.name != "all"]
+        else:
+            cruises = [cruise_name]
+
+        for cruise_name in cruises:
+            try:
+                cruise = Cruise.objects.get(name__iexact=cruise_name)
+
+                directory = f'/vast/raw/{cruise_name}/ctd/'
+                hdr_files = sorted(glob.glob(os.path.join(directory, '*.hdr')))
+                if cruise_name.lower() == "en627":
+                    added_dir = os.path.join(directory, "cast_1_files_used_for_corrected_cast_2")
+                    hdr_files += sorted(glob.glob(os.path.join(added_dir, '*.hdr')))
+                for file in hdr_files:
+                    filename = os.path.basename(file).lower()
+                    if cruise_name == 'ar24a':
+                        cruise_pattern = re.escape(cruise_name[:-1])  
+                    else:
+                        cruise_pattern = re.escape(cruise_name)
+
+                    cast = path_to_cast(cruise_pattern, filename)
+                    if cruise_name.lower() == "en627" and cast == "001":
+                        cast = "002"
+                    if cast is not None:
+                        cast = cast.lstrip('0')
+
+                        # get lat, lon and time from .hdr file
+                        with open(file, 'r', encoding='utf-8', errors='ignore') as file:
+                            content = file.read()
+
+                        latitude, longitude = parse_lat_lon(content)
+                        start_time = parse_time(content)
+                        
+                        if latitude != None and longitude != None and start_time != None:
+                            Cast.objects.update_or_create(
+                                cruise=cruise,
+                                number=cast,
+                                depth= 0,     # nominal depth is entered by user
+                                geolocation = Point(float(longitude), float(latitude), srid=4326),
+                                defaults={
+                                    "start_time": start_time,  
+                                    "end_time": None
+                                }
+                            )
+                        else:
+                            print(f"Cast {cast} for {cruise.name} has null lat, lon, start_time. Will not be saved in the model!")
+ 
+                        # create individual cast file
+                        self.create_cast_file(file, cruise_name, cast, start_time)
+
+                if glob.glob(os.path.join(directory, "*.hdr")):
+                    self.stdout.write(self.style.SUCCESS(f'Casts for Cruise {cruise_name} successfully imported.'))
+                else:
+                    self.stdout.write(self.style.ERROR(f'No Casts found for Cruise {cruise_name}.'))
+            except Cruise.DoesNotExist:
+                raise CommandError(f'Cruise not found {cruise_name}. Run importcruise.py')
+            except Exception as e:
+                raise CommandError(f'An error occurred: {str(e)}')
