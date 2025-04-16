@@ -12,6 +12,7 @@ from storage.mediastore import MediaStore
 from storage.utils import PrefixStore
 from django.conf import settings
 from pathlib import Path
+from django.utils import timezone
 
 class Command(BaseCommand):
     help = 'Import in Underway Data files for a given Cruise. If Cruise is not supplied, all Cruises will be imported.'
@@ -25,6 +26,11 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--cruise_name', type=str, help='Optional name of the cruise.', default=None)
 
+    def make_aware_if_naive(self, dt):
+        if dt is not None and dt.tzinfo is None:
+            return timezone.make_aware(dt)
+        return dt
+
     def handle(self, *args, **options):
         cruise_name = options['cruise_name']
         
@@ -32,7 +38,8 @@ class Command(BaseCommand):
            'ar': {'read_csv_args': {'skiprows': 1}, 'date_column': 'DATE_GMT', 'date_format': '%Y/%m/%d'},
            'at': {'read_csv_args': {'skiprows': 1}, 'date_column': 'DATE_GMT', 'date_format': '%Y/%m/%d'},
            'en': {'read_csv_args': {'comment': '#'}, 'date_column': 'DateTime_ISO8601', 'date_format': None},
-           'hrs': {'read_csv_args': {'header': [0]}, 'date_column': 'date', 'date_format': '%Y-%m-%d %H:%M:%S%z'}
+           'hrs': {'read_csv_args': {'header': [0]}, 'date_column': 'date', 'date_format': '%Y-%m-%d %H:%M:%S%z'},
+           'ae': {'read_csv_args': {'header': [0]}, 'date_column': 'YMD', 'date_format': '%Y%m%d'}
         }
 
         if cruise_name is None:
@@ -48,7 +55,10 @@ class Command(BaseCommand):
                 directory = f'/vast/raw/{cruise_name}/underway/'
                 file_pattern = os.path.join(directory, '*')
                 files = glob.glob(file_pattern)
-                underway_files = [f for f in files if "README" not in os.path.basename(f)]
+                underway_files = [
+                    f for f in files
+                    if os.path.isfile(f) and "README" not in os.path.basename(f)
+                ]
                 if not underway_files:
                     raise CommandError(f'Cruise {cruise_name} underway data not found.')
 
@@ -62,7 +72,7 @@ class Command(BaseCommand):
                         data_frames.append(df)
 
                     combined_data = pd.concat(data_frames, ignore_index=True)
-
+                    
                     # Select only numeric columns and fill NaN values with 'NaN'
                     combined_data[combined_data.select_dtypes(include=['number']).columns] = combined_data.select_dtypes(include=['number']).fillna('NaN')
                     if 'QSR - S/N 10367' in combined_data.columns:    #hrs2303
@@ -78,13 +88,16 @@ class Command(BaseCommand):
                         end_datetime = pd.to_datetime(combined_data[date_column].iloc[-1])
                 else:
                     raise ValueError(f"Unsupported cruise type for cruise_name: {cruise_name}")
+                start_datetime = None if pd.isna(start_datetime) else self.make_aware_if_naive(start_datetime)
+                end_datetime = None if pd.isna(end_datetime) else self.make_aware_if_naive(end_datetime)
+
 
                 Underway.objects.update_or_create(
                         cruise=cruise,
                         start_datetime=start_datetime,
                         end_datetime=end_datetime,
                         )       
-
+                
                 csv_buffer = StringIO()
                 combined_data.to_csv(csv_buffer, index=False)
                 csv_binary = csv_buffer.getvalue().encode('utf-8')
@@ -97,7 +110,7 @@ class Command(BaseCommand):
                     except Exception as e:
                         print(e, flush=True)
                         raise
-                self.stdout.write(self.style.SUCCESS(f'Underway Data successfully imported.'))
+                self.stdout.write(self.style.SUCCESS(f'Underway Data for {cruise.name} successfully imported.'))
             except Cruise.DoesNotExist:
                raise CommandError(f'Cruise {cruise_name} not found.')
             except Exception as e:

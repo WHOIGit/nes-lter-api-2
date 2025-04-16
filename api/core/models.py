@@ -205,7 +205,6 @@ class Niskin(models.Model):
 class Event(models.Model):
     cruise = models.ForeignKey(Cruise, on_delete=models.CASCADE, related_name='events')
     message_id = models.IntegerField()
-    message_id = models.IntegerField()
     instrument = models.CharField(max_length=100)
     action = models.CharField(max_length=32)
     station = models.CharField(max_length=100)

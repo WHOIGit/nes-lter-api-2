@@ -60,7 +60,7 @@ class Command(BaseCommand):
         duplicate_ids = combined[combined.duplicated(keep=False)].unique()
         dup_rows = df[df['nut_a'].isin(duplicate_ids) | df['nut_b'].isin(duplicate_ids)]
         dup_rows = dup_rows[(dup_rows['nut_a'] != ' -') & (dup_rows['nut_b'] != ' -')]
-        print("Warning: Duplicate sample IDs found across nut_a and nut_b:")
+        print("Warning: Duplicate sample IDs found across nut_a and nut_b in LTER_sample_log.xlsx:")
         print(dup_rows[['cruise', 'cast', 'niskin', 'nut_a', 'nut_b']].to_string())
 
         # make replicates long instead of wide

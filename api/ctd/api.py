@@ -28,7 +28,7 @@ def create_vessel(request, input: AddVesselInput):
     except ValueError as e:
         return {"status": "error", "message": str(e)}
 
-@router.put('vessels/update{vessel_name}')
+@router.put('vessels/update/{vessel_name}')
 def update_vessel(request, vessel_name: str, input: UpdateVesselInput):
     try:
         result = CtdService.update_vessel(vessel_name, input)

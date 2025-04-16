@@ -58,6 +58,15 @@ def ctd_plot_view(request, cruise_name, cast_number):
     at_primary_sensor_list = ["t090c", "sal00",  "fleco_afl",  "sbeox0v"]
     hrs_primary_sensor_list = ["t090c", "sal00",  "fleco_afl",  "sbeox0ml_l" ]
 
+    sensor_label = {
+        "t090c": "Temperature (C)",
+        "sal00": "Salinity (PSU)",
+        "sal00_1": "Salinity (PSU)",
+        "fleco_afl": "Fluorescence (MG/M^3)",
+        "sbeox0v": "Oxygen (V)",
+        "sbeox0ml_l": "Oxygen (mL/L)"
+    }
+
     dotenv.load_dotenv()
     URL = os.getenv("URL")
     TOKEN = os.getenv("TOKEN")
@@ -79,17 +88,14 @@ def ctd_plot_view(request, cruise_name, cast_number):
         sensor_columns = at_primary_sensor_list
     elif cruise_name.startswith('hrs'):
         sensor_columns = hrs_primary_sensor_list
-    else:  # cruise starts with EN
+    else:
         sensor_columns = en_primary_sensor_list
 
     df = df.sort_values('depsm')
-    print(sensor_columns, flush=True)
     sensors = [col for col in sensor_columns if col in df.columns]
-    print(df.columns, flush=True)
-    print(sensors, flush=True)
 
     # Create base figure
-    fig, host = plt.subplots(figsize=(7, 6))
+    fig, host = plt.subplots(figsize=(4, 8))  # make taller
     host.invert_yaxis()
     host.set_ylabel("Depth (m)")
     host.grid(True)
@@ -110,7 +116,7 @@ def ctd_plot_view(request, cruise_name, cast_number):
         axes.append(ax)
 
         line, = ax.plot(df[sensor], df['depsm'], label=sensor, color=colors[i % len(colors)])
-        ax.set_xlabel(sensor)
+        ax.set_xlabel(sensor_label.get(sensor, sensor)) 
         ax.tick_params(axis='x', colors=colors[i % len(colors)])
         ax.spines['top'].set_edgecolor(colors[i % len(colors)])
         lines.append(line)

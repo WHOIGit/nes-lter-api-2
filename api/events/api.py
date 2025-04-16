@@ -6,13 +6,6 @@ from .services import EventService, EventOutput, FilterEventInput, EditEventInpu
 
 router = Router()
 
-
-@router.get("read/{cruise_name}")
-def read_events(request, cruise_name: str):
-    return EventService.read_events(cruise_name)
-
-
-
 @router.get("get/{cruise_name}")
 def get_events(request, cruise_name: str):
     return EventService.get_events(cruise_name)

@@ -54,11 +54,12 @@
                 Depth: ${p.depth} m<br>
                 Start Time: ${p.start_time}<br>
                 <a href="/cruise/{{ cruise.name }}/cast/${p.label}/ctd_plot/" target="_blank">
-                   View CTD Plot
+                    View CTD Plot
                 </a>
             `);
-                markers.addLayer(marker);
+            markers.addLayer(marker);
             });
+
 
             map.addLayer(markers);
 
