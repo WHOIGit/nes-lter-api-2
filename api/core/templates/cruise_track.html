@@ -5,10 +5,26 @@
     <title>Cruise Track: {{ cruise.name }}</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            margin: 0;
+            padding: 10px;
+            background: #f0f0f0;
+        }
+
         #map {
-            height: 600px;
+            flex: 1;
             width: 100%;
-            margin-top: 20px;
         }
     </style>
 </head>

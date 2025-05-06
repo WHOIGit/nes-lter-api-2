@@ -69,7 +69,6 @@ class Command(BaseCommand):
                             self.stdout.write(self.style.SUCCESS(f'Cruise {cruise_name} event log not found.'))
 
                 if start_time is None:
-                    start_time = '2017-5-4T00:00:00Z'   # start_time cannot be none ?IS THIS WHAT WE WANT TO DO?
                     self.stdout.write(self.style.SUCCESS(f'Cruise {cruise_name} startCruise event not found.'))
                 if end_time is None:
                     self.stdout.write(self.style.SUCCESS(f'Cruise {cruise_name} stopCruise event not found.'))

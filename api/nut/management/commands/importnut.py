@@ -75,7 +75,7 @@ class Command(BaseCommand):
             try:
                 data = prefix.get(object_key)
             except Exception as e:
-                print(f"Run ImportNiskin.py to create bottle summary file for cruise {cruise}.", flush=True)
+                self.stdout.write(self.style.ERROR(f'Run ImportNiskin.py to create bottle summary file for cruise {cruise}.'))
                 return pd.DataFrame()
 
             btl_sum = pd.read_csv(io.BytesIO(data))
@@ -103,13 +103,20 @@ class Command(BaseCommand):
         df = clean_column_names(df)
 
         # mismatches can lead to unexpected results
-        nut = df['nutrient_number'].astype(str).str.replace('NL_', '').str.strip()
-        lter = df['lter_sample_id'].astype(str).str.strip()
-        if not (nut == lter).all():            
-            mismatch_mask = nut != lter
-            num_mismatches = (nut != lter).sum()
-            print(df.loc[mismatch_mask, ['nutrient_number', 'lter_sample_id']].to_string())
-            raise ValueError(f'Nutrient Number and LTER Sample ID {num_mismatches} column values do not match in LTERnut.xlsx')
+        nut = df['nutrient_number'].astype(str).str.replace('NL_', '', regex=False)\
+            .str.replace('NL', '', regex=False).str.strip()
+        nut = pd.to_numeric(nut).astype(int)
+        lter = df['lter_sample_id']
+        lter = pd.to_numeric(lter).astype(int)
+        mismatch_mask = (nut != lter) & ((nut - lter).abs() != 3000) # ignore diffs of 3000
+        num_mismatches = mismatch_mask.sum()
+        if num_mismatches > 0:
+            mismatches = pd.DataFrame({
+                'nutrient_number': nut[mismatch_mask],
+                'lter_sample_id': lter[mismatch_mask]
+            })
+            print(mismatches.to_string(index=False), flush=True)
+            raise ValueError(f'Nutrient Number and LTER Sample ID: {num_mismatches} column values do not match in LTERnut.xlsx')
 
         df['comments'] = df['comments'].fillna('')
         # deal with below-detection-limit values

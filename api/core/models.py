@@ -163,7 +163,7 @@ class Vessel(models.Model):
 class Cruise(models.Model):
     name = models.CharField(max_length=100, unique=True) # e.g. "EN627"
     vessel = models.ForeignKey(Vessel, on_delete=models.CASCADE)
-    start_time = models.DateTimeField()
+    start_time = models.DateTimeField(null=True, blank=True)
     end_time = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):

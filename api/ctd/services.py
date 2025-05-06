@@ -42,7 +42,7 @@ class UpdateVesselInput(BaseModel):
 class CruiseOutput(BaseModel):
     name: str
     vessel_name: str
-    start_time: datetime
+    start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
 
 

@@ -5,6 +5,7 @@ import glob
 import re
 import pandas as pd
 import dotenv
+import sys
 from django.core.management.base import BaseCommand, CommandError
 from core.models import Cruise
 from core.models import Cast
@@ -99,6 +100,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f"{ascfile} not parsable."))
 
     def handle(self, *args, **options):
+        #self.stdout = options.get('stdout', sys.stdout) # removes /n's
         cruise_name = options['cruise_name']
 
         if cruise_name is None:
@@ -106,6 +108,8 @@ class Command(BaseCommand):
             cruises = [f.name for f in parent_dir.iterdir() if f.is_dir() and f.name != "all"]
         else:
             cruises = [cruise_name]
+
+        self.stdout.write(self.style.SUCCESS(f'For each .hdr file, look for a matching .asc file.'))
 
         for cruise_name in cruises:
             try:
@@ -149,7 +153,7 @@ class Command(BaseCommand):
                             )
                         else:
                             print(f"Cast {cast} for {cruise.name} has null lat, lon, start_time. Will not be saved in the model!")
- 
+                     
                         # create individual cast file
                         self.create_cast_file(file, cruise_name, cast, start_time)
 

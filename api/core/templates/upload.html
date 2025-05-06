@@ -17,7 +17,27 @@
             border: 1px solid #b2d8b2;
             border-radius: 4px;
             color: #2d662d;
+            align-items: flex-start;
         }
+
+        #file-type-container select,
+        #cruise-name-container input {
+            padding: 4px;
+            font-size: 14px;
+            width: 200px;
+        }
+
+        #upload-messages-text {
+            margin-left: 1em;
+            white-space: pre-wrap;
+        }
+
+        #file-type {
+            padding: 4px;
+            font-size: 14px;
+        }
+
+
     </style>
 </head>
 <body>
@@ -25,7 +45,31 @@
     <h1>📂 Drag and Drop Your Files</h1>
 
     <!-- Upload messages container -->
-    <div id="upload-messages"></div>
+    <div id="upload-messages">
+        <div style="display: flex; gap: 4em; align-items: flex-end; margin-bottom: 1em;">
+            <div id="file-type-container">
+                <label for="file-type"><strong>Select File Type:</strong></label><br>
+                <select id="file-type" name="file_type">
+                    <option value="ctd">CTD</option>
+                    <option value="elog">Elog</option>
+                    <option value="underway">Underway</option>
+                    <option value="nutrient">LTERnut.xlsx</option>
+                    <option value="sample_log">LTER_sample_log.xlsx</option>
+                    <option value="station_list">NES-LTER_station_list_compilation.xlsx</option>
+                    <option value="hplc">Sosik*report.xlsx</option>
+                    <option value="chlorophyll">NESLTERchl.xlsx</option>
+                </select>
+            </div>
+
+            <div id="cruise-name-container" style="display: flex; align-items: center; gap: 0.5em; margin-left: 2em;">
+                <label for="cruise-name"><strong>Cruise Name:</strong></label>
+                <input type="text" id="cruise-name" name="cruise_name" placeholder="Enter cruise name">
+            </div>
+        </div>
+
+        <div id="upload-messages-text" style="margin-top: 1em;"></div>
+    </div>
+
 
     <!-- Dropzone form -->
     <form action="{% url 'file-upload' %}" class="dropzone" id="myDropzone" enctype="multipart/form-data">
@@ -34,16 +78,116 @@
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>
+
+    <script>
+        function toggleCruiseNameField() {
+            const fileType = document.getElementById("file-type").value;
+            const cruiseContainer = document.getElementById("cruise-name-container");
+            const cruiseInput = document.getElementById("cruise-name");
+
+            if (["ctd", "elog", "underway"].includes(fileType)) {
+                cruiseContainer.style.display = "block";
+                cruiseInput.required = true;
+            } else {
+                cruiseContainer.style.display = "none";
+                cruiseInput.required = false;
+            }
+        }
+
+        // Run on page load and on change
+        document.getElementById("file-type").addEventListener("change", toggleCruiseNameField);
+        window.addEventListener("DOMContentLoaded", toggleCruiseNameField);
+    </script>
+
     <script>
         Dropzone.options.myDropzone = {
             paramName: "file",
             maxFilesize: 100, // MB
             dataType: 'json',
             init: function () {
+                this.on("sending", function (file, xhr, formData) {
+                    const fileType = document.getElementById("file-type").value;
+                    const cruiseName = document.getElementById("cruise-name").value;
+
+                    formData.append("file_type", fileType);
+                    formData.append("cruise_name", cruiseName);
+                    formData.append("overwrite", "false");  // Default
+
+                    // Show "Please wait..." message
+                    const messagesDiv = document.getElementById("upload-messages-text");
+                    messagesDiv.innerHTML = "";
+
+                    const waitMsg = document.createElement("p");
+                    waitMsg.textContent = "⏳ Please wait... Uploading and processing your file.";
+                    waitMsg.style.fontStyle = "italic";
+                    messagesDiv.appendChild(waitMsg);
+                });
+
+
                 this.on("success", function (file, response) {
-                    const messagesDiv = document.getElementById("upload-messages");
+                    console.log("RESPONSE:", response);  // confirm JSON
+
+                    const messagesDiv = document.getElementById("upload-messages-text");
+
+                    // Clear any previous content
+                    messagesDiv.innerHTML = "";
+
+                    // Show the main message
                     const msg = document.createElement("p");
                     msg.textContent = response.message;
+                    messagesDiv.appendChild(msg);
+                });
+
+                this.on("error", function (file, errorMessage, xhr) {
+                    const messagesDiv = document.getElementById("upload-messages-text");
+                    const msg = document.createElement("p");
+                    msg.style.color = 'red';
+
+                    if (xhr && xhr.response) {
+                        try {
+                            const responseJson = JSON.parse(xhr.response);
+
+                            // If conflict, prompt to overwrite
+                            if (responseJson.conflict) {
+                                const confirmOverwrite = confirm(responseJson.error + "\n\nDo you want to overwrite it?");
+                                if (confirmOverwrite) {
+                                    const fileType = document.getElementById("file-type").value;
+                                    const cruiseName = document.getElementById("cruise-name").value;
+
+                                    const retryFormData = new FormData();
+                                    retryFormData.append("file", file);
+                                    retryFormData.append("file_type", fileType);
+                                    retryFormData.append("cruise_name", cruiseName);
+                                    retryFormData.append("overwrite", "true");
+
+                                    fetch("{% url 'file-upload' %}", {
+                                        method: "POST",
+                                        body: retryFormData
+                                    })
+                                        .then(res => res.json())
+                                        .then(data => {
+                                            const overwriteMsg = document.createElement("p");
+                                            overwriteMsg.textContent = data.message || "File overwritten successfully.";
+                                            messagesDiv.appendChild(overwriteMsg);
+                                        })
+                                        .catch(() => {
+                                            const failMsg = document.createElement("p");
+                                            failMsg.textContent = "Failed to overwrite the file.";
+                                            messagesDiv.appendChild(failMsg);
+                                        });
+
+                                    return; // Prevent default error display
+                                }
+                            }
+
+                            msg.textContent = responseJson.error || "Upload failed.";
+                        } catch (e) {
+                            msg.textContent = "Unexpected upload error.";
+                        }
+                    } else {
+                        msg.textContent = errorMessage;
+                    }
+
                     messagesDiv.appendChild(msg);
                 });
             }

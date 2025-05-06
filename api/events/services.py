@@ -218,13 +218,16 @@ class EventService:
             history_data = []
             for event in events:
                 for record in event.history.all():
-                    history_data.append({
-                    'message_id': event.message_id,
-                    'history_date': record.history_date,
-                    'history_user': record.history_user,
-                    'history_type': record.get_history_type_display(),
-                    'changed_data': record.diff_against(record.prev_record).changed_fields if record.prev_record else 'N/A',
-            })
+                    if record.prev_record:
+                        diff = record.diff_against(record.prev_record)
+                        if diff.changed_fields:
+                            history_data.append({
+                                'message_id': event.message_id,
+                                'history_date': record.history_date,
+                                'history_user': record.history_user,
+                                'history_type': record.get_history_type_display(),
+                                'changed_data': diff.changed_fields,
+                            })
             history_data = sorted(history_data, key=lambda x: x['history_date'], reverse=True)
             return JsonResponse(history_data, safe=False)
         except Cruise.DoesNotExist:
