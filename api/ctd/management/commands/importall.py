@@ -25,12 +25,11 @@ class Command(BaseCommand):
        
         for cruise_name in cruises:
             try:
+                self.stdout.write("Importing cruises...")
+                call_command('importcruise', cruise_name=cruise_name)
 
                 self.stdout.write("Importing events...")
                 call_command('importevent', cruise_name=cruise_name)
-
-                self.stdout.write("Importing cruises...")
-                call_command('importcruise', cruise_name=cruise_name)
 
                 self.stdout.write("Importing underway data...")
                 call_command('importunderwaydata', cruise_name=cruise_name)

@@ -69,9 +69,9 @@ class Command(BaseCommand):
                             self.stdout.write(self.style.SUCCESS(f'Cruise {cruise_name} event log not found.'))
 
                 if start_time is None:
-                    self.stdout.write(self.style.SUCCESS(f'Cruise {cruise_name} startCruise event not found.'))
+                    self.stdout.write(self.style.WARNING(f'Cruise {cruise_name} startCruise event not found.'))
                 if end_time is None:
-                    self.stdout.write(self.style.SUCCESS(f'Cruise {cruise_name} stopCruise event not found.'))
+                    self.stdout.write(self.style.WARNING(f'Cruise {cruise_name} stopCruise event not found.'))
 
                 Cruise.objects.update_or_create(
                     name=cruise_name,
