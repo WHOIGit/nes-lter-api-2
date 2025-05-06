@@ -8,3 +8,5 @@ requests
 openpyxl
 streamlit
 matplotlib
+gunicorn
+git+https://github.com/WHOIGit/amplify-storage-utils
