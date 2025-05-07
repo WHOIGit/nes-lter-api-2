@@ -60,6 +60,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'simple_history.middleware.HistoryRequestMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -144,3 +145,7 @@ MEDIASTORE_PREFIX = 'NES-LTER-'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / "uploads"
 
+try:
+    from .local_settings import *
+except ImportError as e:
+    pass

@@ -9,4 +9,5 @@ openpyxl
 streamlit
 matplotlib
 gunicorn
+whitenoise
 git+https://github.com/WHOIGit/amplify-storage-utils
