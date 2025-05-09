@@ -13,4 +13,6 @@ RUN pip install -r requirements.txt
 WORKDIR /api
 COPY ./api .
 
-CMD python manage.py runserver
+RUN python manage.py collectstatic --noinput
+
+CMD ["python", "manage.py", "runserver"]
