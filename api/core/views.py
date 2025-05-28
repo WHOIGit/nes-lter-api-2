@@ -104,12 +104,14 @@ def file_upload_view(request):
     return render(request, 'upload.html')
 
 def cruise_track_view(request, cruise_name):
+    UNDERWAY_SUFFIX = '_underway.csv'
+
     try:
         cruise = Cruise.objects.get(name__iexact=cruise_name)
         casts = Cast.objects.filter(cruise=cruise).order_by('start_time')
 
-        # Prepare track points for JS (GeoJSON-like)
-        track_points = [
+        # Prepare clickable cast points for JS (GeoJSON-like)
+        cast_points = [
             {
                 "lat": cast.geolocation.y,
                 "lng": cast.geolocation.x,
@@ -120,10 +122,51 @@ def cruise_track_view(request, cruise_name):
             for cast in casts
         ]
 
+        URL = os.getenv("URL")
+        TOKEN = os.getenv("TOKEN")
+        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+
+        object_key = f"{cruise_name}{UNDERWAY_SUFFIX}"
+        with MediaStore(URL, token=TOKEN) as store:
+            prefix = PrefixStore(store, MEDIASTORE_PREFIX)
+            try:
+                data = prefix.get(object_key)
+            except Exception as e:
+                print(e, flush=True)
+
+        underway_data = pd.read_csv(io.BytesIO(data))
+
+        # Non-clickable track points (no labels or popups)
+        try:
+            track_points = [
+                {"lat": row[" Dec_LAT"], "lng": row[" Dec_LON"]}
+                for _, row in underway_data.iterrows()
+            ]
+        except KeyError:
+            try:
+                track_points = [
+                    {"lat": row["Latitude_Deg"], "lng": row["Longitude_Deg"]}   # hrs2303
+                    for _, row in underway_data.iterrows()
+                ]
+            except KeyError:
+                try:
+                    track_points = [
+                        {"lat": row["GPS-Furuno-Latitude"], "lng": row["GPS-Furuno-Longitude"]}   # en
+                        for _, row in underway_data.iterrows()
+                    ]
+                except KeyError:
+                    track_points = [
+                        {"lat": row["Latitude"], "lng": row["Longitude"]}   # ae2426
+                        for _, row in underway_data.iterrows()
+                    ]
+        print(cast_points, flush=True)
+
         context = {
             'cruise': cruise,
             'track_points_json': json.dumps(track_points),
+            'cast_points_json': json.dumps(cast_points),
         }
+
         return render(request, 'cruise_track.html', context)
     except Cruise.DoesNotExist:
         raise CommandError(f'Cruise not found {cruise_name}. Run importcruise.py')

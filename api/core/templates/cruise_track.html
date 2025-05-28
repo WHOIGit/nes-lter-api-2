@@ -42,53 +42,52 @@
         // This incompatibility can prevent markers from displaying correctly on the map.
         // To address this issue, you might consider using the Leaflet.markercluster plugin as an alternative.
 
+        const castPoints = JSON.parse(`{{ cast_points_json|safe }}`);
+        const trackPoints = JSON.parse(`{{ track_points_json|safe }}`);
+
         const map = L.map('map').setView([0, 0], 2);
 
+        // Base layer
         L.tileLayer('https://services.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', {
             attribution: 'Tiles © Esri — Sources: GEBCO, NOAA, National Geographic, and others',
             maxZoom: 13
         }).addTo(map);
 
-        const trackPoints = JSON.parse(`{{ track_points_json|safe }}`);
+        // 1. Add clickable cast markers
+        const markers = L.markerClusterGroup();
 
+        castPoints.forEach(p => {
+            const marker = L.marker([p.lat, p.lng])
+                .bindTooltip("Cast " + p.label, {
+                    permanent: true,
+                    direction: 'top',
+                    offset: [0, -10]
+                })
+                .bindPopup(`
+            <strong>Cast ${p.label}</strong><br>
+            Latitude: ${p.lat.toFixed(5)}<br>
+            Longitude: ${p.lng.toFixed(5)}<br>
+            Depth: ${p.depth} m<br>
+            Start Time: ${p.start_time}<br>
+            <a href="/cruise/{{ cruise.name }}/cast/${p.label}/ctd_plot/" target="_blank">
+                View CTD Plot
+            </a>
+        `);
+            markers.addLayer(marker);
+        });
+        map.addLayer(markers);
+
+        // 2. Add polyline (cruise track)
         if (trackPoints.length > 0) {
             const latlngs = trackPoints.map(p => [p.lat, p.lng]);
 
-            const markers = L.markerClusterGroup();
+            L.polyline(latlngs, { color: 'blue' }).addTo(map);
 
-            trackPoints.forEach(p => {
-                const marker = L.marker([p.lat, p.lng])
-                    .bindTooltip("Cast " + p.label, {
-                        permanent: true,
-                        direction: 'top',
-                        offset: [0, -10]
-                    })
-                    .bindPopup(`
-                <strong>Cast ${p.label}</strong><br>
-                Latitude: ${p.lat.toFixed(5)}<br>
-                Longitude: ${p.lng.toFixed(5)}<br>
-                Depth: ${p.depth} m<br>
-                Start Time: ${p.start_time}<br>
-                <a href="/cruise/{{ cruise.name }}/cast/${p.label}/ctd_plot/" target="_blank">
-                    View CTD Plot
-                </a>
-            `);
-            markers.addLayer(marker);
-            });
-
-
-            map.addLayer(markers);
-
-            const polyline = L.polyline(latlngs, { color: 'blue' }).addTo(map);
-
-            //map.fitBounds(polyline.getBounds());
             const bounds = L.latLngBounds(latlngs);
-            map.fitBounds(bounds); // fits the entire track
+            map.fitBounds(bounds);
             setTimeout(() => {
-                const currentZoom = map.getZoom();
-                map.setZoom(currentZoom + 1);  // Zoom in to show clusters & single casts
-            }, 200); // 200ms delay is usually enough
-
+                map.setZoom(map.getZoom() + 1);
+            }, 200);
         } else {
             alert("No track data available.");
         }
