@@ -16,7 +16,13 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 from pathlib import Path
 from django.core.management import call_command
+from django.contrib.auth.decorators import login_required, user_passes_test
 
+def is_staff(user):
+    return user.is_staff
+
+@login_required
+@user_passes_test(is_staff)
 def file_upload_view(request):
     if request.method == 'POST':
 

@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from ninja import NinjaAPI
 from rest_framework.authtoken.views import obtain_auth_token
 
@@ -26,6 +26,7 @@ api.add_router('/chl/', chl_router)
 
 urlpatterns = [
     path('api/login', obtain_auth_token), # a bit of a hack to use the DRF obtain_auth_token view
+    path('accounts/', include('django.contrib.auth.urls')),  # This creates /accounts/login/
     path('api/', api.urls),
     path('upload/', file_upload_view, name='file-upload'),
     path('cruise/<str:cruise_name>/track/', cruise_track_view, name='cruise_track'),
