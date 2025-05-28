@@ -1,5 +1,4 @@
 import io, os
-import dotenv
 from typing import Optional, List, Tuple
 from datetime import datetime
 
@@ -110,10 +109,6 @@ class UpdateNiskinInput(BaseModel):
 
     
 class CtdService:
-
-    dotenv.load_dotenv()
-    URL = os.getenv("URL")
-    TOKEN = os.getenv("TOKEN")
 
     @staticmethod
     def serialize_vessel(vessel: Vessel) -> VesselOutput:
@@ -281,12 +276,16 @@ class CtdService:
         
     @classmethod
     def get_cast(cls, cruise_name: str, cast_number: str) -> FileResponse:
+        URL = os.getenv("URL")
+        TOKEN = os.getenv("TOKEN")
+        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
             cast = Cast.objects.get(cruise=cruise, number__iexact=cast_number)
             object_key = f"{cruise_name}{"_ctd_cast_"}{cast.number}{".csv"}"
-            with MediaStore(cls.URL, token=cls.TOKEN) as store:
-                prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+            with MediaStore(URL, token=TOKEN) as store:
+                prefix = PrefixStore(store, MEDIASTORE_PREFIX)
                 try:
                     data = prefix.get(object_key)
                 except Exception as e:
@@ -457,12 +456,15 @@ class CtdService:
 
     @classmethod
     def get_bottles(cls, cruise_name: str) -> FileResponse:
+        URL = os.getenv("URL")
+        TOKEN = os.getenv("TOKEN")
+        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
         FILE_SUFFIX = '_ctd_bottles.csv'
         try:
             Cruise.objects.get(name__iexact=cruise_name) 
             object_key = f"{cruise_name}{FILE_SUFFIX}"
-            with MediaStore(cls.URL, token=cls.TOKEN) as store:
-                prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+            with MediaStore(URL, token=TOKEN) as store:
+                prefix = PrefixStore(store, MEDIASTORE_PREFIX)
                 try:
                     data = prefix.get(object_key)
                 except Exception as e:
@@ -477,12 +479,15 @@ class CtdService:
 
     @classmethod
     def get_bottle_summary(cls, cruise_name: str) -> FileResponse:
+        URL = os.getenv("URL")
+        TOKEN = os.getenv("TOKEN")
+        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
         FILE_SUFFIX = '_ctd_bottle_summary.csv'
         try:
             Cruise.objects.get(name__iexact=cruise_name) 
             object_key = f"{cruise_name}{FILE_SUFFIX}"
-            with MediaStore(cls.URL, token=cls.TOKEN) as store:
-                prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+            with MediaStore(URL, token=TOKEN) as store:
+                prefix = PrefixStore(store, MEDIASTORE_PREFIX)
                 try:
                     data = prefix.get(object_key)
                 except Exception as e:
@@ -497,12 +502,15 @@ class CtdService:
 
     @classmethod
     def get_metadata(cls, cruise_name: str) -> FileResponse:
+        URL = os.getenv("URL")
+        TOKEN = os.getenv("TOKEN")
+        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
         FILE_SUFFIX = '_ctd_metadata.csv'
         try:
             Cruise.objects.get(name__iexact=cruise_name) 
             object_key = f"{cruise_name}{FILE_SUFFIX}"
-            with MediaStore(cls.URL, token=cls.TOKEN) as store:
-                prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+            with MediaStore(URL, token=TOKEN) as store:
+                prefix = PrefixStore(store, MEDIASTORE_PREFIX)
                 try:
                     data = prefix.get(object_key)
                 except Exception as e:

@@ -1,7 +1,6 @@
 import csv
 import os
 import glob
-import dotenv
 from django.core.management.base import BaseCommand, CommandError
 from io import BytesIO, StringIO
 import pandas as pd
@@ -13,7 +12,6 @@ from pathlib import Path
 class Command(BaseCommand):
     help = 'Create Cruise Model. If Cruise Name is not supplied, all Cruises will be created.'
 
-    dotenv.load_dotenv()
     URL = os.getenv("URL")
     TOKEN = os.getenv("TOKEN")
 

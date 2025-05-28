@@ -1,6 +1,5 @@
 import io
 import os
-import dotenv
 from typing import Optional, List
 from datetime import datetime
 from django.http import FileResponse, HttpResponse
@@ -73,10 +72,6 @@ class AddNearestStationOutput(BaseModel):
 
 class StationService:
 
-    dotenv.load_dotenv()
-    URL = os.getenv("URL")
-    TOKEN = os.getenv("TOKEN")
-
     @staticmethod
     def serialize_station_location(location: StationLocation) -> StationQueryOutput:
         return StationQueryOutput(
@@ -129,11 +124,14 @@ class StationService:
     
     @classmethod
     def get_station_file(cls) -> FileResponse:
+        URL = os.getenv("URL")
+        TOKEN = os.getenv("TOKEN")
+        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
         FILE_SUFFIX = 'stations.csv'
 
         object_key = f"{FILE_SUFFIX}"
-        with MediaStore(cls.URL, token=cls.TOKEN) as store:
-            prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+        with MediaStore(URL, token=TOKEN) as store:
+            prefix = PrefixStore(store, MEDIASTORE_PREFIX)
             try:
                 data = prefix.get(object_key)
             except Exception as e:

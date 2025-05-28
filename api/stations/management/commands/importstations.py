@@ -1,6 +1,5 @@
 import os
 import io
-import dotenv
 import pandas as pd
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
@@ -20,17 +19,16 @@ DEPTH_COL = 'depth_m'
 COMMENT_COL = 'comment'
 
 STATION_FILENAME = 'stations.csv'
-METADATA_SUFFIX = '_ctd_metadata.csv'
 
 class Command(BaseCommand):
     help = 'Create Station Model.'
 
-    dotenv.load_dotenv()
-    URL = os.getenv("URL")
-    TOKEN = os.getenv("TOKEN")
+    def __init__(self):
+        super().__init__()
+        self.URL = os.getenv("URL")
+        self.TOKEN = os.getenv("TOKEN")
+        self.MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
 
-    columns = ["cruise", "cast", "date", "latitude", "longitude", "nearest_station", "distance_km"]
-    
     def handle(self, *args, **options):
 
         with transaction.atomic():
@@ -76,7 +74,7 @@ class Command(BaseCommand):
 
                 object_key = f'{STATION_FILENAME}'
                 with MediaStore(self.URL, token=self.TOKEN) as store:
-                    prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+                    prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
                     try:
                         prefix.put(object_key, csv_binary)
                         self.stdout.write(self.style.SUCCESS(f'{STATION_FILENAME} successfully created.'))
@@ -85,38 +83,8 @@ class Command(BaseCommand):
                         raise
 
                 # create and write ctd metadata file to media store
-                for cruise in Cruise.objects.all():
-                    data = []
-                    for cast in Cast.objects.filter(cruise=cruise):
-                        station_location = Station.nearest_location(
-                            latitude= cast.geolocation.y,
-                            longitude=cast.geolocation.x,
-                            timestamp=cast.start_time)
-
-                        data.append({
-                            "cruise": cruise.name,
-                            "cast": cast.number,
-                            "date": cast.start_time,
-                            "latitude": cast.geolocation.y,
-                            "longitude": cast.geolocation.x,
-                            "nearest_station": station_location.content_object.name,
-                            "distance_km": station_location.distance.km
-                        })
-                    df = pd.DataFrame(data, columns=self.columns)
-                    csv_buffer = io.StringIO()
-                    df.to_csv(csv_buffer, index=False, na_rep="NaN")
-                    csv_binary = csv_buffer.getvalue().encode("utf-8")
-
-                    object_key = f"{cruise.name}{METADATA_SUFFIX}"
-                    with MediaStore(self.URL, token=self.TOKEN) as store:
-                        prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
-                        try:
-                            prefix.put(object_key, csv_binary)
-                            self.stdout.write(self.style.SUCCESS(f'{cruise.name}{METADATA_SUFFIX} successfully created.'))
-                        except Exception as e:
-                            print(e, flush=True)
-                            raise
-
+                #for cruise in Cruise.objects.all():
+                    
                 self.stdout.write(self.style.SUCCESS(f'Stations successfully imported.'))
             except Exception as e:
                 raise CommandError(f'An error occurred: {str(e)}')

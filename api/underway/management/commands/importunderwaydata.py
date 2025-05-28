@@ -1,7 +1,6 @@
 import csv
 import os
 import glob
-import dotenv
 from django.core.management.base import BaseCommand, CommandError
 from io import BytesIO, StringIO
 import pandas as pd
@@ -17,9 +16,11 @@ from django.utils import timezone
 class Command(BaseCommand):
     help = 'Import in Underway Data files for a given Cruise. If Cruise is not supplied, all Cruises will be imported.'
 
-    dotenv.load_dotenv()
-    URL = os.getenv("URL")
-    TOKEN = os.getenv("TOKEN")
+    def __init__(self):
+        super().__init__()
+        self.URL = os.getenv("URL")
+        self.TOKEN = os.getenv("TOKEN")
+        self.MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
 
     FILE_SUFFIX = '_underway.csv'
 
@@ -104,7 +105,7 @@ class Command(BaseCommand):
                 # Use the put method to store the CSV in the vast media store
                 object_key = f"{cruise_name}{self.FILE_SUFFIX}"
                 with MediaStore(self.URL, token=self.TOKEN) as store:
-                    prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+                    prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
                     try:
                         prefix.put(object_key, csv_binary)
                     except Exception as e:

@@ -23,7 +23,6 @@ from storage.fs import FilesystemStore
 from storage.mediastore import MediaStore
 import io
 from storage.utils import PrefixStore
-import dotenv
 
 FILE_SUFFIX = '_elog.csv'
 DATETIME = 'dateTime8601'
@@ -60,11 +59,6 @@ class EditEventInput(BaseModel):
 
     
 class EventService:
-
-    dotenv.load_dotenv()
-    URL = os.getenv("URL")
-    TOKEN = os.getenv("TOKEN")
-
     FILE_SUFFIX = '_elog.csv'
     
     @staticmethod
@@ -89,6 +83,10 @@ class EventService:
         )
 
     def store_csv_file(self, cruise_name, csv_data):
+        URL = os.getenv("URL")
+        TOKEN = os.getenv("TOKEN")
+        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+
         df = pd.DataFrame(csv_data)
         df[DATETIME] = pd.to_datetime(df[DATETIME])
         df = df.sort_values(by=DATETIME)
@@ -97,8 +95,8 @@ class EventService:
         csv_binary = csv_buffer.getvalue().encode("utf-8")
         # Use the put method to store the CSV in the vast media store
         object_key = f"{cruise_name}{FILE_SUFFIX}"
-        with MediaStore(self.URL, token=self.TOKEN) as store:
-            prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+        with MediaStore(URL, token=TOKEN) as store:
+            prefix = PrefixStore(store, MEDIASTORE_PREFIX)
             try:
                 prefix.put(object_key, csv_binary)
             except Exception as e:
@@ -124,12 +122,16 @@ class EventService:
     
     @classmethod
     def get_events(cls, cruise_name: str) -> FileResponse:
+        URL = os.getenv("URL")
+        TOKEN = os.getenv("TOKEN")
+        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name) 
             if Event.objects.filter(cruise=cruise).exists():
                 object_key = f"{cruise_name}{FILE_SUFFIX}"
-                with MediaStore(cls.URL, token=cls.TOKEN) as store:
-                    prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+                with MediaStore(URL, token=TOKEN) as store:
+                    prefix = PrefixStore(store, MEDIASTORE_PREFIX)
                     try:
                         data = prefix.get(object_key)
                     except Exception as e:

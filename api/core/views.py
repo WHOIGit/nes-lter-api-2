@@ -4,7 +4,6 @@ from django.http import JsonResponse, HttpResponse
 import os
 import io
 import json
-import dotenv
 import pandas as pd
 import re
 from django.conf import settings
@@ -145,13 +144,13 @@ def ctd_plot_view(request, cruise_name, cast_number):
         "sbeox0ml_l": "Oxygen (mL/L)"
     }
 
-    dotenv.load_dotenv()
     URL = os.getenv("URL")
     TOKEN = os.getenv("TOKEN")
+    MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
 
     object_key = f"{cruise_name}_ctd_cast_{cast_number}.csv"
     with MediaStore(URL, token=TOKEN) as store:
-        prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+        prefix = PrefixStore(store, MEDIASTORE_PREFIX)
         try:
             data = prefix.get(object_key)
         except Exception as e:

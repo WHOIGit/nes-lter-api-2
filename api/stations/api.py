@@ -10,22 +10,22 @@ from .services import StationService, StationInput, StationLocationInput, Statio
 
 router = Router()
 
-@router.get("/now", response=List[StationQueryOutput], tags=["Users"])
-def get_stations_now(request):
-    return StationService.get_stations()
+#@router.get("/now", response=List[StationQueryOutput], tags=["Users"])
+#def get_stations_now(request):
+#    return StationService.get_stations()
 
 
-@router.get("/at/{timestamp}", response=List[StationQueryOutput], tags=["Users"])
-def get_stations(request, timestamp: datetime):
-    return StationService.get_stations(timestamp)
+#@router.get("/at/{timestamp}", response=List[StationQueryOutput], tags=["Users"])
+#def get_stations(request, timestamp: datetime):
+#    return StationService.get_stations(timestamp)
 
 @router.get("/file", tags=["Users"])
 def get_stations_file(request):
     return StationService.get_station_file()
 
-@router.post('/nearest', response=NearestStationQueryOutput, tags=["Users"])
-def get_nearest_station(request, query: NearestStationQueryInput):
-    return StationService.get_nearest_station(query)
+# @router.post('/nearest', response=NearestStationQueryOutput, tags=["Users"])
+# def get_nearest_station(request, query: NearestStationQueryInput):
+#    return StationService.get_nearest_station(query)
 
 
 @router.post('/create', tags=["Admin"])

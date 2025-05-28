@@ -1,6 +1,5 @@
 import os
 import io
-import dotenv
 import glob
 import pandas as pd
 from pathlib import Path
@@ -26,9 +25,11 @@ LONGITUDE_COL = 'longitude'
 class Command(BaseCommand):
     help = 'Import Nutrient Data. If Cruise Name is not supplied, all Nut files for all Cruises will be created.'
 
-    dotenv.load_dotenv()
-    URL = os.getenv("URL")
-    TOKEN = os.getenv("TOKEN")
+    def __init__(self):
+        super().__init__()
+        self.URL = os.getenv("URL")
+        self.TOKEN = os.getenv("TOKEN")
+        self.MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
 
     def add_arguments(self, parser):
         parser.add_argument('--cruise_name', type=str, help='Optional name of the cruise.', default=None)
@@ -71,7 +72,7 @@ class Command(BaseCommand):
 
         object_key = f"{cruise}{BTLSUM_SUFFIX}"
         with MediaStore(self.URL, token=self.TOKEN) as store:
-            prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+            prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
             try:
                 data = prefix.get(object_key)
             except Exception as e:
@@ -296,7 +297,7 @@ class Command(BaseCommand):
 
         object_key = f"{cruise}{BTLDATA_SUFFIX}"
         with MediaStore(self.URL, token=self.TOKEN) as store:
-            prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+            prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
             try:
                 data = prefix.get(object_key)
             except Exception as e:
@@ -377,7 +378,7 @@ class Command(BaseCommand):
 
                     object_key = f"{cruise_name}{NUT_SUFFIX}"
                     with MediaStore(self.URL, token=self.TOKEN) as store:
-                        prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+                        prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
                         try:
                             prefix.put(object_key, csv_binary)
                             self.stdout.write(self.style.SUCCESS(f'{cruise_name}{NUT_SUFFIX} successfully created.'))

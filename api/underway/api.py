@@ -15,7 +15,7 @@ def get_underway_column_headers(request, cruise_name: str):
     return UnderwayService.get_column_headers(cruise_name)
 
 @router.get("/find/{start_timestamp}/{end_timestamp}", response=List[UnderwayOutput], tags=["Users"])
-def find_underway_files(request, start_timestamp: datetime, end_timestamp: datetime ):
+def find_underway_files(request, start_timestamp: str, end_timestamp: str ):
     return UnderwayService.find_underway_files(start_timestamp, end_timestamp)
 
 
