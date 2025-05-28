@@ -17,7 +17,6 @@ from io import BytesIO
 from pathlib import Path
 from django.core.management import call_command
 
-@csrf_exempt
 def file_upload_view(request):
     if request.method == 'POST':
 
