@@ -1,3 +1,10 @@
 PRIMARY_DATA_DIR=/data
 
 VAST_DATA_DIR=/path-to-your-local-vast-mount
+
+LOCAL_SETTINGS=./local_settings.py
+
+URL=http://calm.whoi.edu:33300/
+TOKEN=your token here
+
+MEDIASTORE_PREFIX=NES-LTER-

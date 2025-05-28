@@ -1,7 +1,6 @@
 import csv
 import os
 import glob
-import dotenv
 import io
 from django.core.management.base import BaseCommand, CommandError
 import pandas as pd
@@ -47,9 +46,11 @@ INSTRUMENT_MAPPING = {
 class Command(BaseCommand):
     help = 'Import in Events for a given Cruise. If Cruise is not supplied, all Events for all Cruises will be imported.'
 
-    dotenv.load_dotenv()
-    URL = os.getenv("URL")
-    TOKEN = os.getenv("TOKEN")
+    def __init__(self):
+        super().__init__()
+        self.URL = os.getenv("URL")
+        self.TOKEN = os.getenv("TOKEN")
+        self.MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
 
     def add_arguments(self, parser):
         parser.add_argument('--cruise_name', type=str, help='Optional name of the cruise.', default=None)
@@ -64,7 +65,7 @@ class Command(BaseCommand):
         # Use the put method to store the CSV in the vast media store
         object_key = f"{cruise_name}{FILE_SUFFIX}"
         with MediaStore(self.URL, token=self.TOKEN) as store:
-            prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+            prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
             try:
                 prefix.put(object_key, csv_binary)
             except Exception as e:

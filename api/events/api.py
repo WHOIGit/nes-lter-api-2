@@ -6,33 +6,26 @@ from .services import EventService, EventOutput, FilterEventInput, EditEventInpu
 
 router = Router()
 
-
-@router.get("read/{cruise_name}")
-def read_events(request, cruise_name: str):
-    return EventService.read_events(cruise_name)
-
-
-
-@router.get("get/{cruise_name}")
+@router.get("/get/{cruise_name}", tags=["Users"])
 def get_events(request, cruise_name: str):
     return EventService.get_events(cruise_name)
 
 
-@router.post("filter/{cruise_name}", response=List[EventOutput])
+@router.post("/filter/{cruise_name}", response=List[EventOutput], tags=["Users"])
 def filter_events(request, cruise_name: str, input: FilterEventInput):
     return EventService.filter_events(cruise_name, input)
 
-@router.put("edit/{cruise_name}/{message_id}", response=EventOutput)
+@router.post("/edit/{cruise_name}/{message_id}", response=EventOutput, tags=["Admin"])
 def edit_events(request, cruise_name: str, message_id: int, input: EditEventInput):
     return EventService.edit_events(cruise_name, message_id, input)
 
 
-@router.get("history/{cruise_name}", response=str)
+@router.get("/history/{cruise_name}", response=str, tags=["Users"])
 def history_events(request, cruise_name: str):
     return EventService.history_events(cruise_name)
 
 
-@router.delete('delete/{cruise_name}')
+@router.delete('/delete/{cruise_name}', tags=["Admin"])
 def delete_events(request, cruise_name: str):
     try:
         result = EventService.delete_events(cruise_name)

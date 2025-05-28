@@ -1,6 +1,5 @@
 import os
 import io
-import dotenv
 import glob
 import pandas as pd
 from pathlib import Path
@@ -26,9 +25,11 @@ LONGITUDE_COL = 'longitude'
 class Command(BaseCommand):
     help = 'Import Nutrient Data. If Cruise Name is not supplied, all Nut files for all Cruises will be created.'
 
-    dotenv.load_dotenv()
-    URL = os.getenv("URL")
-    TOKEN = os.getenv("TOKEN")
+    def __init__(self):
+        super().__init__()
+        self.URL = os.getenv("URL")
+        self.TOKEN = os.getenv("TOKEN")
+        self.MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
 
     def add_arguments(self, parser):
         parser.add_argument('--cruise_name', type=str, help='Optional name of the cruise.', default=None)
@@ -60,7 +61,7 @@ class Command(BaseCommand):
         duplicate_ids = combined[combined.duplicated(keep=False)].unique()
         dup_rows = df[df['nut_a'].isin(duplicate_ids) | df['nut_b'].isin(duplicate_ids)]
         dup_rows = dup_rows[(dup_rows['nut_a'] != ' -') & (dup_rows['nut_b'] != ' -')]
-        print("Warning: Duplicate sample IDs found across nut_a and nut_b:")
+        print("Warning: Duplicate sample IDs found across nut_a and nut_b in LTER_sample_log.xlsx:")
         print(dup_rows[['cruise', 'cast', 'niskin', 'nut_a', 'nut_b']].to_string())
 
         # make replicates long instead of wide
@@ -71,11 +72,11 @@ class Command(BaseCommand):
 
         object_key = f"{cruise}{BTLSUM_SUFFIX}"
         with MediaStore(self.URL, token=self.TOKEN) as store:
-            prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+            prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
             try:
                 data = prefix.get(object_key)
             except Exception as e:
-                print(f"Run ImportNiskin.py to create bottle summary file for cruise {cruise}.", flush=True)
+                self.stdout.write(self.style.ERROR(f'Run ImportNiskin.py to create bottle summary file for cruise {cruise}.'))
                 return pd.DataFrame()
 
             btl_sum = pd.read_csv(io.BytesIO(data))
@@ -103,13 +104,20 @@ class Command(BaseCommand):
         df = clean_column_names(df)
 
         # mismatches can lead to unexpected results
-        nut = df['nutrient_number'].astype(str).str.replace('NL_', '').str.strip()
-        lter = df['lter_sample_id'].astype(str).str.strip()
-        if not (nut == lter).all():            
-            mismatch_mask = nut != lter
-            num_mismatches = (nut != lter).sum()
-            print(df.loc[mismatch_mask, ['nutrient_number', 'lter_sample_id']].to_string())
-            raise ValueError(f'Nutrient Number and LTER Sample ID {num_mismatches} column values do not match in LTERnut.xlsx')
+        nut = df['nutrient_number'].astype(str).str.replace('NL_', '', regex=False)\
+            .str.replace('NL', '', regex=False).str.strip()
+        nut = pd.to_numeric(nut).astype(int)
+        lter = df['lter_sample_id']
+        lter = pd.to_numeric(lter).astype(int)
+        mismatch_mask = (nut != lter) & ((nut - lter).abs() != 3000) # ignore diffs of 3000
+        num_mismatches = mismatch_mask.sum()
+        if num_mismatches > 0:
+            mismatches = pd.DataFrame({
+                'nutrient_number': nut[mismatch_mask],
+                'lter_sample_id': lter[mismatch_mask]
+            })
+            print(mismatches.to_string(index=False), flush=True)
+            raise ValueError(f'Nutrient Number and LTER Sample ID: {num_mismatches} column values do not match in LTERnut.xlsx')
 
         df['comments'] = df['comments'].fillna('')
         # deal with below-detection-limit values
@@ -289,7 +297,7 @@ class Command(BaseCommand):
 
         object_key = f"{cruise}{BTLDATA_SUFFIX}"
         with MediaStore(self.URL, token=self.TOKEN) as store:
-            prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+            prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
             try:
                 data = prefix.get(object_key)
             except Exception as e:
@@ -370,7 +378,7 @@ class Command(BaseCommand):
 
                     object_key = f"{cruise_name}{NUT_SUFFIX}"
                     with MediaStore(self.URL, token=self.TOKEN) as store:
-                        prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+                        prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
                         try:
                             prefix.put(object_key, csv_binary)
                             self.stdout.write(self.style.SUCCESS(f'{cruise_name}{NUT_SUFFIX} successfully created.'))

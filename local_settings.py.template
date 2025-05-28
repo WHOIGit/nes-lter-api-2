@@ -1,0 +1,6 @@
+
+# do not set DEBUG = True in production
+DEBUG = True
+
+# do not use '*' in production
+ALLOWED_HOSTS = ['*']

@@ -23,7 +23,6 @@ from storage.fs import FilesystemStore
 from storage.mediastore import MediaStore
 import io
 from storage.utils import PrefixStore
-import dotenv
 
 FILE_SUFFIX = '_elog.csv'
 DATETIME = 'dateTime8601'
@@ -60,11 +59,6 @@ class EditEventInput(BaseModel):
 
     
 class EventService:
-
-    dotenv.load_dotenv()
-    URL = os.getenv("URL")
-    TOKEN = os.getenv("TOKEN")
-
     FILE_SUFFIX = '_elog.csv'
     
     @staticmethod
@@ -89,6 +83,10 @@ class EventService:
         )
 
     def store_csv_file(self, cruise_name, csv_data):
+        URL = os.getenv("URL")
+        TOKEN = os.getenv("TOKEN")
+        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+
         df = pd.DataFrame(csv_data)
         df[DATETIME] = pd.to_datetime(df[DATETIME])
         df = df.sort_values(by=DATETIME)
@@ -97,8 +95,8 @@ class EventService:
         csv_binary = csv_buffer.getvalue().encode("utf-8")
         # Use the put method to store the CSV in the vast media store
         object_key = f"{cruise_name}{FILE_SUFFIX}"
-        with MediaStore(self.URL, token=self.TOKEN) as store:
-            prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+        with MediaStore(URL, token=TOKEN) as store:
+            prefix = PrefixStore(store, MEDIASTORE_PREFIX)
             try:
                 prefix.put(object_key, csv_binary)
             except Exception as e:
@@ -121,106 +119,19 @@ class EventService:
         addns.insert(4, 'Latitude', np.nan)
         addns.insert(4, 'Cast', np.nan)
         return addns
-
-    @classmethod
-    def read_events(cls, cruise_name: str):
-        csv_data = []
-        df = pd.DataFrame()
-        try:
-            cruise = Cruise.objects.get(name__iexact=cruise_name)
-            #temporary local mount until can access vast nfs mount on a vm
-            directory = f'/vast/corrected/{cruise_name}/elog/'
-            file_pattern = os.path.join(directory, '*_elog.csv')
-            matching_file = glob.glob(file_pattern)
-            if matching_file:
-                file_path = matching_file[0]
-                df = pd.read_csv(file_path, parse_dates=[DATETIME], dtype={'Station': str, 'Cast': str})
-                df[MESSAGE_ID] = range(1, len(df) + 1)   # assign message ids
-            else:
-                directory = f'/vast/raw/{cruise_name}/elog/'
-                file_pattern = os.path.join(directory, 'R2R_ELOG*FINAL*')
-                matching_file = glob.glob(file_pattern)
-                if matching_file:
-                    file_path = matching_file[0]
-                    df = pd.read_csv(file_path, parse_dates=[DATETIME], dtype={'Station': str, 'Cast': str})
-                
-                    file_pattern = os.path.join(directory, 'R2R_ELOG*corrections.xlsx')
-                    matching_file = glob.glob(file_pattern)
-                    if matching_file:
-                        corr = cls.apply_corrections(cls, matching_file[0])
-                        merged = df.merge(corr, on=MESSAGE_ID, how='left')
-                        DATETIME_X = '{}_x'.format(DATETIME)
-                        DATETIME_Y = '{}_y'.format(DATETIME)
-                        merged[DATETIME] = pd.to_datetime(merged[DATETIME_Y].combine_first(merged[DATETIME_X]), utc=True)
-                        df = merged
-                
-                    file_pattern = os.path.join(directory, 'R2R_ELOG*additions.xlsx')
-                    matching_file = glob.glob(file_pattern)
-                    if matching_file:
-                        addns = cls.apply_additions(cls, matching_file[0])
-                        df = pd.concat([df, addns])
-                        max_message_id = int(df[MESSAGE_ID].max())
-                        new_ids = range(max_message_id + 1, max_message_id + 1 + df[MESSAGE_ID].isna().sum())
-                        df.loc[df[MESSAGE_ID].isna(), MESSAGE_ID] = new_ids
-                        df = df.reset_index(drop=True)
-                        df[MESSAGE_ID] = df[MESSAGE_ID].astype(pd.Int64Dtype())
-
-            if not df.empty:
-                df['Comment'] = df['Comment'].fillna('')
-
-                for _, row in df.iterrows():
-                    longitude = row['Longitude']
-                    latitude = row['Latitude']
-                    if longitude == "NaN" or latitude == "NaN" or longitude == "NO_GPS" or latitude == "NO_GPS":
-                        geolocation = Point(0.0, 0.0, srid=4326)
-                    else:
-                        geolocation = Point(float(longitude), float(latitude), srid=4326) 
-
-                    event, created = Event.objects.update_or_create(
-                            cruise=cruise,
-                            message_id=row[MESSAGE_ID],
-                            instrument=row['Instrument'],
-                            action=row['Action'],
-                            station=row['Station'],
-                            cast=row['Cast'],
-                            comment=row['Comment'],
-                            geolocation=geolocation,
-                            datetime=row[DATETIME]
-                        )
-
-                    csv_data.append({
-                        MESSAGE_ID: event.message_id,
-                        DATETIME: event.datetime,
-                        "Instrument": event.instrument,
-                        "Action": event.action,
-                        "Station": event.station,
-                        "Cast": event.cast,
-                        "Latitude": latitude,
-                        "Longitude": longitude,
-                        "Comment": event.comment,
-                    })
-
-                cls.store_csv_file(cls, cruise_name, csv_data)
-
-                return {"status": "success", "message": "Events have been successfully imported."}
-            else:
-                raise Http404(f"Cruise {cruise_name} event log not found.")
-        except IntegrityError:
-            raise HttpError(409, f"error': f'Cruise with event id {row[MESSAGE_ID]} already exists.")
-        except Cruise.DoesNotExist:
-           raise Http404(f"Cruise {cruise_name} not found.")
-        except Exception as e:
-            raise HttpError(500, f"An error occurred: {str(e)}")
- 
     
     @classmethod
     def get_events(cls, cruise_name: str) -> FileResponse:
+        URL = os.getenv("URL")
+        TOKEN = os.getenv("TOKEN")
+        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name) 
             if Event.objects.filter(cruise=cruise).exists():
                 object_key = f"{cruise_name}{FILE_SUFFIX}"
-                with MediaStore(cls.URL, token=cls.TOKEN) as store:
-                    prefix = PrefixStore(store, settings.MEDIASTORE_PREFIX)
+                with MediaStore(URL, token=TOKEN) as store:
+                    prefix = PrefixStore(store, MEDIASTORE_PREFIX)
                     try:
                         data = prefix.get(object_key)
                     except Exception as e:
@@ -309,13 +220,16 @@ class EventService:
             history_data = []
             for event in events:
                 for record in event.history.all():
-                    history_data.append({
-                    'message_id': event.message_id,
-                    'history_date': record.history_date,
-                    'history_user': record.history_user,
-                    'history_type': record.get_history_type_display(),
-                    'changed_data': record.diff_against(record.prev_record).changed_fields if record.prev_record else 'N/A',
-            })
+                    if record.prev_record:
+                        diff = record.diff_against(record.prev_record)
+                        if diff.changed_fields:
+                            history_data.append({
+                                'message_id': event.message_id,
+                                'history_date': record.history_date,
+                                'history_user': record.history_user,
+                                'history_type': record.get_history_type_display(),
+                                'changed_data': diff.changed_fields,
+                            })
             history_data = sorted(history_data, key=lambda x: x['history_date'], reverse=True)
             return JsonResponse(history_data, safe=False)
         except Cruise.DoesNotExist:

@@ -3,8 +3,8 @@ from .services import HplcService
 
 router = Router()
 
-@router.get("{cruise_id}")
-def get(request, cruise_id: str):
-    return HplcService.get(cruise_id)
+@router.get("/{cruise_name}", tags=["Users"])
+def get(request, cruise_name: str):
+    return HplcService.get(cruise_name)
 
 

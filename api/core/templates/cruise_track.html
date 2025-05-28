@@ -5,10 +5,26 @@
     <title>Cruise Track: {{ cruise.name }}</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            margin: 0;
+            padding: 10px;
+            background: #f0f0f0;
+        }
+
         #map {
-            height: 600px;
+            flex: 1;
             width: 100%;
-            margin-top: 20px;
         }
     </style>
 </head>
@@ -54,11 +70,12 @@
                 Depth: ${p.depth} m<br>
                 Start Time: ${p.start_time}<br>
                 <a href="/cruise/{{ cruise.name }}/cast/${p.label}/ctd_plot/" target="_blank">
-                   View CTD Plot
+                    View CTD Plot
                 </a>
             `);
-                markers.addLayer(marker);
+            markers.addLayer(marker);
             });
+
 
             map.addLayer(markers);
 

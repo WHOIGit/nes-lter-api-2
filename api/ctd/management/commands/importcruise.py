@@ -1,7 +1,6 @@
 import csv
 import os
 import glob
-import dotenv
 from django.core.management.base import BaseCommand, CommandError
 from io import BytesIO, StringIO
 import pandas as pd
@@ -13,7 +12,6 @@ from pathlib import Path
 class Command(BaseCommand):
     help = 'Create Cruise Model. If Cruise Name is not supplied, all Cruises will be created.'
 
-    dotenv.load_dotenv()
     URL = os.getenv("URL")
     TOKEN = os.getenv("TOKEN")
 
@@ -69,10 +67,9 @@ class Command(BaseCommand):
                             self.stdout.write(self.style.SUCCESS(f'Cruise {cruise_name} event log not found.'))
 
                 if start_time is None:
-                    start_time = '2017-5-4T00:00:00Z'   # start_time cannot be none ?IS THIS WHAT WE WANT TO DO?
-                    self.stdout.write(self.style.SUCCESS(f'Cruise {cruise_name} startCruise event not found.'))
+                    self.stdout.write(self.style.WARNING(f'Cruise {cruise_name} startCruise event not found.'))
                 if end_time is None:
-                    self.stdout.write(self.style.SUCCESS(f'Cruise {cruise_name} stopCruise event not found.'))
+                    self.stdout.write(self.style.WARNING(f'Cruise {cruise_name} stopCruise event not found.'))
 
                 Cruise.objects.update_or_create(
                     name=cruise_name,
