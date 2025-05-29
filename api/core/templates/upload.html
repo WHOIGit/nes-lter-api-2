@@ -105,6 +105,9 @@
             maxFilesize: 100, // MB
             dataType: 'json',
             init: function () {
+                // Get CSRF token once
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
                 this.on("sending", function (file, xhr, formData) {
                     const fileType = document.getElementById("file-type").value;
                     const cruiseName = document.getElementById("cruise-name").value;
@@ -159,6 +162,7 @@
                                     retryFormData.append("file_type", fileType);
                                     retryFormData.append("cruise_name", cruiseName);
                                     retryFormData.append("overwrite", "true");
+                                    retryFormData.append("csrfmiddlewaretoken", csrfToken); // Add CSRF token
 
                                     fetch("{% url 'file-upload' %}", {
                                         method: "POST",
