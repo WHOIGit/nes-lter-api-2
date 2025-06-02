@@ -180,7 +180,7 @@ def cruise_track_view(request, cruise_name):
                 lat < -90 or lat > 90 or
                 lng < -180 or lng > 180
             ):
-                errors.append(f"[Invalid] Entry {i}: lat={lat}, lng={lng}")
+                print(f"[Invalid] Entry {i}: lat={lat}, lng={lng}")
             else:
                 clean_track_points.append(point)
 
@@ -190,7 +190,6 @@ def cruise_track_view(request, cruise_name):
             'cruise': cruise,
             'track_points_json': json.dumps(track_points),
             'cast_points_json': json.dumps(cast_points),
-            'errors': errors,
         }
 
         return render(request, 'cruise_track.html', context)
