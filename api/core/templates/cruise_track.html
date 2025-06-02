@@ -30,6 +30,13 @@
 </head>
 <body>
     <h1>Cruise Track for {{ cruise.name }}</h1>
+    {% if errors %}
+    <div style="background-color: #ffe0e0; padding: 6px 10px; border: 1px solid red; margin: 10px; font-size: 0.9em;">
+        <strong>Invalid Track Points:</strong>
+        {{ errors|join:", " }}
+    </div>
+    {% endif %}
+
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>

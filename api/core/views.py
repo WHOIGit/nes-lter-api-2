@@ -103,6 +103,12 @@ def file_upload_view(request):
 
     return render(request, 'upload.html')
 
+def clean_float(val):
+    try:
+        return float(str(val).strip().replace("–", "-"))
+    except Exception:
+        return None
+
 def cruise_track_view(request, cruise_name):
     UNDERWAY_SUFFIX = '_underway.csv'
 
@@ -155,16 +161,36 @@ def cruise_track_view(request, cruise_name):
                         for _, row in underway_data.iterrows()
                     ]
                 except KeyError:
+                    
                     track_points = [
                         {"lat": row["Latitude"], "lng": row["Longitude"]}   # ae2426
                         for _, row in underway_data.iterrows()
                     ]
-        print(cast_points, flush=True)
 
+        errors = []
+        clean_track_points = []
+        for i, point in enumerate(track_points):
+            lat = clean_float(point["lat"])
+            lng = clean_float(point["lng"])
+
+            if (
+                pd.isnull(lat) or pd.isnull(lng) or
+                not isinstance(lat, (float, int)) or
+                not isinstance(lng, (float, int)) or
+                lat < -90 or lat > 90 or
+                lng < -180 or lng > 180
+            ):
+                errors.append(f"[Invalid] Entry {i}: lat={lat}, lng={lng}")
+            else:
+                clean_track_points.append(point)
+
+        track_points = clean_track_points
+                    
         context = {
             'cruise': cruise,
             'track_points_json': json.dumps(track_points),
             'cast_points_json': json.dumps(cast_points),
+            'errors': errors,
         }
 
         return render(request, 'cruise_track.html', context)
@@ -211,7 +237,11 @@ def ctd_plot_view(request, cruise_name, cast_number):
     else:
         sensor_columns = en_primary_sensor_list
 
-    df = df.sort_values('date')
+    try:
+        df = df.sort_values('date')
+    except:
+        print(f'Cannot sort values by date for cruise {cruise_name}', flush=True)
+
     sensors = [col for col in sensor_columns if col in df.columns]
 
     # Create base figure
