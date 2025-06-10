@@ -3,6 +3,10 @@ from .services import NutService
 
 router = Router()
 
+@router.get("/all", tags=["Users"])    # must be before get/cruise_name
+def getall(request):
+    return NutService.getall()
+
 @router.get("/{cruise_name}", tags=["Users"])
 def get(request, cruise_name: str):
     return NutService.get(cruise_name)

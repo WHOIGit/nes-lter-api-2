@@ -77,22 +77,25 @@ def file_upload_view(request):
 
         buffer = io.StringIO()
         command_lookup = {
-            'ctd': 'importcast',
-            'elog': 'importevent',
-            'underway': 'importunderwaydata',
-            'nutrient' : 'importnut',
-            'sample_log' : 'importnut',
-            'station_list' : 'importstations',
-            'hplc' : 'importhplc',
-            'chlorophyll' : 'importchl'
+            'ctd': ['importcast', 'importniskin'],
+            'elog': ['importevent'],
+            'underway': ['importunderwaydata'],
+            'nutrient' : ['importnut'],
+            'sample_log' : ['importnut'],
+            'station_list' : ['importstations'],
+            'hplc' : ['importhplc'],
+            'chlorophyll' : ['importchl']
         }
         message = f'Cruise name: {cruise_name},'
         message += f' File type: {file_type}.\n'
         try:
-            if file_type == 'station_list':
-                call_command(command_lookup.get(file_type), stdout=buffer)
-            else:
-                call_command(command_lookup.get(file_type), cruise_name=cruise_name, stdout=buffer)
+            commands = command_lookup.get(file_type, [])
+            for cmd in commands:
+                if file_type == 'station_list':
+                    call_command(cmd, stdout=buffer)
+                else:
+                    call_command(cmd, cruise_name=cruise_name, stdout=buffer)
+
             output = buffer.getvalue()
             buffer.close()
             import_message = output + '\nImport completed successfully.'

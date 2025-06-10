@@ -1,61 +1,70 @@
 import io
 import os
-from datetime import datetime
+import csv
 from django.http import FileResponse, HttpResponse, Http404
 from storage.mediastore import MediaStore
 from storage.utils import PrefixStore
 from core.models import Cruise
-from django.conf import settings
-from pathlib import Path
 
 class ChlService:
+    URL = os.getenv("URL")
+    TOKEN = os.getenv("TOKEN")
+    MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+    FILE_SUFFIX = '_chl.csv'
 
     @classmethod
     def get(cls, cruise_name: str) -> FileResponse:
-        URL = os.getenv("URL")
-        TOKEN = os.getenv("TOKEN")
-        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
 
-        FILE_SUFFIX = '_chl.csv'
-        combined = bytearray()
-        first = True
+        try:
+            Cruise.objects.get(name__iexact=cruise_name) 
+            object_key = f"{cruise_name}{cls.FILE_SUFFIX}"
+            with MediaStore(cls.URL, token=cls.TOKEN) as store:
+                prefix = PrefixStore(store, cls.MEDIASTORE_PREFIX)
+                try:
+                    data = prefix.get(object_key)
+                except Exception as e:
+                    print(e, flush=True)
+                    raise
+            csv_buffer = io.BytesIO(data)
+            response = HttpResponse(csv_buffer, content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="{object_key}"'
+            return response
+        except Cruise.DoesNotExist:
+            raise Http404(f"Cruise {cruise_name} not found.")
 
-        if cruise_name.lower() == 'all':
-            parent_dir = Path('/vast/raw/')
-            cruises = [f.name for f in parent_dir.iterdir() if f.is_dir() and f.name != "all"]
-        else:
-            cruises = [cruise_name]
-      
-        for cruise_name in cruises:
-            try:
-                Cruise.objects.get(name__iexact=cruise_name)
-                object_key = f"{cruise_name}{FILE_SUFFIX}"
-                with MediaStore(URL, token=TOKEN) as store:
-                    prefix = PrefixStore(store, MEDIASTORE_PREFIX)
-                    try:
-                        data = prefix.get(object_key)
-                    except Exception as e:
-                        print(e, flush=True)
-                        raise
+    @classmethod
+    def getall(cls) -> FileResponse:
+        csv_buffer = io.StringIO()
+        csv_writer = csv.writer(csv_buffer)
 
-                    lines = data.decode('utf-8').splitlines(keepends=True)
-                    if not lines:
-                        continue
-                    if first:
-                        combined.extend("".join(lines).encode('utf-8'))
-                        first = False
-                    else:
-                        # Skip the header (line 0)
-                        combined.extend("".join(lines[1:]).encode('utf-8'))
-                        print(combined, flush=True)
-            except Cruise.DoesNotExist:
-                raise Http404(f"Cruise {cruise_name} not found.")
-            
-        csv_buffer = io.BytesIO(combined)
-        response = HttpResponse(csv_buffer, content_type='text/csv')
-        if len(cruises) > 1:
-            object_key = f"all{FILE_SUFFIX}"
-        response['Content-Disposition'] = f'attachment; filename="{object_key}"'
+        is_first_cruise = True
+        cruises = Cruise.objects.all().order_by('name')
+
+        for cruise in cruises:
+            object_key = f"{cruise.name}{cls.FILE_SUFFIX}"
+            with MediaStore(cls.URL, token=cls.TOKEN) as store:
+                prefix = PrefixStore(store, cls.MEDIASTORE_PREFIX)
+                try:
+                    data = prefix.get(object_key)
+                except Exception as e:
+                    continue
+
+            cruise_data = data.decode('utf-8')
+            reader = csv.reader(io.StringIO(cruise_data))
+
+            if is_first_cruise:
+                # first cruise: write everything including header
+                for row in reader:
+                    csv_writer.writerow(row)
+                is_first_cruise = False
+            else:
+                # other cruises: skip header
+                next(reader, None) 
+                for row in reader:
+                    csv_writer.writerow(row)
+
+        # Reset the pointer to the start
+        csv_buffer.seek(0)
+        response = HttpResponse(csv_buffer.getvalue(), content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="all_chl.csv"'
         return response
-    
-
