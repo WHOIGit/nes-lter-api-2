@@ -170,7 +170,6 @@ def cruise_track_view(request, cruise_name):
                         for _, row in underway_data.iterrows()
                     ]
 
-        errors = []
         clean_track_points = []
         for i, point in enumerate(track_points):
             lat = clean_float(point["lat"])
