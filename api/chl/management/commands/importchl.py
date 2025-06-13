@@ -55,7 +55,7 @@ class Command(BaseCommand):
 
             chl = chl.merge(btl_sum, on=['cruise','cast','niskin'], how='left')
             chl = chl.dropna(subset=['cruise'])
-            chl.sort_values('date')
+            chl = chl.sort_values('date')
             return chl
 
     def read_chl_data(self):

@@ -1,25 +1,25 @@
 import io
 import os
-from datetime import datetime
+import csv
 from django.http import FileResponse, HttpResponse, Http404
 from storage.mediastore import MediaStore
 from storage.utils import PrefixStore
 from core.models import Cruise
-from django.conf import settings
 
 class NutService:
+    URL = os.getenv("URL")
+    TOKEN = os.getenv("TOKEN")
+    MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+    FILE_SUFFIX = '_nut.csv'
 
     @classmethod
     def get(cls, cruise_name: str) -> FileResponse:
-        URL = os.getenv("URL")
-        TOKEN = os.getenv("TOKEN")
-        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
-        FILE_SUFFIX = '_nut.csv'
+
         try:
             Cruise.objects.get(name__iexact=cruise_name) 
-            object_key = f"{cruise_name}{FILE_SUFFIX}"
-            with MediaStore(URL, token=TOKEN) as store:
-                prefix = PrefixStore(store, MEDIASTORE_PREFIX)
+            object_key = f"{cruise_name}{cls.FILE_SUFFIX}"
+            with MediaStore(cls.URL, token=cls.TOKEN) as store:
+                prefix = PrefixStore(store, cls.MEDIASTORE_PREFIX)
                 try:
                     data = prefix.get(object_key)
                 except Exception as e:
@@ -31,4 +31,42 @@ class NutService:
             return response
         except Cruise.DoesNotExist:
             raise Http404(f"Cruise {cruise_name} not found.")    
+
+    @classmethod
+    def getall(cls) -> FileResponse:
+        csv_buffer = io.StringIO()
+        csv_writer = csv.writer(csv_buffer)
+
+        is_first_cruise = True
+        cruises = Cruise.objects.all().order_by('name')
+
+        for cruise in cruises:
+            object_key = f"{cruise.name}{cls.FILE_SUFFIX}"
+            with MediaStore(cls.URL, token=cls.TOKEN) as store:
+                prefix = PrefixStore(store, cls.MEDIASTORE_PREFIX)
+                try:
+                    data = prefix.get(object_key)
+                except Exception as e:
+                    continue
+
+            cruise_data = data.decode('utf-8')
+            reader = csv.reader(io.StringIO(cruise_data))
+
+            if is_first_cruise:
+                # first cruise: write everything including header
+                for row in reader:
+                    csv_writer.writerow(row)
+                is_first_cruise = False
+            else:
+                # other cruises: skip header
+                next(reader, None) 
+                for row in reader:
+                    csv_writer.writerow(row)
+
+        # Reset the pointer to the start
+        csv_buffer.seek(0)
+        response = HttpResponse(csv_buffer.getvalue(), content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="all_nut.csv"'
+        return response
+
 

@@ -82,22 +82,25 @@ def file_upload_view(request):
 
         buffer = io.StringIO()
         command_lookup = {
-            'ctd': 'importcast',
-            'elog': 'importevent',
-            'underway': 'importunderwaydata',
-            'nutrient' : 'importnut',
-            'sample_log' : 'importnut',
-            'station_list' : 'importstations',
-            'hplc' : 'importhplc',
-            'chlorophyll' : 'importchl'
+            'ctd': ['importcast', 'importniskin'],
+            'elog': ['importevent'],
+            'underway': ['importunderwaydata'],
+            'nutrient' : ['importnut'],
+            'sample_log' : ['importnut'],
+            'station_list' : ['importstations'],
+            'hplc' : ['importhplc'],
+            'chlorophyll' : ['importchl']
         }
         message = f'Cruise name: {cruise_name},'
         message += f' File type: {file_type}.\n'
         try:
-            if file_type == 'station_list':
-                call_command(command_lookup.get(file_type), stdout=buffer)
-            else:
-                call_command(command_lookup.get(file_type), cruise_name=cruise_name, stdout=buffer)
+            commands = command_lookup.get(file_type, [])
+            for cmd in commands:
+                if file_type == 'station_list':
+                    call_command(cmd, stdout=buffer)
+                else:
+                    call_command(cmd, cruise_name=cruise_name, stdout=buffer)
+
             output = buffer.getvalue()
             buffer.close()
             import_message = output + '\nImport completed successfully.'
@@ -108,13 +111,21 @@ def file_upload_view(request):
 
     return render(request, 'upload.html')
 
+def clean_float(val):
+    try:
+        return float(str(val).strip().replace("–", "-"))
+    except Exception:
+        return None
+
 def cruise_track_view(request, cruise_name):
+    UNDERWAY_SUFFIX = '_underway.csv'
+
     try:
         cruise = Cruise.objects.get(name__iexact=cruise_name)
         casts = Cast.objects.filter(cruise=cruise).order_by('start_time')
 
-        # Prepare track points for JS (GeoJSON-like)
-        track_points = [
+        # Prepare clickable cast points for JS (GeoJSON-like)
+        cast_points = [
             {
                 "lat": cast.geolocation.y,
                 "lng": cast.geolocation.x,
@@ -125,10 +136,69 @@ def cruise_track_view(request, cruise_name):
             for cast in casts
         ]
 
+        URL = os.getenv("URL")
+        TOKEN = os.getenv("TOKEN")
+        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+
+        object_key = f"{cruise_name}{UNDERWAY_SUFFIX}"
+        with MediaStore(URL, token=TOKEN) as store:
+            prefix = PrefixStore(store, MEDIASTORE_PREFIX)
+            try:
+                data = prefix.get(object_key)
+            except Exception as e:
+                print(e, flush=True)
+
+        underway_data = pd.read_csv(io.BytesIO(data))
+
+        # Non-clickable track points (no labels or popups)
+        try:
+            track_points = [
+                {"lat": row[" Dec_LAT"], "lng": row[" Dec_LON"]}
+                for _, row in underway_data.iterrows()
+            ]
+        except KeyError:
+            try:
+                track_points = [
+                    {"lat": row["Latitude_Deg"], "lng": row["Longitude_Deg"]}   # hrs2303
+                    for _, row in underway_data.iterrows()
+                ]
+            except KeyError:
+                try:
+                    track_points = [
+                        {"lat": row["GPS-Furuno-Latitude"], "lng": row["GPS-Furuno-Longitude"]}   # en
+                        for _, row in underway_data.iterrows()
+                    ]
+                except KeyError:
+                    
+                    track_points = [
+                        {"lat": row["Latitude"], "lng": row["Longitude"]}   # ae2426
+                        for _, row in underway_data.iterrows()
+                    ]
+
+        clean_track_points = []
+        for i, point in enumerate(track_points):
+            lat = clean_float(point["lat"])
+            lng = clean_float(point["lng"])
+
+            if (
+                pd.isnull(lat) or pd.isnull(lng) or
+                not isinstance(lat, (float, int)) or
+                not isinstance(lng, (float, int)) or
+                lat < -90 or lat > 90 or
+                lng < -180 or lng > 180
+            ):
+                print(f"[Invalid] Entry {i}: lat={lat}, lng={lng}")
+            else:
+                clean_track_points.append(point)
+
+        track_points = clean_track_points
+                    
         context = {
             'cruise': cruise,
             'track_points_json': json.dumps(track_points),
+            'cast_points_json': json.dumps(cast_points),
         }
+
         return render(request, 'cruise_track.html', context)
     except Cruise.DoesNotExist:
         raise CommandError(f'Cruise not found {cruise_name}. Run importcruise.py')
@@ -173,7 +243,11 @@ def ctd_plot_view(request, cruise_name, cast_number):
     else:
         sensor_columns = en_primary_sensor_list
 
-    df = df.sort_values('date')
+    try:
+        df = df.sort_values('date')
+    except:
+        print(f'Cannot sort values by date for cruise {cruise_name}', flush=True)
+
     sensors = [col for col in sensor_columns if col in df.columns]
 
     # Create base figure

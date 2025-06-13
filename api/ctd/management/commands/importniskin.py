@@ -4,6 +4,8 @@ import re
 import io
 import pandas as pd
 import numpy as np
+import sys
+from django.core.management.color import color_style
 from django.core.management.base import BaseCommand, CommandError
 from core.models import Cruise
 from core.models import Cast, Niskin
@@ -109,7 +111,13 @@ def to_dataframe(cruise_name, cast, in_lines):
         cvs[DATE_COL_IX] = '{} {}'.format(cvs[DATE_COL_IX], time)
         rows.append(cvs)
 
-    df = pd.DataFrame(rows, columns=col_headers)
+    try:
+        df = pd.DataFrame(rows, columns=col_headers)
+    except:
+        style = color_style()
+        sys.stdout.write(style.ERROR(f'Bad formatted .btl file columns found for cruise {cruise_name} cast {cast}.'))
+        return
+
     # convert df columns to reasonable types
     df[BOTTLE_COL] = df[BOTTLE_COL].astype(int)
     df[DATE_COL] = pd.to_datetime(df[DATE_COL], utc=True)
@@ -182,11 +190,14 @@ class Command(BaseCommand):
                             with open(file, 'r', encoding='latin1') as f:
                                 lines = f.readlines()                            
                             df = to_dataframe(cruise_name, cast, lines)
+                            if df is None:
+                                continue
                             
                             # add lat/lon and depth for armstrong and atlantis cruises
                             if LAT_COL not in df.columns and LON_COL not in df.columns:
                                 df[LAT_COL] = latitude
                                 df[LON_COL] = longitude
+                            
                             if DEPTH_COL not in df.columns and PRESSURE_COL in df.columns:
                                 df[DEPTH_COL] = [
                                     p_to_depth(float(p), float(lat)) if pd.notna(p) and pd.notna(lat) else None
@@ -200,12 +211,15 @@ class Command(BaseCommand):
                                     geolocation = Point(float(row[LON_COL]), float(row[LAT_COL]), srid=4326)
                                 else:
                                     geolocation = None
-                                if row[DEPTH_COL] is not None:
+                               
+                                if DEPTH_COL in row and row[DEPTH_COL] is not None:
                                     Niskin.objects.update_or_create(
                                         cast=cast_obj,
                                         number=row[NISKIN_COL],
-                                        depth= row[DEPTH_COL],  
-                                        geolocation = geolocation
+                                        defaults={
+                                            'depth': row[DEPTH_COL],
+                                            'geolocation': geolocation
+                                        }
                                     )
                                 else:
                                     self.stdout.write(self.style.ERROR(f'Depth for Cruise {cruise_name} cast {cast} niskin {row[NISKIN_COL]} null. Model not updated.'))
@@ -219,7 +233,6 @@ class Command(BaseCommand):
                             self.stdout.write(self.style.ERROR(f'Cast {cast} for Cruise {cruise_name} not imported. Run importcast.py'))
 
                 if glob.glob(os.path.join(directory, "*.btl")) and dfs:
-                    dfs = [df.dropna(subset=['depsm']) for df in dfs]
                     dfs = [df for df in dfs if not df.empty]  #remove empty dataframes
                     compiled_df = pd.concat(dfs, sort=False)
                     # 3 digit casts needed for sorting

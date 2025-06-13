@@ -115,32 +115,11 @@ class Command(BaseCommand):
                    df[MESSAGE_ID] = range(1, len(df) + 1)   # assign message ids
                else:
                    directory = f'/vast/raw/{cruise_name}/elog/'
-                   file_pattern = os.path.join(directory, 'R2R_ELOG*FINAL*')
+                   file_pattern = os.path.join(directory, 'R2R_ELOG*FINAL*')  # do not read corrections or additions files in elog dir
                    matching_file = glob.glob(file_pattern)
                    if matching_file:
                        file_path = matching_file[0]
                        df = pd.read_csv(file_path, encoding='latin1',parse_dates=[DATETIME], dtype={'Station': str, 'Cast': str})
-                
-                       file_pattern = os.path.join(directory, 'R2R_ELOG*corrections.xlsx')
-                       matching_file = glob.glob(file_pattern)
-                       if matching_file:
-                           corr = self.apply_corrections(matching_file[0])
-                           merged = df.merge(corr, on=MESSAGE_ID, how='left')
-                           DATETIME_X = '{}_x'.format(DATETIME)
-                           DATETIME_Y = '{}_y'.format(DATETIME)
-                           merged[DATETIME] = pd.to_datetime(merged[DATETIME_Y].combine_first(merged[DATETIME_X]), utc=True)
-                           df = merged
-                
-                       file_pattern = os.path.join(directory, 'R2R_ELOG*additions.xlsx')
-                       matching_file = glob.glob(file_pattern)
-                       if matching_file:
-                           addns = self.apply_additions(matching_file[0])
-                           df = pd.concat([df, addns])
-                           max_message_id = int(df[MESSAGE_ID].max())
-                           new_ids = range(max_message_id + 1, max_message_id + 1 + df[MESSAGE_ID].isna().sum())
-                           df.loc[df[MESSAGE_ID].isna(), MESSAGE_ID] = new_ids
-                           df = df.reset_index(drop=True)
-                           df[MESSAGE_ID] = df[MESSAGE_ID].astype(pd.Int64Dtype())
 
                if not df.empty:
                    df['Comment'] = df['Comment'].fillna('')
