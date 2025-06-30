@@ -135,7 +135,7 @@ def update_niskin(request, cruise_name: str, cast_number: str, niskin_number: st
     except ValueError as e:
         return {"status": "error", "message": str(e)}
 
-@router.delete('/niksins/delete/{cruise_name}/{cast_number}/{niskin_number}', tags=["Admin"], auth=TokenAuthenticator())
+@router.delete('/niskins/delete/{cruise_name}/{cast_number}/{niskin_number}', tags=["Admin"], auth=TokenAuthenticator())
 def delete_niskin(request, cruise_name: str, cast_number: str, niskin_number: int):
     try:
         result = CtdService.delete_niskin(cruise_name, cast_number, niskin_number)
