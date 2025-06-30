@@ -1,6 +1,7 @@
 from typing import List
 from datetime import datetime
 from ninja import Router
+from core.auth import TokenAuthenticator
 
 from .services import EventService, EventOutput, FilterEventInput, EditEventInput
 
@@ -15,7 +16,7 @@ def get_events(request, cruise_name: str):
 def filter_events(request, cruise_name: str, input: FilterEventInput):
     return EventService.filter_events(cruise_name, input)
 
-@router.post("/edit/{cruise_name}/{message_id}", response=EventOutput, tags=["Admin"])
+@router.post("/edit/{cruise_name}/{message_id}", response=EventOutput, tags=["Admin"], auth=TokenAuthenticator())
 def edit_events(request, cruise_name: str, message_id: int, input: EditEventInput):
     return EventService.edit_events(cruise_name, message_id, input)
 
@@ -25,7 +26,7 @@ def history_events(request, cruise_name: str):
     return EventService.history_events(cruise_name)
 
 
-@router.delete('/delete/{cruise_name}', tags=["Admin"])
+@router.delete('/delete/{cruise_name}', tags=["Admin"], auth=TokenAuthenticator())
 def delete_events(request, cruise_name: str):
     try:
         result = EventService.delete_events(cruise_name)
