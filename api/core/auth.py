@@ -11,7 +11,10 @@ class TokenAuthenticator(HttpBearer):
     def authenticate(self, request, token):
         # This ensures the DRF token auth will see the header
         request.META['HTTP_AUTHORIZATION'] = f"Token {token}"
-        user_auth_tuple = self.auth.authenticate(request)
+        try:
+            user_auth_tuple = self.auth.authenticate(request)
+        except AuthenticationFailed as e:
+            raise HttpError(401, 'Unauthorized') from e
         if user_auth_tuple is None:
             raise HttpError(401, 'Unauthorized')
         user, _ = user_auth_tuple
