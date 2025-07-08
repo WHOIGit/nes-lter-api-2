@@ -165,7 +165,10 @@ class Command(BaseCommand):
                 cruise = Cruise.objects.get(name__iexact=cruise_name)
 
                 directory = f'/vast/raw/{cruise_name}/ctd/'
-                btl_files = sorted(glob.glob(os.path.join(directory, '*.btl')))
+                btl_files = sorted(
+                    f for f in glob.glob(os.path.join(directory, '*.btl'))
+                    if not f.endswith('_original.btl')
+                )
                 if cruise_name.lower() == "en627":
                     added_dir = os.path.join(directory, "cast_1_files_used_for_corrected_cast_2")
                     btl_files += sorted(glob.glob(os.path.join(added_dir, '*.btl')))

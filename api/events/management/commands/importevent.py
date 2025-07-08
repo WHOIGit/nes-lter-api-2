@@ -16,22 +16,29 @@ import pytz
 from datetime import datetime
 
 DATETIME = 'dateTime8601'
-MESSAGE_ID = 'Message ID'  
+MESSAGE_ID = 'Message ID'
+R2R_EVENT = 'R2R_Event'
 FILE_SUFFIX = '_elog.csv'
 
 INSTRUMENT_MAPPING = {
     "Attune": "Attune Flow Cytometer",
+    "Attune Flow Cytomoeter": "Attune Flow Cytometer",
     "Bongo": "Bongo Net",
     "Cytomeoter": "Cytometer",
     "EK80": "EK80 broadband",
     "IFCB_continuous": "IFCB continuous",
     "IFCB Continuous": "IFCB continuous",
     "IFCB 109": "IFCB continuous",
+    "IFCB": "IFCB continuous",
     "Incubation": "Incubation Grazing",
     "Incubation O2": "Incubation Respiration O2",
+    "Issacs Kidd Midwater Trawl": "Isaacs-Kidd Midwater Trawl",
+    "Midwater Trawl": "RMT10 Midwater Trawl (Tucker-style)",
+    "RMT8 Midwater Trawl": "RMT10 Midwater Trawl (Tucker-style)",
     "RingNet": "Ring Net",
     "RingNetIFCB Continuous": "IFCB continuous",
     "SSW": "Underway Science seawater diaphragm pump",
+    "Stingray": "Sting Ray",
     "SUNA V2": "SUNAV2",
     "Thermosalinograph SBE45": "Thermosalinographs on underway impeller ",
     "Transmissometer 10": "Transmissometer 10cm",
@@ -39,7 +46,9 @@ INSTRUMENT_MAPPING = {
     "trans25": "Transmissometer 25cm",        
     "Underway diaphram pump": "Underway Science seawater diaphragm pump",
     "Underway Impeller": "Underway Science seawater impeller",
+    "Underway Science seawater impeller pump": "Underway Science seawater impeller",
     "Underway Science Seawater Diaphragm Pump": "Underway Science seawater diaphragm pump",
+    "Valeport Modus SVS": "Valeport SVS"
 }
 
 
@@ -72,23 +81,6 @@ class Command(BaseCommand):
                 print(e, flush=True)
                 raise
 
-    def apply_corrections(self, path):
-        corr = pd.read_excel(path)
-        corr[DATETIME] = pd.to_datetime(corr[DATETIME], utc=True)
-        corr.pop('Instrument')
-        corr.pop('Action')
-        return corr
-
-    def apply_additions(self, addns_path):
-        addns = pd.read_excel(addns_path)
-        addns[DATETIME] = pd.to_datetime(addns[DATETIME], utc=True, format="ISO8601")
-        # add placeholder columns
-        addns.insert(4, MESSAGE_ID, np.nan)
-        addns.insert(4, 'Longitude', np.nan)
-        addns.insert(4, 'Latitude', np.nan)
-        addns.insert(4, 'Cast', np.nan)
-        return addns
-
     def handle(self, *args, **options):
         cruise_name = options['cruise_name']
         
@@ -105,14 +97,13 @@ class Command(BaseCommand):
                directory = f'/vast/corrected/{cruise_name}/elog/'
                file_pattern = os.path.join(directory, '*_elog.csv')
                matching_file = glob.glob(file_pattern)
-               if matching_file:
+               if matching_file and cruise_name.lower() not in ['en608', 'en617', 'en627']:  # serve the original elogs for these cruises
                    file_path = matching_file[0]
                    df = pd.read_csv(file_path, parse_dates=[DATETIME], dtype={'Station': str, 'Cast': str})
                    try:
                        df[DATETIME] = pd.to_datetime(df[DATETIME]).dt.tz_convert('UTC')
                    except:
                        df[DATETIME] = pd.to_datetime(df[DATETIME]).dt.tz_localize('UTC')   # en617
-                   df[MESSAGE_ID] = range(1, len(df) + 1)   # assign message ids
                else:
                    directory = f'/vast/raw/{cruise_name}/elog/'
                    file_pattern = os.path.join(directory, 'R2R_ELOG*FINAL*')  # do not read corrections or additions files in elog dir
@@ -136,10 +127,13 @@ class Command(BaseCommand):
                        raw_instrument = row['Instrument']
                        instrument = INSTRUMENT_MAPPING.get(raw_instrument, raw_instrument)
 
+                       message_id = int(row[MESSAGE_ID]) if pd.notna(row[MESSAGE_ID]) else None  # Nan is a float
+                       
                        event, created = Event.objects.update_or_create(
                                cruise=cruise,
-                               message_id=row[MESSAGE_ID],
+                               r2r_event=row[R2R_EVENT],
                                defaults={
+                                   "message_id": message_id,
                                    "instrument":instrument,
                                    "action":row['Action'],
                                    "station":row['Station'],
@@ -151,6 +145,7 @@ class Command(BaseCommand):
                                )
 
                        csv_data.append({
+                           R2R_EVENT: event.r2r_event,
                            MESSAGE_ID: event.message_id,
                            DATETIME: event.datetime,
                            "Instrument": event.instrument,

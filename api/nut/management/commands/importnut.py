@@ -154,7 +154,10 @@ class Command(BaseCommand):
 
         # set date, lat, lon, depth to NaN when there is no bottle file for the cast
         btl_dir = f'/vast/raw/{cruise}/ctd/'
-        for file in sorted(glob.glob(os.path.join(btl_dir, '*.asc'))):
+        for file in sorted(
+            f for f in glob.glob(os.path.join(btl_dir, '*.asc'))
+            if not f.endswith('_original.asc')
+        ):
             if cruise == 'en627':
                 file = file.replace("_u", "")
             btl_file = file[:-3] + 'btl'
