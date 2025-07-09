@@ -204,7 +204,8 @@ class Niskin(models.Model):
 
 class Event(models.Model):
     cruise = models.ForeignKey(Cruise, on_delete=models.CASCADE, related_name='events')
-    message_id = models.IntegerField()
+    r2r_event = models.CharField(max_length=30, null=True, blank=True)
+    message_id = models.IntegerField(null=True)
     instrument = models.CharField(max_length=100)
     action = models.CharField(max_length=32)
     station = models.CharField(max_length=100)
@@ -216,7 +217,7 @@ class Event(models.Model):
     
     class Meta:
         constraints = [
-            UniqueConstraint(fields=['cruise', 'message_id'], name='unique_cruise_message_id')
+            UniqueConstraint(fields=['cruise', 'r2r_event'], name='unique_cruise_r2r_event')
         ]
 
     def __str__(self):
