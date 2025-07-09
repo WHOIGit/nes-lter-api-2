@@ -2,6 +2,7 @@ from typing import List
 from datetime import datetime
 
 from ninja import Router
+from core.auth import TokenAuthenticator
 from django.http import FileResponse
 
 from .services import StationService, StationInput, StationLocationInput, StationQueryOutput, \
@@ -28,13 +29,13 @@ def get_stations_file(request):
 #    return StationService.get_nearest_station(query)
 
 
-@router.post('/create', tags=["Admin"])
+@router.post('/create', tags=["Admin"], auth=TokenAuthenticator())
 def create_station(request, input: StationInput):
     StationService.create_station(input)
     return 204
 
 
-@router.post('/set_location', tags=["Admin"])
+@router.post('/set_location', tags=["Admin"], auth=TokenAuthenticator())
 def set_location(request, input: StationLocationInput):
     StationService.set_location(input)
     return 204
