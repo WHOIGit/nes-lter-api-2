@@ -83,7 +83,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         cruise_name = options['cruise_name']
-        
+       
         if cruise_name is None:
             cruises = list(Cruise.objects.values_list('name', flat=True))
         else:

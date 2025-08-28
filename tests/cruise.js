@@ -1,0 +1,175 @@
+
+const fs = require('fs/promises');
+const path = require('path');
+console.log("Running Cruise Test.");
+
+const expectedCruiseNames = [
+    "ar31c", "ar32", "ar34a", "ar34b", "ar38", "ar39a", "ar39b", "ar44", "ar48a", "ar48b",
+    "ar52a", "ar52b", "ar61a", "ar61b", "ar62", "ar63", "ar66a", "ar66b", "ar70b", "ar75",
+    "ar77", "ar78", "ar79", "ar80", "ar82a", "ar82b", "ar87a", "ar87b", "ar88", "at46",
+    "en608", "en617", "en627", "en644", "en649", "en655", "en657", "en661", "en668",
+    "en685", "en687", "en688", "en695", "en706", "ae2426", "ar16",
+    "ar22", "ar24a", "ar24b", "ar24c", "ar28a", "en712", "en715", "en720", "ar28b", "ar31a",
+    "ar31b", "en727", "hrs2303"
+];
+
+async function getData() {
+    try {
+        const response = await fetch('http://localhost:8000/api/ctd/cruises/get/all');
+        if (!response.ok) {
+            throw new Error(`HTTP error ${response.status}`);
+        }
+
+        const data = await response.text();
+
+        const missing = [];
+
+        for (const cruiseName of expectedCruiseNames) {
+            if (!data.includes(cruiseName)) {
+                missing.push(cruiseName);
+            }
+        }
+
+        if (missing.length === 0) {
+            console.log("All expected cruise names were found.");
+            console.log("Cruise Get All test successful.");
+        } else {
+            console.log("Missing cruise names:", missingCruises);
+            console.log("Cruise Get All test failed.");
+        }
+
+    } catch (error) {
+        console.error("Error fetching cruise data:", error);
+    }
+
+
+    for (const cruise of expectedCruiseNames) {
+        error = false;
+        try {
+            const response = await fetch(`http://localhost:8000/api/ctd/cruises/get/${encodeURIComponent(cruise)}`);
+            if (!response.ok) {
+                throw new Error('HTTP error ' + response.status);
+            }
+
+            const data = await response.json();
+
+            if (data.name && data.name.includes(cruise)) {
+                console.log(`Cruise Get test for "${cruise}" successful.`);
+            } else {
+                error = true;
+                console.log(`Cruise Get test for "${cruise}" failed.`);
+            }
+
+        } catch (err) {
+            console.error(`Error fetching "${cruise}":`, err.message);
+        }
+    }
+
+    if (error) {
+        console.log(`Cruise Get test for all cruises failed.`);
+    } else {
+        console.log(`Cruise Get test for all cruises successful.`);
+    }
+
+    var token;
+    const tokenPath = path.resolve(__dirname, 'token.txt');
+    if (path.basename(process.cwd()) === 'tests') {
+        token = (await fs.readFile("token.txt", 'utf-8')).trim();
+    }
+    else {
+        token = (await fs.readFile(tokenPath, 'utf-8')).trim();
+    }      
+
+    try {
+        const response = await fetch('http://localhost:8000/api/ctd/cruises/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                "name": 'test',
+                "vessel_name": 'Neil Armstrong',
+                "start_time": '2021-11-03 21:20:00+00:00',
+                "end_time": '2022-11-03 21:20:00+00:00'
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.log(data.detail)
+            throw new Error('HTTP error ' + response.status);
+        }
+
+        if (data.status == 'success') {
+            console.log('Add Cruise test successful.');
+        } else {
+            console.log('Add Cruise test failed.');
+        }
+
+    }
+    catch (err) {
+        console.error('Error:', err);
+    }
+
+    try {
+        const response = await fetch('http://localhost:8000/api/ctd/cruises/update/test', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                "vessel_name": 'Endeavor',
+                "start_time": '2021-11-03 21:20:00+00:00',
+                "end_time": '2022-11-03 21:20:00+00:00'
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.log(data.detail);
+            throw new Error('HTTP error ' + response.status);
+        }
+
+        if (data.vessel_name == 'Endeavor') {
+            console.log('Modify Cruise test successful.');
+        } else {
+            console.log('Modify Cruise test failed.');
+        }
+
+    }
+    catch (err) {
+        console.error('Error:', err);
+    }
+
+    try {
+        const response = await fetch('http://localhost:8000/api/ctd/cruises/delete/test', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (!response.ok) {
+            throw new Error('HTTP error ' + response.status);
+        }
+        const data = await response.json();
+
+        if (data.message == "Cruise test deleted.") {
+            console.log('Delete Cruise test successful.');
+        } else {
+            console.log('Delete Cruise test failed.');
+        }
+
+    }
+    catch (err) {
+        console.error('Error:', err);
+    }
+
+}
+
+getData();
+

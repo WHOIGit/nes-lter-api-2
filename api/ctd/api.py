@@ -35,6 +35,13 @@ def update_vessel(request, vessel_name: str, input: UpdateVesselInput):
     except ValueError as e:
         return {"status": "error", "message": str(e)}
 
+@router.delete('/vessels/delete/{vessel_name}', tags=["Admin"], auth=TokenAuthenticator())
+def delete_vessel(request, vessel_name: str):
+    try:
+        result = CtdService.delete_vessel(vessel_name)
+        return result
+    except ValueError as e:
+        return {"status": "error", "message": str(e)}
 
 @router.get("/cruises/get/all", response=List[CruiseOutput], tags=["Users"])
 def get_cruises(request):

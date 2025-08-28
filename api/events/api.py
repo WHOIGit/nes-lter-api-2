@@ -11,14 +11,17 @@ router = Router()
 def get_events(request, cruise_name: str):
     return EventService.get_events(cruise_name)
 
+@router.post("/instruments/{cruise_name}", response=List[str], tags=["Users"])
+def get_instruments(request, cruise_name: str):
+    return EventService.get_instruments(cruise_name)
 
 @router.post("/filter/{cruise_name}", response=List[EventOutput], tags=["Users"])
 def filter_events(request, cruise_name: str, input: FilterEventInput):
     return EventService.filter_events(cruise_name, input)
 
-@router.post("/edit/{cruise_name}/{message_id}", response=EventOutput, tags=["Admin"], auth=TokenAuthenticator())
-def edit_events(request, cruise_name: str, message_id: int, input: EditEventInput):
-    return EventService.edit_events(cruise_name, message_id, input)
+@router.post("/edit/{cruise_name}/{r2r_event}", response=EventOutput, tags=["Admin"], auth=TokenAuthenticator())
+def edit_events(request, cruise_name: str, r2r_event: str, input: EditEventInput):
+    return EventService.edit_events(cruise_name, r2r_event, input)
 
 
 @router.get("/history/{cruise_name}", response=str, tags=["Users"])
