@@ -6,6 +6,7 @@ from io import BytesIO, StringIO
 import pandas as pd
 from core.models import Cruise
 from core.models import Underway
+from core.utils import clean_column_names
 from storage.fs import FilesystemStore
 from storage.mediastore import MediaStore
 from storage.utils import PrefixStore
@@ -87,6 +88,9 @@ class Command(BaseCommand):
                     else:
                         start_datetime = pd.to_datetime(combined_data[date_column].iloc[0])
                         end_datetime = pd.to_datetime(combined_data[date_column].iloc[-1])
+
+                    df_data = clean_column_names(combined_data)
+
                 else:
                     raise ValueError(f"Unsupported cruise type for cruise_name: {cruise_name}")
                 start_datetime = None if pd.isna(start_datetime) else self.make_aware_if_naive(start_datetime)
@@ -100,7 +104,7 @@ class Command(BaseCommand):
                         )       
                 
                 csv_buffer = StringIO()
-                combined_data.to_csv(csv_buffer, index=False)
+                df_data.to_csv(csv_buffer, index=False)
                 csv_binary = csv_buffer.getvalue().encode('utf-8')
                 # Use the put method to store the CSV in the vast media store
                 object_key = f"{cruise_name}{self.FILE_SUFFIX}"
