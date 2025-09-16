@@ -25,17 +25,13 @@ async function getData() {
         console.log('Events Get test failed.');
     }
   } catch (err) {
+    console.log('Events Get test failed.');
     console.error('Error:', err);
   }
 
 
   try {
-      const response = await fetch('http://localhost:8000/api/events/instruments/ar77', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json'
-          },
-    });
+    const response = await fetch('http://localhost:8000/api/events/instruments/ar77');
     if (!response.ok) {
         throw new Error('HTTP error ' + response.status);
     }
@@ -47,14 +43,26 @@ async function getData() {
         console.log('Event Get Instruments test failed.');
       }
   } catch (err) {
+      console.log('Event Get Instruments test failed.');
       console.error('Error:', err);
   }
+
+    var token;
+    const tokenPath = path.resolve(__dirname, 'token.txt');
+    if (path.basename(process.cwd()) === 'tests') {
+        token = (await fs.readFile("token.txt", 'utf-8')).trim();
+    }
+    else {
+        token = (await fs.readFile(tokenPath, 'utf-8')).trim();
+    }      
+
 
   try {
     const response = await fetch('http://localhost:8000/api/events/filter/ar77', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
             "instrument": 'Ship',
@@ -74,6 +82,7 @@ async function getData() {
 
   }
   catch (err) {
+     console.log('Event Filter test failed.');
      console.error('Error:', err);
   }
 
@@ -86,18 +95,10 @@ try {
 
     console.log('Events History test successful.');
 
-    } catch (err) {
+} catch (err) {
+        console.log('Events History test failed.');
         console.error('Error:', err);
     }
-
-    var token;
-    const tokenPath = path.resolve(__dirname, 'token.txt');
-    if (path.basename(process.cwd()) === 'tests') {
-        token = (await fs.readFile("token.txt", 'utf-8')).trim();
-    }
-    else {
-        token = (await fs.readFile(tokenPath, 'utf-8')).trim();
-    }      
 
     try {
         const response = await fetch('http://localhost:8000/api/events/edit/ar77/20231011.1311.001', {
@@ -134,6 +135,7 @@ try {
 
     }
     catch (err) {
+        console.log('Edit Event test failed.');
         console.error('Error:', err);
     }
 
@@ -159,6 +161,7 @@ try {
 
     }
     catch (err) {
+        console.log('Delete Event test failed.');
         console.error('Error:', err);
     } */
 }

@@ -23,6 +23,7 @@ async function getData() {
         console.log('Chl Get test failed.');
     }
   } catch (err) {
+    console.log('Chl Get test failed.');
     console.error('Error:', err);
   }
 
@@ -46,9 +47,10 @@ try {
         console.log('Chl Get All values are missing.');
         console.log('Chl Get All test failed.');
     }
-} catch (err) {
-    console.error('Error:', err);
-}
+    } catch (err) {
+        console.log('Chl Get All test failed.');
+        console.error('Error:', err);
+    }
 }
 
 getData();

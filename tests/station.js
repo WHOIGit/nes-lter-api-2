@@ -25,15 +25,25 @@ async function getData() {
         console.log('Station File Get test failed');
     }
   } catch (err) {
+    console.log('Station File Get test failed');
     console.error('Error:', err);
   }
 
-  
+  var token;
+  const tokenPath = path.resolve(__dirname, 'token.txt');
+  if (path.basename(process.cwd()) === 'tests') {
+      token = (await fs.readFile("token.txt", 'utf-8')).trim();
+  }
+  else {
+      token = (await fs.readFile(tokenPath, 'utf-8')).trim();
+  }      
+
   try {
       const response = await fetch('http://localhost:8000/api/stations/add_nearest', {
           method: 'POST',
           headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
               "latitude": [41.1133],
@@ -52,17 +62,11 @@ async function getData() {
         console.log('Station Get Nearest test failed');
       }
   } catch (err) {
+      console.log('Station Get Nearest test failed');
       console.error('Error:', err);
   }
  
-    var token;
-    const tokenPath = path.resolve(__dirname, 'token.txt');
-    if (path.basename(process.cwd()) === 'tests') {
-        token = (await fs.readFile("token.txt", 'utf-8')).trim();
-    }
-    else {
-        token = (await fs.readFile(tokenPath, 'utf-8')).trim();
-    }      
+/*  // Joe going to delete this
 
     try {
         const response = await fetch('http://localhost:8000/api/stations/create', {
@@ -92,6 +96,7 @@ async function getData() {
 
     }
     catch (err) {
+        console.log('Create Station test failed');
         console.error('Error:', err);
     }
 
@@ -128,8 +133,11 @@ async function getData() {
 
     }
     catch (err) {
+        console.log('Set Location Station test failed');
         console.error('Error:', err);
     }
+
+  */
 
    
 }

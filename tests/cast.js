@@ -19,6 +19,7 @@ async function getData() {
         console.log('Casts Get All test failed');
     }
   } catch (err) {
+    console.log('Casts Get All test failed');
     console.error('Error:', err);
   }
 
@@ -42,6 +43,7 @@ async function getData() {
       }
 
   } catch (err) {
+     console.log('Cast Get Single test failed');
      console.error('Error:', err);
   }
 
@@ -87,6 +89,7 @@ async function getData() {
 
     }
     catch (err) {
+        console.log('Add Cast test failed.');
         console.error('Error:', err);
     }
 
@@ -121,6 +124,7 @@ async function getData() {
 
     }
     catch (err) {
+        console.log('Modify Cast test failed.');
         console.error('Error:', err);
     }
 
@@ -145,6 +149,7 @@ async function getData() {
 
     }
     catch (err) {
+        console.log('Delete Cast test failed.');
         console.error('Error:', err);
     }
 

@@ -19,6 +19,7 @@ async function getData() {
         console.log('Niskins Get All test failed.');
     }
   } catch (err) {
+    console.log('Niskins Get All test failed.');
     console.error('Error:', err);
   }
 
@@ -36,6 +37,7 @@ async function getData() {
       }
 
   } catch (err) {
+     console.log('Niskin Get Single test failed.');
      console.error('Error:', err);
   }
 
@@ -80,6 +82,7 @@ async function getData() {
 
     }
     catch (err) {
+        console.log('Add Niskin test failed.');
         console.error('Error:', err);
     }
 
@@ -112,6 +115,7 @@ async function getData() {
 
     }
     catch (err) {
+        console.log('Modify Niskin test failed.');
         console.error('Error:', err);
     }
 
@@ -136,6 +140,7 @@ async function getData() {
 
     }
     catch (err) {
+        console.log('Delete Niskin test failed.');
         console.error('Error:', err);
     }
   

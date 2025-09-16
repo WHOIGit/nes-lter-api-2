@@ -21,6 +21,7 @@ async function getData() {
         console.log('Bottles Get All test failed.');
     }
   } catch (err) {
+    console.log('Bottles Get All test failed.');
     console.error('Error:', err);
   }
 
@@ -44,6 +45,7 @@ async function getData() {
     }
 
   } catch (err) {
+     console.log('Bottle Summary test failed.');
      console.error('Error:', err);
   }
 }

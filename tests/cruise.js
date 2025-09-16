@@ -10,7 +10,7 @@ const expectedCruiseNames = [
     "en608", "en617", "en627", "en644", "en649", "en655", "en657", "en661", "en668",
     "en685", "en687", "en688", "en695", "en706", "ae2426", "ar16",
     "ar22", "ar24a", "ar24b", "ar24c", "ar28a", "en712", "en715", "en720", "ar28b", "ar31a",
-    "ar31b", "en727", "hrs2303"
+    "ar31b", "en727", "hrs2303", "ar91"
 ];
 
 async function getData() {
@@ -110,6 +110,7 @@ async function getData() {
 
     }
     catch (err) {
+        console.log('Add Cruise test failed.');
         console.error('Error:', err);
     }
 
@@ -142,6 +143,7 @@ async function getData() {
 
     }
     catch (err) {
+        console.log('Modify Cruise test failed.');
         console.error('Error:', err);
     }
 
@@ -166,6 +168,7 @@ async function getData() {
 
     }
     catch (err) {
+        console.log('Delete Cruise test failed.');
         console.error('Error:', err);
     }
 

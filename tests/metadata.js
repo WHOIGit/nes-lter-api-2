@@ -23,6 +23,7 @@ async function getData() {
         console.log('Metadata test failed.');
     }
   } catch (err) {
+    console.log('Metadata test failed.');
     console.error('Error:', err);
   }
 

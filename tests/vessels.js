@@ -22,6 +22,7 @@ async function getData() {
         console.log('Vessel Get All test failed.');
     }
   } catch (err) {
+    console.log('Vessel Get All test failed.');
     console.error('Error:', err);
   }
 
@@ -41,6 +42,7 @@ async function getData() {
         console.log('Vessel Get test failed.');
     }
   } catch (err) {
+     console.log('Vessel Get test failed.');
      console.error('Error:', err);
 }
 
@@ -79,7 +81,8 @@ async function getData() {
     }
 
     }
-    catch (err) {
+  catch (err) {
+        console.log('Add Vessel test failed.');
         console.error('Error:', err);
     }
 
@@ -109,6 +112,7 @@ async function getData() {
 
     }
     catch (err) {
+        console.log('Modify Vessel test failed.');
         console.error('Error:', err);
     }
 
@@ -133,6 +137,7 @@ async function getData() {
 
     }
     catch (err) {
+        console.log('Delete Vessel test failed.');
         console.error('Error:', err);
     }
 }

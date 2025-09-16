@@ -11,11 +11,11 @@ router = Router()
 def get_events(request, cruise_name: str):
     return EventService.get_events(cruise_name)
 
-@router.post("/instruments/{cruise_name}", response=List[str], tags=["Users"])
+@router.get("/instruments/{cruise_name}", response=List[str], tags=["Users"])
 def get_instruments(request, cruise_name: str):
     return EventService.get_instruments(cruise_name)
 
-@router.post("/filter/{cruise_name}", response=List[EventOutput], tags=["Users"])
+@router.post("/filter/{cruise_name}", response=List[EventOutput], tags=["Users"], auth=TokenAuthenticator())
 def filter_events(request, cruise_name: str, input: FilterEventInput):
     return EventService.filter_events(cruise_name, input)
 

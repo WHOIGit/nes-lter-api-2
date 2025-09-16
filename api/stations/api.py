@@ -41,7 +41,7 @@ def set_location(request, input: StationLocationInput):
     return 204
 
 
-@router.post('/add_nearest', response=AddNearestStationOutput, tags=["Users"])
+@router.post('/add_nearest', response=AddNearestStationOutput, tags=["Users"], auth=TokenAuthenticator())
 def add_nearest_station(request, input: AddNearestStationInput):
     return StationService.add_nearest_station(
         latitude=input.latitude,

@@ -23,6 +23,7 @@ async function getData() {
         console.log('Nut Get test failed.');
     }
   } catch (err) {
+    console.log('Nut Get test failed.');
     console.error('Error:', err);
   }
 
@@ -47,6 +48,7 @@ try {
         console.log('Nut Get All test failed.');
     }
 } catch (err) {
+    console.log('Nut Get All test failed.');
     console.error('Error:', err);
 }
 }

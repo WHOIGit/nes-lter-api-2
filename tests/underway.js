@@ -23,6 +23,7 @@ async function getData() {
         console.log('Underway Get test failed.');
     }
   } catch (err) {
+    console.log('Underway Get test failed.');
     console.error('Error:', err);
   }
 
@@ -40,6 +41,7 @@ async function getData() {
         console.log('Underway Get Column Headers test failed.');
       }
   } catch (err) {
+      console.log('Underway Get Column Headers test failed.');
       console.error('Error:', err);
   }
 
@@ -57,6 +59,7 @@ async function getData() {
     }
 
   } catch (err) {
+     console.log('Underway Find test failed.');
      console.error('Error:', err);
     }
 

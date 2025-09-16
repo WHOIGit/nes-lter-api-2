@@ -23,6 +23,7 @@ async function getData() {
         console.log('HPLC Get test failed.');
     }
   } catch (err) {
+    console.log('HPLC Get test failed.');
     console.error('Error:', err);
   }
 
