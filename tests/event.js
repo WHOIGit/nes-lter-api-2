@@ -1,0 +1,190 @@
+const fs = require('fs/promises');
+const path = require('path');
+console.log("Running Event Test.");
+
+const cruises = ["ar77", "en617", "hrs2303", "ae2426", "at46"];
+
+const getCounts = { ar77: 166, en617: 111, hrs2303: 159, ae2426: 168, at46: 266 };
+const instCounts = { ar77: 18, en617: 19, hrs2303: 20, ae2426: 21, at46: 19 };
+const r2rEvent = {
+    ar77: '20231011.1311.001', en617: 'en617-SE-20180720.1404.001', hrs2303: '20230502.1302.001',
+    ae2426: '20241106.1442.001', at46: 'at46-SE-20220216.1627.001'
+};
+
+async function getData(cruise) {
+  try {
+    const response = await fetch(`http://localhost:8000/api/events/get/${cruise}`);
+    if (!response.ok) {
+      throw new Error('HTTP error ' + response.status);
+      }
+
+    const data = await response.text();
+
+    const lines = data
+          .split('\n')
+          .map(line => line.trim())
+          .filter(line => line.length > 0); 
+
+    const expected = getCounts[cruise];
+
+    if (lines.length === expected) 
+    {
+        console.log(`${cruise} Events Get test successful.`);
+    }
+    else {
+        console.log(`${cruise} Events are missing.`);
+        console.log(`${cruise} Events Get test failed.`);
+    }
+  } catch (err) {
+    console.log(`${cruise} Events Get test failed.`);
+    console.error('Error:', err);
+  }
+
+
+  try {
+    const response = await fetch(`http://localhost:8000/api/events/instruments/${cruise}`);
+    if (!response.ok) {
+        throw new Error('HTTP error ' + response.status);
+    }
+    const data = await response.json();
+
+    const expected = instCounts[cruise];
+
+    if (data.length === expected) {
+        console.log(`${cruise} Event Get Instruments test successful.`);
+    } else {
+        console.log(`${cruise} Event Get Instruments test failed.`);
+      }
+  } catch (err) {
+      console.log(`${cruise} Event Get Instruments test failed.`);
+      console.error('Error:', err);
+  }
+
+    var token;
+    const tokenPath = path.resolve(__dirname, 'token.txt');
+    if (path.basename(process.cwd()) === 'tests') {
+        token = (await fs.readFile("token.txt", 'utf-8')).trim();
+    }
+    else {
+        token = (await fs.readFile(tokenPath, 'utf-8')).trim();
+    }      
+
+
+  try {
+    const response = await fetch(`http://localhost:8000/api/events/filter/${cruise}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+            "instrument": 'Ship',
+            "action": 'startCruise'
+        })
+    });
+    if (!response.ok) {
+        throw new Error('HTTP error ' + response.status);
+    }
+    const data = await response.json();
+
+    if (data.length == 1) {
+        console.log(`${cruise} Event Filter test successful.`);
+    } else {
+        console.log(`${cruise} Event Filter test failed.`);
+    }
+
+  }
+  catch (err) {
+      console.log(`${cruise} Event Filter test failed.`);
+     console.error('Error:', err);
+  }
+
+try {
+    const response = await fetch(`http://localhost:8000/api/events/history/${cruise}`);
+    if (!response.ok) {
+        throw new Error('HTTP error ' + response.status);
+    }
+    const data = await response.json();  // returned data can be any length, so just catch errors
+
+    console.log(`${cruise} Events History test successful.`);
+
+} catch (err) {
+    console.log(`${cruise} Events History test failed.`);
+    console.error('Error:', err);
+    }
+
+    const r2r = r2rEvent[cruise];
+
+    try {
+        const response = await fetch(`http://localhost:8000/api/events/edit/${cruise}/${r2r}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                "message_id": 1,
+                "instrument": "Ship",
+                "action": "startCruise",
+                "station": "",
+                "cast": "",
+                "latitude": 41.493007,
+                "longitude": -70.680232,
+                "comment": "",
+                "datetime": null
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.log(data.detail);
+            throw new Error('HTTP error ' + response.status);
+        }
+
+        if (data.instrument == 'Ship') {
+            console.log(`${cruise} Edit Event test successful.`);
+        } else {
+            console.log(`${cruise} Edit Event test failed.`);
+        }
+
+    }
+    catch (err) {
+        console.log(`${cruise} Edit Event test failed.`);
+        console.error('Error:', err);
+    }
+
+/*   FIX - NEED TO RUN IMPORT EVENTS AFTER THIS
+     try {
+        const response = await fetch('http://localhost:8000/api/events/delete/ar77', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (!response.ok) {
+            throw new Error('HTTP error ' + response.status);
+        }
+        const data = await response.json();
+
+        if (data.message == "Events on cruise ar77 deleted.") {
+            console.log(`${cruise} Delete Event test successful.`);
+        } else {
+            console.log(`${cruise} Delete Event test failed.`);
+        }
+
+    }
+    catch (err) {
+        console.log(`${cruise} Delete Event test failed.`);
+        console.error('Error:', err);
+    } */
+}
+
+async function runAll() {
+    for (const cruise of cruises) {
+        await getData(cruise);
+    }
+}
+
+runAll();
