@@ -17,7 +17,7 @@ class ChlService:
 
         try:
             Cruise.objects.get(name__iexact=cruise_name) 
-            object_key = f"{cruise_name}{cls.FILE_SUFFIX}"
+            object_key = f"{cruise_name.lower()}{cls.FILE_SUFFIX}"
             with MediaStore(cls.URL, token=cls.TOKEN) as store:
                 prefix = PrefixStore(store, cls.MEDIASTORE_PREFIX)
                 try:

@@ -29,6 +29,7 @@ DATETIME = 'dateTime8601'
 MESSAGE_ID = 'Message ID'  
 
 class EventOutput(BaseModel):
+    r2r_event: str
     message_id: int
     instrument: str
     action: str
@@ -43,18 +44,19 @@ class EventOutput(BaseModel):
 class FilterEventInput(BaseModel):
     instrument: Optional[str] = None
     action: Optional[str] = None
-    station: Optional[str] = None
-    cast: Optional[str] = None
-    comment: Optional[str] = None
+    station: Optional[str] = ""
+    cast: Optional[str] = ""
+    comment: Optional[str] = ""
 
 class EditEventInput(BaseModel):
+    message_id: Optional[int] = None
     instrument: Optional[str] = None
     action: Optional[str] = None
-    station: Optional[str] = None
-    cast: Optional[str] = None
+    station: Optional[str] = ""
+    cast: Optional[str] = ""
     latitude: Optional[float] = None
     longitude: Optional[float] = None
-    comment: Optional[str] = None
+    comment: Optional[str] = ""
     datetime: Optional[datetime] = None
 
     
@@ -71,6 +73,7 @@ class EventService:
             longitude = None
 
         return EventOutput(
+                r2r_event=event.r2r_event,
                 message_id=event.message_id,
                 instrument=event.instrument,
                 action=event.action,
@@ -90,6 +93,8 @@ class EventService:
         df = pd.DataFrame(csv_data)
         df[DATETIME] = pd.to_datetime(df[DATETIME])
         df = df.sort_values(by=DATETIME)
+        df["Station"] = df["Station"].replace("nan", "")
+        df["Cast"] = df["Cast"].replace("nan", "")
         csv_buffer = io.StringIO()
         df.to_csv(csv_buffer, index=False)
         csv_binary = csv_buffer.getvalue().encode("utf-8")
@@ -129,7 +134,7 @@ class EventService:
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name) 
             if Event.objects.filter(cruise=cruise).exists():
-                object_key = f"{cruise_name}{FILE_SUFFIX}"
+                object_key = f"{cruise_name.lower()}{FILE_SUFFIX}"
                 with MediaStore(URL, token=TOKEN) as store:
                     prefix = PrefixStore(store, MEDIASTORE_PREFIX)
                     try:
@@ -144,7 +149,27 @@ class EventService:
             else:
                 raise Http404(f"Event data not imported.")    
         except Cruise.DoesNotExist:
-           raise Http404(f"Cruise {cruise_name} not found.")    
+           raise Http404(f"Cruise {cruise_name} not found.")  
+       
+    @classmethod
+    def get_instruments(cls, cruise_name: str) -> List[str]:
+        URL = os.getenv("URL")
+        TOKEN = os.getenv("TOKEN")
+        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+
+        try:
+            cruise = Cruise.objects.get(name__iexact=cruise_name) 
+            if Event.objects.filter(cruise=cruise).exists():
+                events = Event.objects.filter(cruise=cruise)
+
+                # Extract unique instruments, sorted alphabetically
+                instruments = events.values_list('instrument', flat=True).distinct().order_by('instrument')
+                return list(instruments)
+            else:
+                raise Http404("Event data not imported.")
+                return []
+        except Cruise.DoesNotExist:
+            raise Http404(f"Cruise {cruise_name} not found.")    
         
        
     @classmethod
@@ -162,15 +187,20 @@ class EventService:
                 events = events.filter(cast__iexact=input.cast)
             if input.comment:
                 events = events.filter(comment__icontains=input.comment)
+            print(events.query, flush=True)
+            print([e.id for e in events], flush=True)
+
             return [EventService.serialize_event(event) for event in events]
         except Cruise.DoesNotExist:
            raise Http404(f"Cruise {cruise_name} not found.")  
 
     @classmethod
-    def edit_events(cls, cruise_name: str, message_id: int, input: EditEventInput) -> EventOutput:
+    def edit_events(cls, cruise_name: str, r2r_event: str, input: EditEventInput) -> EventOutput:
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name) 
-            event = Event.objects.get(cruise=cruise, message_id=message_id)
+            event = Event.objects.get(cruise=cruise, r2r_event=r2r_event)
+            if input.message_id:
+                event.message_id = input.message_id
             if input.instrument:
                 event.instrument = input.instrument
             if input.action:
@@ -178,7 +208,7 @@ class EventService:
             if input.station:
                 event.station = input.station
             if input.cast:
-                event.cast = input.cast
+                event.cast = input.cast            
             if input.latitude and input.longitude:
                 event.geolocation = Point(float(input.longitude), float(input.latitude), srid=4326)    
             if input.comment:
@@ -191,6 +221,7 @@ class EventService:
             events = Event.objects.filter(cruise=cruise)
             data = [
                 {
+                    "R2R_Event": e.r2r_event,
                     MESSAGE_ID: e.message_id,
                     DATETIME: e.datetime,
                     "Instrument": e.instrument,
@@ -210,7 +241,7 @@ class EventService:
         except Cruise.DoesNotExist:
            raise Http404(f"Cruise {cruise_name} not found.")  
         except Event.DoesNotExist:
-            raise Http404(f"Event {message_id} not found for {cruise_name} .")
+            raise Http404(f"Event {r2r_event} not found for {cruise_name} .")
 
     @classmethod
     def history_events(cls, cruise_name: str) -> str:
@@ -224,6 +255,7 @@ class EventService:
                         diff = record.diff_against(record.prev_record)
                         if diff.changed_fields:
                             history_data.append({
+                                'r2r_event': event.r2r_event,
                                 'message_id': event.message_id,
                                 'history_date': record.history_date,
                                 'history_user': record.history_user,

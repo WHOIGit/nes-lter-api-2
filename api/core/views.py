@@ -286,4 +286,8 @@ def ctd_plot_view(request, cruise_name, cast_number):
     plt.close()
     buffer.seek(0)
 
-    return HttpResponse(buffer.getvalue(), content_type='image/png')
+    # The title will be verified in cruise_track.js automated test
+    resp = HttpResponse(buffer.getvalue(), content_type="image/png")
+    resp["X-Plot-Title"] = f"{cruise_name} Cast {cast_number} - CTD Profile"
+    return resp
+

@@ -1,4 +1,5 @@
 import io, os
+import csv
 from typing import Optional, List, Tuple
 from datetime import datetime
 
@@ -160,6 +161,16 @@ class CtdService:
         except Vessel.DoesNotExist:
             pass
 
+    @classmethod
+    def delete_vessel(cls, vessel_name: str):
+        vessel = Vessel.objects.filter(name__iexact=vessel_name)
+        if not vessel.exists():
+            raise HttpError(404, f"Vessel with name '{vessel_name}' does not exist.")
+        try:
+            vessel.delete()
+            return {"message": f"Vessel '{vessel_name}' deleted"}
+        except Exception as e:
+            raise HttpError(500, f"Failed to delete vessel: {str(e)}")
 
     @classmethod
     def update_vessel(cls, vessel_name: str, input: UpdateVesselInput) -> VesselOutput:
@@ -194,9 +205,27 @@ class CtdService:
         )
 
     @classmethod
-    def get_cruises(cls) -> list[CruiseOutput]:
+    def get_cruises(cls) -> HttpResponse:
         cruises = Cruise.objects.all()
-        return [cls.serialize_cruise(cruise) for cruise in cruises]
+
+        buffer = io.StringIO()
+        writer = csv.writer(buffer)
+
+        # Write header row
+        writer.writerow(["name", "vessel", "start_time", "end_time"])
+
+        for cruise in cruises:
+            writer.writerow([
+                cruise.name,
+                cruise.vessel.name,
+                cruise.start_time,
+                cruise.end_time
+            ])
+
+        # Convert to HttpResponse
+        response = HttpResponse(buffer.getvalue(), content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="cruises.csv"'
+        return response
     
     @classmethod
     def get_cruise(cls, cruise_name: str) -> CruiseOutput:
@@ -446,7 +475,7 @@ class CtdService:
             cast = Cast.objects.get(cruise=cruise, number__iexact=cast_number)
             niskin = Niskin.objects.get(cast=cast, number=niskin_number)
             niskin.delete()
-            return {"status": "success", "message": f"Cast {cast_number} on cruise {cruise_name} deleted."}   
+            return {"status": "success", "message": f"Niskin {niskin_number} on cruise {cruise_name} for cast {cast_number} deleted."}   
         except Cruise.DoesNotExist:
             raise Http404(f"Cruise {cruise_name} not found.")
         except Cast.DoesNotExist:
@@ -462,7 +491,7 @@ class CtdService:
         FILE_SUFFIX = '_ctd_bottles.csv'
         try:
             Cruise.objects.get(name__iexact=cruise_name) 
-            object_key = f"{cruise_name}{FILE_SUFFIX}"
+            object_key = f"{cruise_name.lower()}{FILE_SUFFIX}"
             with MediaStore(URL, token=TOKEN) as store:
                 prefix = PrefixStore(store, MEDIASTORE_PREFIX)
                 try:
@@ -485,7 +514,7 @@ class CtdService:
         FILE_SUFFIX = '_ctd_bottle_summary.csv'
         try:
             Cruise.objects.get(name__iexact=cruise_name) 
-            object_key = f"{cruise_name}{FILE_SUFFIX}"
+            object_key = f"{cruise_name.lower()}{FILE_SUFFIX}"
             with MediaStore(URL, token=TOKEN) as store:
                 prefix = PrefixStore(store, MEDIASTORE_PREFIX)
                 try:
@@ -508,7 +537,7 @@ class CtdService:
         FILE_SUFFIX = '_ctd_metadata.csv'
         try:
             Cruise.objects.get(name__iexact=cruise_name) 
-            object_key = f"{cruise_name}{FILE_SUFFIX}"
+            object_key = f"{cruise_name.lower()}{FILE_SUFFIX}"
             with MediaStore(URL, token=TOKEN) as store:
                 prefix = PrefixStore(store, MEDIASTORE_PREFIX)
                 try:
