@@ -166,7 +166,7 @@ class EventService:
                 instruments = events.values_list('instrument', flat=True).distinct().order_by('instrument')
                 return list(instruments)
             else:
-                raise Http404("Event data not imported..")
+                raise Http404("Event data not imported.")
                 return []
         except Cruise.DoesNotExist:
             raise Http404(f"Cruise {cruise_name} not found.")    
