@@ -112,7 +112,7 @@ async function getData(cruise) {
             throw new Error('HTTP error ' + response.status);
         }
 
-        if (data.status == 'success') {
+        if (data.status === 'success') {
             console.log(`${cruise} Modify Niskin 99 test successful.`);
         } else {
             console.log(`${cruise} Modify Niskin 99 test failed.`);
