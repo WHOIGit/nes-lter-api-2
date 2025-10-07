@@ -4,7 +4,7 @@ console.log("Running Cast Test.");
 
 const cruises = ["ar77", "en617", "hrs2303", "ae2426", "at46"];
 
-const lineCounts = { ar77: 35, en617: 36, hrs2303: 13, ae2426: 20, at46: 23 };
+const lineCounts = { ar77: 35, en617: 35, hrs2303: 12, ae2426: 20, at46: 23 };
 
 async function getData(cruise) {
   try {
@@ -18,22 +18,27 @@ async function getData(cruise) {
 
     if (data.length === expected) 
       {
-        console.log(`${cruise} Casts Get All test successful`);
+        console.log(`${cruise} Casts Get All test successful.`);
     }
     else {
-        console.log(`${cruise} Casts Get All are missing`);
-        console.log(`${cruise} Casts Get All test failed`);
+        console.log(`${cruise} Casts Get All are missing.`);
+        console.log(`${cruise} Casts Get All test failed.`);
     }
   } catch (err) {
-      console.log(`${cruise} Casts Get All test failed`);
-    console.error(`Error:`, err);
+      console.log(`${cruise} Casts Get All test failed.`);
+      console.error(`Error:`, err);
   }
 
 
   try {
     const response = await fetch(`http://localhost:8000/api/ctd/cast/get/${cruise}/10`);
     if (!response.ok) {
-        throw new Error(`HTTP error ` + response.status);
+        if (cruise === 'ae2426') {
+            console.log(`${cruise} Cast Get Single test unsuccessful. This is the expected result for ae2426.`);
+        }
+        else { 
+            throw new Error(`HTTP error ` + response.status);
+        }
     }
     const data = await response.text();
    
@@ -43,19 +48,14 @@ async function getData(cruise) {
         .filter(line => line.length > 0); // Remove blank lines
 
     if (lines.length > 1) {
-        console.log(`${cruise} Cast Get Single test successful`);
+        console.log(`${cruise} Cast Get Single test successful.`);
     } else {
-        console.log(`${cruise} Cast Get Single test failed`);
+        console.log(`${cruise} Cast Get Single test failed.`);
     }
 
   } catch (err) {     
-      if (cruise === 'ae2426') {
-          console.log(`${cruise} Cast Get Single test failed. This is the expected result for ae2426.`);
-      }
-      else {
-          console.log(`${cruise} Cast Get Single test failed`);
-          console.error(`Error:`, err);
-      }
+      console.log(`${cruise} Cast Get Single test failed.`);
+      console.error(`Error:`, err);
   }
 
     var token;

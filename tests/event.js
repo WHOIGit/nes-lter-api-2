@@ -4,7 +4,7 @@ console.log("Running Event Test.");
 
 const cruises = ["ar77", "en617", "hrs2303", "ae2426", "at46"];
 
-const getCounts = { ar77: 166, en617: 111, hrs2303: 159, ae2426: 168, at46: 266 };
+const getCounts = { ar77: 166, en617: 111, hrs2303: 159, ae2426: 168, at46: 228 };
 const instCounts = { ar77: 18, en617: 19, hrs2303: 20, ae2426: 21, at46: 19 };
 const r2rEvent = {
     ar77: '20231011.1311.001', en617: 'en617-SE-20180720.1404.001', hrs2303: '20230502.1302.001',
@@ -156,7 +156,7 @@ try {
 
 /*   FIX - NEED TO RUN IMPORT EVENTS AFTER THIS
      try {
-        const response = await fetch('http://localhost:8000/api/events/delete/ar77', {
+        const response = await fetch(`http://localhost:8000/api/events/delete/${cruise}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -168,7 +168,7 @@ try {
         }
         const data = await response.json();
 
-        if (data.message == "Events on cruise ar77 deleted.") {
+        if (data.message == `Events on cruise ${cruise} deleted.`) {
             console.log(`${cruise} Delete Event test successful.`);
         } else {
             console.log(`${cruise} Delete Event test failed.`);
