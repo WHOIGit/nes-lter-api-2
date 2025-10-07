@@ -2,42 +2,47 @@ const fs = require('fs/promises');
 const path = require('path');
 console.log("Running Niskin Test.");
 
-async function getData() {
-  try {
-    const response = await fetch('http://localhost:8000/api/ctd/niskins/get/all/ar77/10');
-    if (!response.ok) {
-      throw new Error('HTTP error ' + response.status);
-    }
-    const data = await response.json();
+const cruises = ["ar77", "en617", "hrs2303", "ae2426", "at46"];
 
-    if (data.length == 24)
-      {
-        console.log('Niskins Get All test successful.');
+const lineCounts = { ar77: 24, en617: 6, hrs2303: 12, ae2426: 24, at46: 4 };
+
+async function getData(cruise) {
+    try {
+        const response = await fetch(`http://localhost:8000/api/ctd/niskins/get/all/${cruise}/10`);
+        if (!response.ok) {
+            throw new Error('HTTP error ' + response.status);
+        }
+        const data = await response.json();
+
+        const expected = lineCounts[cruise];
+
+        if (data.length === expected) {
+            console.log(`${cruise} Niskins Get All test successful.`);
+        }
+        else {
+            console.log(`${cruise} Niskins for All are missing.`);
+            console.log(`${cruise} Niskins Get All test failed.`);
+        }
+    } catch (err) {
+        console.log(`${cruise} Niskins Get All test failed.`);
+        console.error('Error:', err);
     }
-    else {
-        console.log('Niskins for All are missing.');
-        console.log('Niskins Get All test failed.');
-    }
-  } catch (err) {
-    console.log('Niskins Get All test failed.');
-    console.error('Error:', err);
-  }
 
   try {
-    const response = await fetch('http://localhost:8000/api/ctd/niskins/get/en608/10/1');
+    const response = await fetch(`http://localhost:8000/api/ctd/niskins/get/${cruise}/10/1`);
     if (!response.ok) {
         throw new Error('HTTP error ' + response.status);
     }
     const data = await response.json();
    
-      if (data.cruise_name === 'en608' && data.cast_number === '10' && data.number === 1) { 
-        console.log('Niskin Get Single test successful.');
+      if (data.cruise_name === `${cruise}` && data.cast_number === '10' && data.number === 1) { 
+          console.log(`${cruise} Niskin Get Single test successful.`);
       } else {
-          console.log('Niskin Get Single test failed.');
+          console.log(`${cruise} Niskin Get Single test failed.`);
       }
 
   } catch (err) {
-     console.log('Niskin Get Single test failed.');
+      console.log(`${cruise} Niskin Get Single test failed.`);
      console.error('Error:', err);
   }
 
@@ -58,7 +63,7 @@ async function getData() {
                 'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
-                "cruise_name": "ar77",
+                "cruise_name": `${cruise}`,
                 "cast_number": "1",
                 "number":99,
                 "latitude": 40,
@@ -74,20 +79,20 @@ async function getData() {
             throw new Error('HTTP error ' + response.status);
         }
 
-        if (data.status == 'success') {
-            console.log('Add Niskin test successful.');
+        if (data.status === 'success') {
+            console.log(`${cruise} Add Niskin 99 test successful.`);
         } else {
-            console.log('Add Niskin test failed.');
+            console.log(`${cruise} Add Niskin 99 test failed.`);
         }
 
     }
     catch (err) {
-        console.log('Add Niskin test failed.');
+        console.log(`${cruise} Add Niskin test failed.`);
         console.error('Error:', err);
     }
 
     try {
-        const response = await fetch('http://localhost:8000/api/ctd/niskins/update/ar77/1/99', {
+        const response = await fetch(`http://localhost:8000/api/ctd/niskins/update/${cruise}/1/99`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -107,20 +112,20 @@ async function getData() {
             throw new Error('HTTP error ' + response.status);
         }
 
-        if (data.status == 'success') {
-            console.log('Modify Niskin test successful.');
+        if (data.status === 'success') {
+            console.log(`${cruise} Modify Niskin 99 test successful.`);
         } else {
-            console.log('Modify Niskin test failed.');
+            console.log(`${cruise} Modify Niskin 99 test failed.`);
         }
 
     }
     catch (err) {
-        console.log('Modify Niskin test failed.');
+        console.log(`${cruise} Modify Niskin 99 test failed.`);
         console.error('Error:', err);
     }
 
     try {
-        const response = await fetch('http://localhost:8000/api/ctd/niskins/delete/ar77/1/99', {
+        const response = await fetch(`http://localhost:8000/api/ctd/niskins/delete/${cruise}/1/99`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -132,18 +137,24 @@ async function getData() {
         }
         const data = await response.json();
 
-        if (data.message == "Niskin 99 on cruise ar77 for cast 1 deleted.") {
-            console.log('Delete Niskin test successful.');
+        if (data.message === `Niskin 99 on cruise ${cruise} for cast 1 deleted.`) {
+            console.log(`${cruise} Delete Niskin 99 test successful.`);
         } else {
-            console.log('Delete Niskin test failed.');
+            console.log(`${cruise} Delete Niskin 99 test failed.`);
         }
 
     }
     catch (err) {
-        console.log('Delete Niskin test failed.');
+        console.log(`${cruise} Delete Niskin 99 test failed.`);
         console.error('Error:', err);
     }
   
 }
 
-getData();
+async function runAll() {
+    for (const cruise of cruises) {
+        await getData(cruise);
+    }
+}
+
+runAll();

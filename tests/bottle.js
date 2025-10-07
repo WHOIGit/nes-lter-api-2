@@ -1,6 +1,12 @@
-async function getData() {
+console.log("Running Bottle Test.");
+
+const cruises = ["ar77", "en617", "hrs2303", "ae2426", "at46"];
+
+const lineCounts = { ar77: 310, en617: 359, hrs2303: 145, ae2426: 266, at46: 305 };
+
+async function getData(cruise) {
   try {
-    const response = await fetch('http://localhost:8000/api/ctd/bottles/ar77');
+    const response = await fetch(`http://localhost:8000/api/ctd/bottles/${cruise}`);
     if (!response.ok) {
       throw new Error('HTTP error ' + response.status);
       }
@@ -12,22 +18,24 @@ async function getData() {
           .map(line => line.trim())
           .filter(line => line.length > 0); 
 
-    if (lines.length == 310)
-      {
-        console.log('Bottles Get All test successful.');
+    const expected = lineCounts[cruise];
+
+    if (lines.length === expected) 
+    {
+        console.log(`${cruise} Bottles Get All test successful.`);
     }
     else {
-        console.log('Bottles for All are missing.');
-        console.log('Bottles Get All test failed.');
+        console.log(`${cruise} Bottles for All are missing.`);
+        console.log(`${cruise} Bottles Get All test failed.`);
     }
   } catch (err) {
-    console.log('Bottles Get All test failed.');
+      console.log(`${cruise} Bottles Get All test failed.`);
     console.error('Error:', err);
   }
 
 
   try {
-    const response = await fetch('http://localhost:8000/api/ctd/bottle_summary/ar77');
+    const response = await fetch(`http://localhost:8000/api/ctd/bottle_summary/${cruise}`);
     if (!response.ok) {
         throw new Error('HTTP error ' + response.status);
     }
@@ -38,16 +46,24 @@ async function getData() {
         .map(line => line.trim())
         .filter(line => line.length > 0);
 
-    if (lines.length == 310) { 
-        console.log('Bottle Summary test successful.');
+    const expected = lineCounts[cruise];
+
+    if (lines.length === expected) { 
+        console.log(`${cruise} Bottle Summary test successful.`);
     } else {
-        console.log('Bottle Summary test failed.');
+        console.log(`${cruise} Bottle Summary test failed.`);
     }
 
   } catch (err) {
-     console.log('Bottle Summary test failed.');
+      console.log(`${cruise} Bottle Summary test failed.`);
      console.error('Error:', err);
   }
 }
 
-getData();
+async function runAll() {
+    for (const cruise of cruises) {
+        await getData(cruise);
+    }
+}
+
+runAll();

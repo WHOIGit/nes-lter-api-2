@@ -1,8 +1,13 @@
 console.log("Running HPLC Test.");
 
-async function getData() {
+const cruises = ["ar77", "en617", "hrs2303", "ae2426", "at46"];
+
+// Expected line counts
+const lineCounts = { ar77: 34, en617: 30, hrs2303: 32, ae2426: 1, at46: 30 };
+
+async function getData(cruise) {
   try {
-    const response = await fetch('http://localhost:8000/api/hplc/ar77');
+    const response = await fetch(`http://localhost:8000/api/hplc/${cruise}`);
     if (!response.ok) {
       throw new Error('HTTP error ' + response.status);
       }
@@ -14,20 +19,26 @@ async function getData() {
           .map(line => line.trim())
           .filter(line => line.length > 0); 
 
-    if (lines.length == 34)
-      {
-        console.log('HPLC Get test successful.');
+    const expected = lineCounts[cruise];
+
+    if (lines.length === expected) {
+        console.log(`${cruise} HPLC Get test successful.`);
     }
     else {
-        console.log('HPLC are missing.');
-        console.log('HPLC Get test failed.');
+        console.log(`${cruise} HPLC are missing.`);
+        console.log(`${cruise} HPLC Get test failed.`);
     }
   } catch (err) {
-    console.log('HPLC Get test failed.');
+    console.log(`${cruise} HPLC Get test failed.`);
     console.error('Error:', err);
   }
 
-
 }
 
-getData();
+async function runAll() {
+    for (const cruise of cruises) {
+        await getData(cruise);
+    }
+}
+
+runAll();

@@ -1,70 +1,81 @@
-const fs = require('fs/promises');
+const fs = require(`fs/promises`);
 const path = require('path');
 console.log("Running Cast Test.");
 
-async function getData() {
+const cruises = ["ar77", "en617", "hrs2303", "ae2426", "at46"];
+
+const lineCounts = { ar77: 35, en617: 35, hrs2303: 12, ae2426: 20, at46: 23 };
+
+async function getData(cruise) {
   try {
-    const response = await fetch('http://localhost:8000/api/ctd/casts/get/ar77');
+    const response = await fetch(`http://localhost:8000/api/ctd/casts/get/${cruise}`);
     if (!response.ok) {
-      throw new Error('HTTP error ' + response.status);
+      throw new Error(`HTTP error ` + response.status);
     }
     const data = await response.json();
 
-    if (data.length == 35)
+    const expected = lineCounts[cruise];
+
+    if (data.length === expected) 
       {
-        console.log('Casts Get All test successful');
+        console.log(`${cruise} Casts Get All test successful.`);
     }
     else {
-        console.log('Casts for All are missing');
-        console.log('Casts Get All test failed');
+        console.log(`${cruise} Casts Get All are missing.`);
+        console.log(`${cruise} Casts Get All test failed.`);
     }
   } catch (err) {
-    console.log('Casts Get All test failed');
-    console.error('Error:', err);
+      console.log(`${cruise} Casts Get All test failed.`);
+      console.error(`Error:`, err);
   }
 
 
   try {
-    const response = await fetch('http://localhost:8000/api/ctd/cast/get/en608/10');
+    const response = await fetch(`http://localhost:8000/api/ctd/cast/get/${cruise}/10`);
     if (!response.ok) {
-        throw new Error('HTTP error ' + response.status);
+        if (cruise === 'ae2426') {
+            console.log(`${cruise} Cast Get Single test unsuccessful. This is the expected result for ae2426.`);
+        }
+        else { 
+            throw new Error(`HTTP error ` + response.status);
+        }
     }
     const data = await response.text();
    
     const lines = data
-        .split('\n')
+        .split(`\n`)
         .map(line => line.trim())
         .filter(line => line.length > 0); // Remove blank lines
 
-      if (lines.length > 1) {
-          console.log('Cast Get Single test successful');
-      } else {
-          console.log('Cast Get Single test failed');
-      }
+    if (lines.length > 1) {
+        console.log(`${cruise} Cast Get Single test successful.`);
+    } else {
+        console.log(`${cruise} Cast Get Single test failed.`);
+    }
 
-  } catch (err) {
-     console.log('Cast Get Single test failed');
-     console.error('Error:', err);
+  } catch (err) {     
+      console.log(`${cruise} Cast Get Single test failed.`);
+      console.error(`Error:`, err);
   }
 
     var token;
-    const tokenPath = path.resolve(__dirname, 'token.txt');
-    if (path.basename(process.cwd()) === 'tests') {
-        token = (await fs.readFile("token.txt", 'utf-8')).trim();
+    const tokenPath = path.resolve(__dirname, `token.txt`);
+    if (path.basename(process.cwd()) === `tests`) {
+        token = (await fs.readFile("token.txt", `utf-8`)).trim();
     }
     else {
-        token = (await fs.readFile(tokenPath, 'utf-8')).trim();
+        token = (await fs.readFile(tokenPath, `utf-8`)).trim();
     }      
 
     try {
-        const response = await fetch('http://localhost:8000/api/ctd/casts/create', {
+        const response = await fetch(`http://localhost:8000/api/ctd/casts/create`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
-                "cruise_name": "ar77",
+                "cruise_name": `${cruise}`,
                 "number": "99",
                 "latitude": 40,
                 "longitude": -70,
@@ -78,23 +89,23 @@ async function getData() {
 
         if (!response.ok) {
             console.log(data.detail);
-            throw new Error('HTTP error ' + response.status);
+            throw new Error(`HTTP error ` + response.status);
         }
 
-        if (data.status == 'success') {
-            console.log('Add Cast test successful.');
+        if (data.status === `success`) {
+            console.log(`${cruise} Add Cast 99 test successful.`);
         } else {
-            console.log('Add Cast test failed.');
+            console.log(`${cruise} Add Cast 99 test failed.`);
         }
 
     }
     catch (err) {
-        console.log('Add Cast test failed.');
-        console.error('Error:', err);
+        console.log(`${cruise} Add Cast 99 test failed.`);
+        console.error(`Error:`, err);
     }
 
     try {
-        const response = await fetch('http://localhost:8000/api/ctd/casts/update/ar77/99', {
+        const response = await fetch(`http://localhost:8000/api/ctd/casts/update/${cruise}/99`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -113,23 +124,23 @@ async function getData() {
 
         if (!response.ok) {
             console.log(data.detail);
-            throw new Error('HTTP error ' + response.status);
+            throw new Error(`HTTP error ` + response.status);
         }
 
-        if (data.status == 'success') {
-            console.log('Modify Cast test successful.');
+        if (data.status === `success`) {
+            console.log(`${cruise} Modify Cast 99 test successful.`);
         } else {
-            console.log('Modify Cast test failed.');
+            console.log(`${cruise} Modify Cast 99 test failed.`);
         }
 
     }
     catch (err) {
-        console.log('Modify Cast test failed.');
-        console.error('Error:', err);
+        console.log(`${cruise} Modify Cast 99 test failed.`);
+        console.error(`Error:`, err);
     }
 
     try {
-        const response = await fetch('http://localhost:8000/api/ctd/casts/delete/ar77/99', {
+        const response = await fetch(`http://localhost:8000/api/ctd/casts/delete/${cruise}/99`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -137,22 +148,29 @@ async function getData() {
             }
         });
         if (!response.ok) {
-            throw new Error('HTTP error ' + response.status);
+            throw new Error(`HTTP error ` + response.status);
         }
         const data = await response.json();
 
-        if (data.message == "Cast 99 on cruise ar77 deleted.") {
-            console.log('Delete Cast test successful.');
+        if (data.message === `Cast 99 on cruise ${cruise} deleted.`) {
+            console.log(`${cruise} Delete Cast 99 test successful.`);
         } else {
-            console.log('Delete Cast test failed.');
+            console.log(`${cruise} Delete Cast 99 test failed.`);
         }
 
     }
     catch (err) {
-        console.log('Delete Cast test failed.');
-        console.error('Error:', err);
+        console.log(`${cruise} Delete Cast 99 test failed.`);
+        console.error(`Error:`, err);
     }
 
 }
 
-getData();
+
+async function runAll() {
+    for (const cruise of cruises) {
+        await getData(cruise);
+    }
+}
+
+runAll();
