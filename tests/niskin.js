@@ -137,7 +137,7 @@ async function getData(cruise) {
         }
         const data = await response.json();
 
-        if (data.message == `Niskin 99 on cruise ${cruise} for cast 1 deleted.`) {
+        if (data.message === `Niskin 99 on cruise ${cruise} for cast 1 deleted.`) {
             console.log(`${cruise} Delete Niskin 99 test successful.`);
         } else {
             console.log(`${cruise} Delete Niskin 99 test failed.`);
