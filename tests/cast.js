@@ -152,7 +152,7 @@ async function getData(cruise) {
         }
         const data = await response.json();
 
-        if (data.message == `Cast 99 on cruise ${cruise} deleted.`) {
+        if (data.message === `Cast 99 on cruise ${cruise} deleted.`) {
             console.log(`${cruise} Delete Cast 99 test successful.`);
         } else {
             console.log(`${cruise} Delete Cast 99 test failed.`);
