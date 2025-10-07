@@ -19,7 +19,7 @@ class HplcService:
         try:
             if cruise_name.lower() != "mvco":
                 Cruise.objects.get(name__iexact=cruise_name) 
-            object_key = f"{cruise_name}{FILE_SUFFIX}"
+            object_key = f"{cruise_name.lower()}{FILE_SUFFIX}"
             with MediaStore(URL, token=TOKEN) as store:
                 prefix = PrefixStore(store, MEDIASTORE_PREFIX)
                 try:

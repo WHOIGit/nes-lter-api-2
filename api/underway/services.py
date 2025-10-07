@@ -38,7 +38,7 @@ class UnderwayService:
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
             if Underway.objects.filter(cruise=cruise).exists():
-                object_key = f"{cruise_name}{cls.FILE_SUFFIX}"
+                object_key = f"{cruise_name.lower()}{cls.FILE_SUFFIX}"
                 with MediaStore(URL, token=TOKEN) as store:
                     prefix = PrefixStore(store, MEDIASTORE_PREFIX)
                     try:
@@ -63,7 +63,7 @@ class UnderwayService:
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
             if Underway.objects.filter(cruise=cruise).exists(): 
-                object_key = f"{cruise_name}{cls.FILE_SUFFIX}"
+                object_key = f"{cruise_name.lower()}{cls.FILE_SUFFIX}"
                 with MediaStore(URL, token=TOKEN) as store:
                     prefix = PrefixStore(store, MEDIASTORE_PREFIX)
                     try:

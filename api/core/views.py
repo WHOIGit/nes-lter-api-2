@@ -153,25 +153,25 @@ def cruise_track_view(request, cruise_name):
         # Non-clickable track points (no labels or popups)
         try:
             track_points = [
-                {"lat": row[" Dec_LAT"], "lng": row[" Dec_LON"]}
+                {"lat": row["dec_lat"], "lng": row["dec_lon"]}   # ar
                 for _, row in underway_data.iterrows()
             ]
         except KeyError:
             try:
                 track_points = [
-                    {"lat": row["Latitude_Deg"], "lng": row["Longitude_Deg"]}   # hrs2303
+                    {"lat": row["latitude_deg"], "lng": row["longitude_deg"]}   # hrs2303
                     for _, row in underway_data.iterrows()
                 ]
             except KeyError:
                 try:
                     track_points = [
-                        {"lat": row["GPS-Furuno-Latitude"], "lng": row["GPS-Furuno-Longitude"]}   # en
+                        {"lat": row["gps_furuno_latitude"], "lng": row["gps_furuno_longitude"]}   # en
                         for _, row in underway_data.iterrows()
                     ]
                 except KeyError:
                     
                     track_points = [
-                        {"lat": row["Latitude"], "lng": row["Longitude"]}   # ae2426
+                        {"lat": row["latitude"], "lng": row["longitude"]}   # ae2426
                         for _, row in underway_data.iterrows()
                     ]
 
@@ -286,4 +286,8 @@ def ctd_plot_view(request, cruise_name, cast_number):
     plt.close()
     buffer.seek(0)
 
-    return HttpResponse(buffer.getvalue(), content_type='image/png')
+    # The title will be verified in cruise_track.js automated test
+    resp = HttpResponse(buffer.getvalue(), content_type="image/png")
+    resp["X-Plot-Title"] = f"{cruise_name} Cast {cast_number} - CTD Profile"
+    return resp
+
