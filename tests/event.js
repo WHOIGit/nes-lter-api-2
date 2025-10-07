@@ -142,7 +142,7 @@ try {
             throw new Error('HTTP error ' + response.status);
         }
 
-        if (data.instrument == 'Ship') {
+        if (data.instrument === 'Ship') {
             console.log(`${cruise} Edit Event test successful.`);
         } else {
             console.log(`${cruise} Edit Event test failed.`);
