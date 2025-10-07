@@ -87,7 +87,7 @@ async function getData(cruise) {
     }
     const data = await response.json();
 
-    if (data.length == 1) {
+    if (data.length === 1) {
         console.log(`${cruise} Event Filter test successful.`);
     } else {
         console.log(`${cruise} Event Filter test failed.`);
