@@ -6,8 +6,6 @@ from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.gis.geos import Point
 from core.models import Cruise, Station
-from storage.mediastore import MediaStore
-from storage.utils import PrefixStore
 import numpy as np
 from core.utils import clean_column_names, wide_to_long, path_to_cast, get_store
 
@@ -71,13 +69,13 @@ class Command(BaseCommand):
     def read_btl_summary(self, cruise, sample_ids):
 
         object_key = f"{cruise}{BTLSUM_SUFFIX}"
-        with MediaStore(self.URL, token=self.TOKEN) as store:
-            prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
+        with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
             try:
-                data = prefix.get(object_key)
+                data = store.get(object_key)
             except Exception as e:
+                print(e, flush=True)
                 self.stdout.write(self.style.ERROR(f'Run ImportNiskin.py to create bottle summary file for cruise {cruise}.'))
-                return pd.DataFrame()
+                raise
 
             btl_sum = pd.read_csv(io.BytesIO(data))
             btl_sum.cast = btl_sum.cast.astype(str).str.lstrip("0")  #remove leading 0s for merge
@@ -299,10 +297,9 @@ class Command(BaseCommand):
         JP_STUDENT_CRUISES = ['ar22', 'ar32', 'ar38']
 
         object_key = f"{cruise}{BTLDATA_SUFFIX}"
-        with MediaStore(self.URL, token=self.TOKEN) as store:
-            prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
+        with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
             try:
-                data = prefix.get(object_key)
+                data = store.get(object_key)
             except Exception as e:
                 print(e, flush=True)
                 print("Run ImportNiskin.py to import bottle file.", flush=True)
