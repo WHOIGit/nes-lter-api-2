@@ -34,7 +34,7 @@ jobs:
           docker compose -f docker-compose-testing.yml exec -T api python manage.py migrate --noinput
 
           # Create admin user and capture token
-          docker compose -f docker-compose-testing.yml exec -T api python manage.py shell -c "
+          docker compose -f docker-compose-testing.yml exec -T api python manage.py shell <<'PY'
 from django.contrib.auth import get_user_model
 from rest_framework.authtoken.models import Token
 from pathlib import Path
@@ -48,7 +48,7 @@ user.save()
 
 token, _ = Token.objects.get_or_create(user=user)
 Path('tests/token.txt').write_text(token.key)
-"
+PY
 
           sh -c "until curl -Is http://localhost:8000; do echo 'waiting for http://localhost:8000'; sleep 10; done"
           echo "localhost:8000 running"
