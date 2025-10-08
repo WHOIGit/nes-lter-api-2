@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 from core.models import Cruise
 from core.models import Event
+from core.utils import get_store
 from storage.fs import FilesystemStore
 from storage.mediastore import MediaStore
 from storage.utils import PrefixStore
@@ -73,10 +74,9 @@ class Command(BaseCommand):
         csv_binary = csv_buffer.getvalue().encode("utf-8")
         # Use the put method to store the CSV in the vast media store
         object_key = f"{cruise_name}{FILE_SUFFIX}"
-        with MediaStore(self.URL, token=self.TOKEN) as store:
-            prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
+        with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
             try:
-                prefix.put(object_key, csv_binary)
+                store.put(object_key, csv_binary)
             except Exception as e:
                 print(e, flush=True)
                 raise

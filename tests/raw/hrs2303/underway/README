@@ -1,0 +1,6 @@
+README for HRS2303 raw underway
+2023-07-12 Stace Beaulieu
+This is the 1-min temporal resolution underway product generated using two data sources: 
+- ship-provided underway data files as processed on board,
+- PAR: column "qsr_s_n_10367" from ship-provided PAR file.
+I did not find documentation for PAR units, but magnitude is consistent with units umol photons/m2/sec as on previous Endeavor cruises (uE/m2/sec on previous Armstrong cruises).

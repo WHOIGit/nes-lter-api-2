@@ -81,14 +81,6 @@ class Command(BaseCommand):
                     except Exception as e:
                         print(e, flush=True)
                         raise
-#                with MediaStore(self.URL, token=self.TOKEN) as store:
-#                    prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
-#                    try:
-#                       prefix.put(object_key, csv_binary)
-#                        self.stdout.write(self.style.SUCCESS(f'{STATION_FILENAME} successfully created.'))
-#                    except Exception as e:
-#                        print(e, flush=True)
-#                        raise
 
                 self.stdout.write(self.style.SUCCESS(f'Stations successfully imported.'))
             except Exception as e:
