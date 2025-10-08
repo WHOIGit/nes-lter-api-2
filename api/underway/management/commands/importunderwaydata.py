@@ -6,11 +6,7 @@ from io import BytesIO, StringIO
 import pandas as pd
 from core.models import Cruise
 from core.models import Underway
-from core.utils import clean_column_names
-from storage.fs import FilesystemStore
-from storage.mediastore import MediaStore
-from storage.utils import PrefixStore
-from django.conf import settings
+from core.utils import clean_column_names, get_store
 from pathlib import Path
 from django.utils import timezone
 
@@ -108,10 +104,9 @@ class Command(BaseCommand):
                 csv_binary = csv_buffer.getvalue().encode('utf-8')
                 # Use the put method to store the CSV in the vast media store
                 object_key = f"{cruise_name}{self.FILE_SUFFIX}"
-                with MediaStore(self.URL, token=self.TOKEN) as store:
-                    prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
+                with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
                     try:
-                        prefix.put(object_key, csv_binary)
+                        store.put(object_key, csv_binary)
                     except Exception as e:
                         print(e, flush=True)
                         raise

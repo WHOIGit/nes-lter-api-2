@@ -3,11 +3,8 @@ import io
 import pandas as pd
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
-from core.models import Station, StationLocation, Cruise, Cast
-from storage.mediastore import MediaStore
-from storage.utils import PrefixStore
+from core.models import Station, StationLocation
 from core.utils import get_store
-from django.conf import settings
 from django.db import transaction
 
 STATION_FULL_COL = 'stationfullname'

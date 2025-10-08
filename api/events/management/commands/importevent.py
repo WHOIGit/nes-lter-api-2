@@ -8,10 +8,6 @@ import numpy as np
 from core.models import Cruise
 from core.models import Event
 from core.utils import get_store
-from storage.fs import FilesystemStore
-from storage.mediastore import MediaStore
-from storage.utils import PrefixStore
-from django.conf import settings
 from django.contrib.gis.geos import Point
 import pytz
 from datetime import datetime
