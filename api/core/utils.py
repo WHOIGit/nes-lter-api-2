@@ -8,6 +8,8 @@ from storage.mediastore import MediaStore
 from storage.utils import PrefixStore
 from storage.object import DictStore
 
+_IN_MEMORY_STORE = DictStore()
+
 def path_to_cast(cruise_name, filename):
 
     CRUISE_CAST_REGEXES = [
@@ -164,7 +166,7 @@ def get_store( url, token, prefix):
 
     if _use_dictstore():
         # In-memory store for CI/tests; no network; no cleanup needed
-        base_store = DictStore()
+        base_store = _IN_MEMORY_STORE
         prefixed = PrefixStore(base_store, prefix or "")
         yield prefixed
     else:
