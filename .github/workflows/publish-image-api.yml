@@ -35,20 +35,20 @@ jobs:
 
           # Create admin user and capture token
           docker compose -f docker-compose-testing.yml exec -T api python manage.py shell -c "
-            from django.contrib.auth import get_user_model
-            from rest_framework.authtoken.models import Token
-            from pathlib import Path
+from django.contrib.auth import get_user_model
+from rest_framework.authtoken.models import Token
+from pathlib import Path
 
-            User = get_user_model()
-            user, created = User.objects.get_or_create(username='admin')
-            user.set_password('admin')
-            user.is_superuser = True
-            user.is_staff = True
-            user.save()
+User = get_user_model()
+user, created = User.objects.get_or_create(username='admin')
+user.set_password('admin')
+user.is_superuser = True
+user.is_staff = True
+user.save()
 
-            token, _ = Token.objects.get_or_create(user=user)
-            Path('tests/token.txt').write_text(token.key)
-          "
+token, _ = Token.objects.get_or_create(user=user)
+Path('tests/token.txt').write_text(token.key)
+"
 
           sh -c "until curl -Is http://localhost:8000; do echo 'waiting for http://localhost:8000'; sleep 10; done"
           echo "localhost:8000 running"
