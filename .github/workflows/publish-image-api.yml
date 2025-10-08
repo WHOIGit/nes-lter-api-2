@@ -28,7 +28,7 @@ jobs:
           docker compose -f docker-compose-testing.yml build
 
           docker compose -f docker-compose-testing.yml up --detach
-          sleep 60
+          sleep 30
 
           # Run migrations
           docker compose -f docker-compose-testing.yml exec -T api python manage.py migrate --noinput
