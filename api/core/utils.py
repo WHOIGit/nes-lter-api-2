@@ -165,7 +165,7 @@ def get_store( url, token, prefix):
 
     if _use_dictstore():
         # In-memory store for CI/tests; no network
-        root = "/app/.store"
+        root = "/data/.store"
         os.makedirs(root, exist_ok=True)
         base_store = FilesystemStore(root)
         prefixed = PrefixStore(base_store, prefix or "")
