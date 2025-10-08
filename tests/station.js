@@ -18,14 +18,14 @@ async function getData() {
 
     if (lines.length == 81)
       {
-        console.log('Stations File Get test successful');
+        console.log('Stations File Get test successful.');
     }
     else {
-        console.log('Stations are missing');
-        console.log('Station File Get test failed');
+        console.log('Stations are missing.');
+        console.log('Station File Get test failed.');
     }
   } catch (err) {
-    console.log('Station File Get test failed');
+    console.log('Station File Get test failed.');
     console.error('Error:', err);
   }
 
@@ -57,12 +57,13 @@ async function getData() {
     const data = await response.json();
    
     if ((data.station == 'L1.5') && (data.distance_km == 0)) { 
-        console.log('Station Get Nearest test successful');
+        console.log('Station Get Nearest test successful.');
     } else {
-        console.log('Station Get Nearest test failed');
+        console.log('Station Get Nearest test failed.');
       }
   } catch (err) {
-      console.log('Station Get Nearest test failed');
+      console.log("token: ", token)
+      console.log('Station Get Nearest test failed.');
       console.error('Error:', err);
   }
  
