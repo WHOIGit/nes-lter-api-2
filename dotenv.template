@@ -8,3 +8,5 @@ URL=http://calm.whoi.edu:33300/
 TOKEN=your token here
 
 MEDIASTORE_PREFIX=NES-LTER-
+
+USE_DICTSTORE=FALSE

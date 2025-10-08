@@ -2,6 +2,11 @@ import math
 from datetime import datetime
 import re
 import pandas as pd
+import os
+from contextlib import contextmanager
+from storage.mediastore import MediaStore
+from storage.utils import PrefixStore
+from storage.object import DictStore
 
 def path_to_cast(cruise_name, filename):
 
@@ -150,3 +155,20 @@ def cast_columns(df, dtype, columns, inplace=False, fillna=None):
         if fillna is not None:
             df[c] = df[c].fillna(fillna)
     return df
+
+def _use_dictstore() -> bool:
+    return os.getenv("USE_DICTSTORE", "FALSE").upper() == "TRUE"
+
+@contextmanager
+def get_store( url, token, prefix):
+
+    if _use_dictstore():
+        # In-memory store for CI/tests; no network; no cleanup needed
+        base_store = DictStore()
+        prefixed = PrefixStore(base_store, prefix or "")
+        yield prefixed
+    else:
+        # Real vast store
+        with MediaStore(url, token=token) as base_store:
+            prefixed = PrefixStore(base_store, prefix or "")
+            yield prefixed

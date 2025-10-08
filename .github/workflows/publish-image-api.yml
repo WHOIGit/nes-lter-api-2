@@ -1,0 +1,79 @@
+name: Create and publish a package
+on:
+  push:
+    branches:
+      - "github-actions"
+
+env:
+  IMAGE_NAME: nes-lter-api-2
+
+jobs:
+  # NES-LTER API 2 Automated Testing and Tagging
+  setup-build-publish:
+    name: NES-LTER API 2 Setup, Build, and Publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Running Automated tests
+        run: |
+
+          # Build and run development version
+          mv dotenv.template .env
+          sed -i 's|^VAST_DATA_DIR=.*|VAST_DATA_DIR=./tests|' .env
+          sed -i 's|^USE_DICTSTORE=FALSE$|USE_DICTSTORE=TRUE|' .env
+
+          docker compose -f docker-compose-testing.yml build
+
+          docker compose -f docker-compose-testing.yml up --detach
+          sleep 60
+
+          # Run migrations
+          docker compose -f docker-compose-testing.yml exec -T api python manage.py migrate --noinput
+
+          sh -c "until curl -Is http://localhost:8000; do echo 'waiting for http://localhost:8000'; sleep 10; done"
+          echo "localhost:8000 running"
+
+          # Import the test cruise and CTD data
+          docker compose -f docker-compose-testing.yml exec -T api python manage.py importall --cruise_name ar77
+          docker compose -f docker-compose-testing.yml exec -T api python manage.py importall --cruise_name en617
+          docker compose -f docker-compose-testing.yml exec -T api python manage.py importall --cruise_name hrs2303
+          docker compose -f docker-compose-testing.yml exec -T api python manage.py importall --cruise_name ae2426
+          docker compose -f docker-compose-testing.yml exec -T api python manage.py importall --cruise_name at46
+
+          # Run automated tests
+          docker compose -f docker-compose-testing.yml run tests ./RunAllTests-Docker.bat
+
+      - name: Build, Tag & Push Production Image
+        if: contains(github.ref, 'release')
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          IMAGE_ID=ghcr.io/${{ github.repository }}
+
+          # Change all uppercase to lowercase
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+
+          # Strip git ref prefix from branch
+          BRANCH=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+
+          # Strip "release-" prefix from version
+          VERSION=$(echo $BRANCH | sed -e 's/.*-//')
+
+          echo "IMAGE_ID:"
+          echo $IMAGE_ID
+          echo "VERSION:"
+          echo $VERSION
+
+          # Build Production Django Container
+          docker build -f compose/production/django/Dockerfile -t $IMAGE_ID .
+
+          docker image ls
+                        
+          docker tag $IMAGE_ID $IMAGE_ID:$VERSION
+
+          docker push $IMAGE_ID:$VERSION
+
+      - name: Stopping API 2 application
+        run: docker compose --file docker-compose-testing.yml down
