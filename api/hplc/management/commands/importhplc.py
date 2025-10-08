@@ -6,7 +6,7 @@ from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.gis.geos import Point
 from core.models import Cruise, HPLC, Station
-from core.utils get_store
+from core.utils import get_store
 import numpy as np
 
 HPLC_SUFFIX = '_hplc.csv'
