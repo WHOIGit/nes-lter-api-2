@@ -37,6 +37,7 @@ jobs:
           docker compose -f docker-compose-testing.yml exec -T api python manage.py shell -c "
             from django.contrib.auth import get_user_model
             from rest_framework.authtoken.models import Token
+            from pathlib import Path
 
             User = get_user_model()
             user, created = User.objects.get_or_create(username='admin')
@@ -46,7 +47,7 @@ jobs:
             user.save()
 
             token, _ = Token.objects.get_or_create(user=user)
-            echo ${token.key} > tests/token.txt
+            Path('tests/token.txt').write_text(token.key)
           "
 
           sh -c "until curl -Is http://localhost:8000; do echo 'waiting for http://localhost:8000'; sleep 10; done"
