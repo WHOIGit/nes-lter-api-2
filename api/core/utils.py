@@ -7,8 +7,7 @@ from contextlib import contextmanager
 from storage.mediastore import MediaStore
 from storage.utils import PrefixStore
 from storage.object import DictStore
-
-_IN_MEMORY_STORE = DictStore()
+from storage.fs import FilesystemStore
 
 def path_to_cast(cruise_name, filename):
 
@@ -165,8 +164,10 @@ def _use_dictstore() -> bool:
 def get_store( url, token, prefix):
 
     if _use_dictstore():
-        # In-memory store for CI/tests; no network; no cleanup needed
-        base_store = _IN_MEMORY_STORE
+        # In-memory store for CI/tests; no network
+        root = "/app/.store"
+        os.makedirs(root, exist_ok=True)
+        base_store = FilesystemStore(root)
         prefixed = PrefixStore(base_store, prefix or "")
         yield prefixed
     else:
