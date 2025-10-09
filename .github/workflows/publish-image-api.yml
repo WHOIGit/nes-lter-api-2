@@ -30,17 +30,18 @@ jobs:
           docker compose -f docker-compose-testing.yml up --detach
           sleep 30
 
+          # Run migrations
+          docker compose -f docker-compose-testing.yml exec -T api python manage.py migrate --noinput
+
+          sh -c "until curl -Is http://localhost:8000; do echo 'waiting for http://localhost:8000'; sleep 10; done"
+          echo "localhost:8000 running"
+
           TOKEN=$(docker compose -f docker-compose-testing.yml exec -T api python manage.py shell -c "
           from django.contrib.auth import get_user_model; from rest_framework.authtoken.models import Token;User = get_user_model();u = User.objects.get(username='admin');print(Token.objects.get(user=u).key)" | tr -d '\r')
 
           echo "Token: $TOKEN"
           echo "token=$TOKEN" >> $GITHUB_OUTPUT
 
-          # Run migrations
-          docker compose -f docker-compose-testing.yml exec -T api python manage.py migrate --noinput
-
-          sh -c "until curl -Is http://localhost:8000; do echo 'waiting for http://localhost:8000'; sleep 10; done"
-          echo "localhost:8000 running"
 
           # Import the test cruise and CTD data
           docker compose -f docker-compose-testing.yml exec -T api python manage.py importall --cruise_name ar77
