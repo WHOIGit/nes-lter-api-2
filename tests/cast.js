@@ -59,12 +59,13 @@ async function getData(cruise) {
   }
 
     var token;
-    const tokenPath = path.resolve(__dirname, `token.txt`);
-    if (path.basename(process.cwd()) === `tests`) {
-        token = (await fs.readFile("token.txt", `utf-8`)).trim();
+    const tokenPath = path.resolve(__dirname, 'token.txt');
+    if (__dirname === "/tests") {
+        token = (await fs.readFile("/data/token.txt", 'utf-8')).trim();
     }
     else {
-        token = (await fs.readFile(tokenPath, `utf-8`)).trim();
+        const dataPath = tokenPath.replace('\\tests\\', '\\data\\');
+        token = (await fs.readFile(dataPath, 'utf-8')).trim();
     }      
 
     try {

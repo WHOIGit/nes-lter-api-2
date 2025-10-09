@@ -14,10 +14,7 @@ from django.http import Http404
 from ninja.errors import HttpError
 from django.http import HttpResponse
 from django.http import FileResponse
-
-from storage.mediastore import MediaStore
-from storage.utils import PrefixStore
-from django.conf import settings
+from core.utils import get_store
 
 class VesselOutput(BaseModel):
     designation: str
@@ -313,10 +310,9 @@ class CtdService:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
             cast = Cast.objects.get(cruise=cruise, number__iexact=cast_number)
             object_key = f"{cruise_name}{"_ctd_cast_"}{cast.number}{".csv"}"
-            with MediaStore(URL, token=TOKEN) as store:
-                prefix = PrefixStore(store, MEDIASTORE_PREFIX)
+            with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
                 try:
-                    data = prefix.get(object_key)
+                    data = store.get(object_key)
                 except Exception as e:
                     print(e, flush=True)
                     raise
@@ -492,10 +488,9 @@ class CtdService:
         try:
             Cruise.objects.get(name__iexact=cruise_name) 
             object_key = f"{cruise_name.lower()}{FILE_SUFFIX}"
-            with MediaStore(URL, token=TOKEN) as store:
-                prefix = PrefixStore(store, MEDIASTORE_PREFIX)
+            with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
                 try:
-                    data = prefix.get(object_key)
+                    data = store.get(object_key)
                 except Exception as e:
                     print(e, flush=True)
                     raise
@@ -515,10 +510,9 @@ class CtdService:
         try:
             Cruise.objects.get(name__iexact=cruise_name) 
             object_key = f"{cruise_name.lower()}{FILE_SUFFIX}"
-            with MediaStore(URL, token=TOKEN) as store:
-                prefix = PrefixStore(store, MEDIASTORE_PREFIX)
+            with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
                 try:
-                    data = prefix.get(object_key)
+                    data = store.get(object_key)
                 except Exception as e:
                     print(e, flush=True)
                     raise
@@ -538,10 +532,9 @@ class CtdService:
         try:
             Cruise.objects.get(name__iexact=cruise_name) 
             object_key = f"{cruise_name.lower()}{FILE_SUFFIX}"
-            with MediaStore(URL, token=TOKEN) as store:
-                prefix = PrefixStore(store, MEDIASTORE_PREFIX)
+            with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
                 try:
-                    data = prefix.get(object_key)
+                    data = store.get(object_key)
                 except Exception as e:
                     print(e, flush=True)
                     raise
