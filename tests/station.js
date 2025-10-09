@@ -28,14 +28,15 @@ async function getData() {
     console.log('Station File Get test failed.');
     console.error('Error:', err);
   }
-
+  
   var token;
   const tokenPath = path.resolve(__dirname, 'token.txt');
   if (path.basename(process.cwd()) === 'tests') {
-      token = (await fs.readFile("token.txt", 'utf-8')).trim();
+      token = (await fs.readFile("/data/token.txt", 'utf-8')).trim();
   }
   else {
-      token = (await fs.readFile(tokenPath, 'utf-8')).trim();
+      const dataPath = tokenPath.replace('\\tests\\', '\\data\\');
+      token = (await fs.readFile(dataPath, 'utf-8')).trim();
   }      
 
   try {
@@ -62,7 +63,7 @@ async function getData() {
         console.log('Station Get Nearest test failed.');
       }
   } catch (err) {
-      console.log("token: ", token)
+      console.log("token: ")
       console.log('Station Get Nearest test failed.');
       console.error('Error:', err);
   }
