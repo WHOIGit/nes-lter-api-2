@@ -49,11 +49,12 @@ async function getData() {
     var token;
     const tokenPath = path.resolve(__dirname, 'token.txt');
     if (path.basename(process.cwd()) === 'tests') {
-        token = (await fs.readFile("token.txt", 'utf-8')).trim();
+        token = (await fs.readFile("/data/token.txt", 'utf-8')).trim();
     }
     else {
-        token = (await fs.readFile(tokenPath, 'utf-8')).trim();
-    }      
+        const dataPath = tokenPath.replace('\\tests\\', '\\data\\');
+        token = (await fs.readFile(dataPath, 'utf-8')).trim();
+    } 
 
   try {
     const response = await fetch('http://localhost:8000/api/ctd/vessels/create', {
