@@ -4,8 +4,7 @@ const path = require('path');
 console.log("Running Cruise Test.");
 
 let expectedCruiseNames;
-console.log("dirname: ", __dirname)
-if (__dirname === "tests") {
+if (__dirname === "/tests") {
     expectedCruiseNames = [
         "ar77", "en617", "hrs2303", "ae2426", "at46"
     ];
