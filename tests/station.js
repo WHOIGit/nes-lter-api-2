@@ -31,7 +31,7 @@ async function getData() {
   
   var token;
   const tokenPath = path.resolve(__dirname, 'token.txt');
-  if (path.basename(process.cwd()) === 'tests') {
+  if (__dirname === "/tests") {
       token = (await fs.readFile("/data/token.txt", 'utf-8')).trim();
   }
   else {
