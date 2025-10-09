@@ -63,7 +63,6 @@ async function getData() {
         console.log('Station Get Nearest test failed.');
       }
   } catch (err) {
-      console.log("token: ")
       console.log('Station Get Nearest test failed.');
       console.error('Error:', err);
   }

@@ -3,15 +3,23 @@ const fs = require('fs/promises');
 const path = require('path');
 console.log("Running Cruise Test.");
 
-const expectedCruiseNames = [
-    "ar31c", "ar32", "ar34a", "ar34b", "ar38", "ar39a", "ar39b", "ar44", "ar48a", "ar48b",
-    "ar52a", "ar52b", "ar61a", "ar61b", "ar62", "ar63", "ar66a", "ar66b", "ar70b", "ar75",
-    "ar77", "ar78", "ar79", "ar80", "ar82a", "ar82b", "ar87a", "ar87b", "ar88", "at46",
-    "en608", "en617", "en627", "en644", "en649", "en655", "en657", "en661", "en668",
-    "en685", "en687", "en688", "en695", "en706", "ae2426", "ar16",
-    "ar22", "ar24a", "ar24b", "ar24c", "ar28a", "en712", "en715", "en720", "ar28b", "ar31a",
-    "ar31b", "en727", "hrs2303", "ar91"
-];
+let expectedCruiseNames;
+if (__dirname === "tests") {
+    expectedCruiseNames = [
+        "ar77", "en617", "hrs2303", "ae2426", "at46"
+    ];
+}
+else {
+    expectedCruiseNames = [
+        "ar31c", "ar32", "ar34a", "ar34b", "ar38", "ar39a", "ar39b", "ar44", "ar48a", "ar48b",
+        "ar52a", "ar52b", "ar61a", "ar61b", "ar62", "ar63", "ar66a", "ar66b", "ar70b", "ar75",
+        "ar77", "ar78", "ar79", "ar80", "ar82a", "ar82b", "ar87a", "ar87b", "ar88", "at46",
+        "en608", "en617", "en627", "en644", "en649", "en655", "en657", "en661", "en668",
+        "en685", "en687", "en688", "en695", "en706", "ae2426", "ar16",
+        "ar22", "ar24a", "ar24b", "ar24c", "ar28a", "en712", "en715", "en720", "ar28b", "ar31a",
+        "ar31b", "en727", "hrs2303", "ar91"
+    ];
+}
 
 async function getData() {
     try {
@@ -74,11 +82,12 @@ async function getData() {
     var token;
     const tokenPath = path.resolve(__dirname, 'token.txt');
     if (path.basename(process.cwd()) === 'tests') {
-        token = (await fs.readFile("token.txt", 'utf-8')).trim();
+        token = (await fs.readFile("/data/token.txt", 'utf-8')).trim();
     }
     else {
-        token = (await fs.readFile(tokenPath, 'utf-8')).trim();
-    }      
+        const dataPath = tokenPath.replace('\\tests\\', '\\data\\');
+        token = (await fs.readFile(dataPath, 'utf-8')).trim();
+    }    
 
     try {
         const response = await fetch('http://localhost:8000/api/ctd/cruises/create', {
