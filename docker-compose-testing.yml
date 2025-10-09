@@ -13,6 +13,7 @@ services:
       - ${PRIMARY_DATA_DIR:-./data}:/data
       - ${VAST_DATA_DIR}:/vast
       - ${LOCAL_SETTINGS:-./local_settings.py}:/api/config/local_settings.py
+      - ./tests:/tests
     ports:
       - "8000:8000"
     networks:
@@ -24,6 +25,8 @@ services:
     build:
       context: .
       dockerfile: ./tests/Dockerfile
+    volumes:
+      - ./tests:/tests  
     depends_on:
       - api
     profiles:
