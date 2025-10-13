@@ -70,6 +70,7 @@ class Command(BaseCommand):
                         data_frames.append(df)
 
                     combined_data = pd.concat(data_frames, ignore_index=True)
+                    combined_data = combined_data.sort_values(by=metadata['date_column'], ascending=True, ignore_index=True)
                     
                     # Select only numeric columns and fill NaN values with 'NaN'
                     combined_data[combined_data.select_dtypes(include=['number']).columns] = combined_data.select_dtypes(include=['number']).fillna('NaN')
