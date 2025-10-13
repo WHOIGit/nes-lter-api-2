@@ -97,11 +97,8 @@ class UnderwayService:
             Q(start_datetime__lte=end_timestamp) & Q(end_datetime__gte=start_timestamp)
         )
 
-        print(start_timestamp, end_timestamp, flush=True)
-
         for underway in underway_objects:
             object_key = f"{underway.cruise.name}{cls.FILE_SUFFIX}"
-            print(underway.cruise.name, flush=True)
             responses.append(UnderwayOutput(file_name=object_key))
         if not responses:
             raise Http404(f"Underway data files not found between start timestamp {start_timestamp} and {end_timestamp}.")   
