@@ -61,7 +61,6 @@ async function getData(cruise) {
 
 try {
     const search = times[cruise];
-    console.log(`http://localhost:8000/api/underway/find/${search}`);
     const response = await fetch(`http://localhost:8000/api/underway/find/${search}`);
     if (!response.ok) {
         throw new Error('HTTP error ' + response.status);

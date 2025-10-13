@@ -4,8 +4,7 @@ import glob
 
 from io import BytesIO
 
-from datetime import datetime
-from django.utils import timezone
+from datetime import datetime, time, timedelta, timezone as dt_tz
 from django.http import JsonResponse
 from django.http import HttpResponse
 
@@ -85,14 +84,18 @@ class UnderwayService:
     @classmethod
     def find_underway_files(cls, start_timestamp: str, end_timestamp: str) -> list[UnderwayOutput]:
         try:
-            start_dt = datetime.strptime(start_timestamp, "%Y-%m-%d")
-            end_dt = datetime.strptime(end_timestamp, "%Y-%m-%d")
+            start_date = datetime.strptime(start_timestamp, "%Y-%m-%d")
+            end_date = datetime.strptime(end_timestamp, "%Y-%m-%d")
         except ValueError:
             raise HttpError(400, "Invalid date format. Use yyyy-mm-dd")
 
         # datetime format yyyy-mm-dd hh:mm:ss
         if end_timestamp < start_timestamp:
             raise HttpError(500, f"end_timestamp must be greater than or equal to start_timestamp")
+
+        UTC = dt_tz.utc
+        start_dt = datetime.combine(start_date, time.min, tzinfo=UTC)
+        end_dt = datetime.combine(end_date + timedelta(days=1), time.min, tzinfo=UTC)
 
         underway_objects = Underway.objects.filter(
             Q(start_datetime__lte=end_dt) & Q(end_datetime__gte=start_dt)
