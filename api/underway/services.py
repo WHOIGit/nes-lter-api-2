@@ -5,6 +5,7 @@ import glob
 from io import BytesIO
 
 from datetime import datetime
+from django.utils import timezone
 from django.http import JsonResponse
 from django.http import HttpResponse
 
@@ -92,11 +93,12 @@ class UnderwayService:
         # datetime format yyyy-mm-dd hh:mm:ss
         if end_timestamp < start_timestamp:
             raise HttpError(500, f"end_timestamp must be greater than or equal to start_timestamp")
-        responses = []
+
         underway_objects = Underway.objects.filter(
-            Q(start_datetime__lte=end_timestamp) & Q(end_datetime__gte=start_timestamp)
+            Q(start_datetime__lte=end_dt) & Q(end_datetime__gte=start_dt)
         )
 
+        responses = []
         for underway in underway_objects:
             object_key = f"{underway.cruise.name}{cls.FILE_SUFFIX}"
             responses.append(UnderwayOutput(file_name=object_key))
