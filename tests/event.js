@@ -180,8 +180,8 @@ try {
             console.log(`${cruise} Delete Event test failed.`);
             console.error('Error:', err);
         }
-    }
-} */
+    } */
+}
 
 async function runAll() {
     for (const cruise of cruises) {
