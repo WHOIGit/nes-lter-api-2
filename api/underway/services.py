@@ -90,7 +90,7 @@ class UnderwayService:
             raise HttpError(400, "Invalid date format. Use yyyy-mm-dd")
 
         # datetime format yyyy-mm-dd hh:mm:ss
-        if end_timestamp < start_timestamp:
+        if end_date < start_date:
             raise HttpError(500, f"end_timestamp must be greater than or equal to start_timestamp")
 
         UTC = dt_tz.utc
