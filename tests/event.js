@@ -62,13 +62,13 @@ async function getData(cruise) {
 
     var token;
     const tokenPath = path.resolve(__dirname, 'token.txt');
-    if (path.basename(process.cwd()) === 'tests') {
-        token = (await fs.readFile("token.txt", 'utf-8')).trim();
+    if (__dirname === "/tests") {
+        token = (await fs.readFile("/data/token.txt", 'utf-8')).trim();
     }
     else {
-        token = (await fs.readFile(tokenPath, 'utf-8')).trim();
-    }      
-
+        const dataPath = tokenPath.replace('\\tests\\', '\\data\\');
+        token = (await fs.readFile(dataPath, 'utf-8')).trim();
+    }   
 
   try {
     const response = await fetch(`http://localhost:8000/api/events/filter/${cruise}`, {
@@ -154,32 +154,34 @@ try {
         console.error('Error:', err);
     }
 
-/*   FIX - NEED TO RUN IMPORT EVENTS AFTER THIS
-     try {
-        const response = await fetch(`http://localhost:8000/api/events/delete/${cruise}`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+    // Delete events in docker only, need to rerun import events to recreate
+/*    if (__dirname === "/tests") {
+        try {
+            const response = await fetch(`http://localhost:8000/api/events/delete/${cruise}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (!response.ok) {
+                throw new Error('HTTP error ' + response.status);
             }
-        });
-        if (!response.ok) {
-            throw new Error('HTTP error ' + response.status);
-        }
-        const data = await response.json();
+            const data = await response.json();
 
-        if (data.message == `Events on cruise ${cruise} deleted.`) {
-            console.log(`${cruise} Delete Event test successful.`);
-        } else {
+            if (data.message == `Events on cruise ${cruise} deleted.`) {
+                console.log(`${cruise} Delete Event test successful.`);
+            } else {
+                console.log(`${cruise} Delete Event test failed.`);
+            }
+
+        }
+        catch (err) {
             console.log(`${cruise} Delete Event test failed.`);
+            console.error('Error:', err);
         }
-
     }
-    catch (err) {
-        console.log(`${cruise} Delete Event test failed.`);
-        console.error('Error:', err);
-    } */
-}
+} */
 
 async function runAll() {
     for (const cruise of cruises) {

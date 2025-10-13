@@ -1,28 +1,16 @@
-import csv
 import os
-import glob
+import io
 import pandas as pd
 import numpy as np
-from django.conf import settings
-from typing import Optional, List, Tuple
+from typing import Optional, List
 from datetime import datetime
-from django.contrib.gis.db.models import PointField
-from django.contrib.gis.geos import Point, point
+from django.contrib.gis.geos import Point
 from django.http import JsonResponse
 from django.http import HttpResponse
-
 from pydantic import BaseModel
-
 from core.models import Cruise, Event
-
-from django.db import IntegrityError
 from django.http import FileResponse, Http404
-from ninja.errors import HttpError
-
-from storage.fs import FilesystemStore
-from storage.mediastore import MediaStore
-import io
-from storage.utils import PrefixStore
+from core.utils import get_store
 
 FILE_SUFFIX = '_elog.csv'
 DATETIME = 'dateTime8601'
@@ -100,10 +88,9 @@ class EventService:
         csv_binary = csv_buffer.getvalue().encode("utf-8")
         # Use the put method to store the CSV in the vast media store
         object_key = f"{cruise_name}{FILE_SUFFIX}"
-        with MediaStore(URL, token=TOKEN) as store:
-            prefix = PrefixStore(store, MEDIASTORE_PREFIX)
+        with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
             try:
-                prefix.put(object_key, csv_binary)
+                store.put(object_key, csv_binary)
             except Exception as e:
                 print(e, flush=True)
                 raise
@@ -135,10 +122,9 @@ class EventService:
             cruise = Cruise.objects.get(name__iexact=cruise_name) 
             if Event.objects.filter(cruise=cruise).exists():
                 object_key = f"{cruise_name.lower()}{FILE_SUFFIX}"
-                with MediaStore(URL, token=TOKEN) as store:
-                    prefix = PrefixStore(store, MEDIASTORE_PREFIX)
+                with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
                     try:
-                        data = prefix.get(object_key)
+                        data = store.get(object_key)
                     except Exception as e:
                         print(e, flush=True)
                         raise
