@@ -83,10 +83,6 @@ class UnderwayService:
 
     @classmethod
     def find_underway_files(cls, start_timestamp: str, end_timestamp: str) -> list[UnderwayOutput]:
-        URL = os.getenv("URL")
-        TOKEN = os.getenv("TOKEN")
-        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
-
         try:
             start_dt = datetime.strptime(start_timestamp, "%Y-%m-%d")
             end_dt = datetime.strptime(end_timestamp, "%Y-%m-%d")
@@ -102,15 +98,6 @@ class UnderwayService:
         )
         for underway in underway_objects:
             object_key = f"{underway.cruise.name}{cls.FILE_SUFFIX}"
-            with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
-                try:
-                    data = store.get(object_key)
-                except Exception as e:
-                    print(e, flush=True)
-                    raise
-            csv_buffer = BytesIO(data)
-            response = HttpResponse(csv_buffer, content_type='text/csv')
-            response['Content-Disposition'] = f'attachment; filename="{object_key}"'
             responses.append(UnderwayOutput(file_name=object_key))
         if not responses:
             raise Http404(f"Underway data files not found between start timestamp {start_timestamp} and {end_timestamp}.")   
