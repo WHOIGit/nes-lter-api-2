@@ -32,6 +32,7 @@ async function getData(cruise) {
         console.log(`${cruise} Events Get test successful.`);
     }
     else {
+        console.log("lines, expected: ", lines.length, expected)
         console.log(`${cruise} Events are missing.`);
         console.log(`${cruise} Events Get test failed.`);
     }
