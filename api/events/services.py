@@ -187,8 +187,6 @@ class EventService:
                 events = events.filter(cast__iexact=input.cast)
             if input.comment:
                 events = events.filter(comment__icontains=input.comment)
-            print(events.query, flush=True)
-            print([e.id for e in events], flush=True)
 
             return [EventService.serialize_event(event) for event in events]
         except Cruise.DoesNotExist:
