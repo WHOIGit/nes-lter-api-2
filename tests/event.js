@@ -4,7 +4,7 @@ console.log("Running Event Test.");
 
 const cruises = ["ar77", "en617", "hrs2303", "ae2426", "at46"];
 
-const getCounts = { ar77: 166, en617: 111, hrs2303: 159, ae2426: 168, at46: 228 };
+const getCounts = { ar77: 166, en617: 111, hrs2303: 159, ae2426: 168, at46: 266 };
 const instCounts = { ar77: 18, en617: 19, hrs2303: 20, ae2426: 21, at46: 19 };
 const r2rEvent = {
     ar77: '20231011.1311.001', en617: 'en617-SE-20180720.1404.001', hrs2303: '20230502.1302.001',
