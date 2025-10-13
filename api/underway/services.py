@@ -2,9 +2,8 @@ import csv
 import os
 import glob
 
-from io import BytesIO, StringIO
+from io import BytesIO
 
-from django.conf import settings
 from datetime import datetime
 from django.http import JsonResponse
 from django.http import HttpResponse
@@ -16,13 +15,10 @@ import pandas as pd
 from core.models import Cruise
 from core.models import Underway
 
-from django.db import IntegrityError
 from django.http import FileResponse, Http404
 from ninja.errors import HttpError
 
-from storage.fs import FilesystemStore
-from storage.mediastore import MediaStore
-from storage.utils import PrefixStore
+from core.utils import get_store
 
 class UnderwayOutput(BaseModel):
     file_name: str
@@ -39,13 +35,12 @@ class UnderwayService:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
             if Underway.objects.filter(cruise=cruise).exists():
                 object_key = f"{cruise_name.lower()}{cls.FILE_SUFFIX}"
-                with MediaStore(URL, token=TOKEN) as store:
-                    prefix = PrefixStore(store, MEDIASTORE_PREFIX)
-                    try:
-                        data = prefix.get(object_key)
-                    except Exception as e:
-                        print(e, flush=True)
-                        raise
+                with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
+                   try:
+                       data = store.get(object_key)
+                   except Exception as e:
+                       print(e, flush=True)
+                       raise
                 csv_buffer = BytesIO(data)
                 response = HttpResponse(csv_buffer, content_type='text/csv')
                 response['Content-Disposition'] = f'attachment; filename="{object_key}"'
@@ -64,10 +59,9 @@ class UnderwayService:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
             if Underway.objects.filter(cruise=cruise).exists(): 
                 object_key = f"{cruise_name.lower()}{cls.FILE_SUFFIX}"
-                with MediaStore(URL, token=TOKEN) as store:
-                    prefix = PrefixStore(store, MEDIASTORE_PREFIX)
+                with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
                     try:
-                        data = prefix.get(object_key)
+                        data = store.get(object_key)
                     except Exception as e:
                         print(e, flush=True)
                         raise
@@ -108,10 +102,9 @@ class UnderwayService:
         )
         for underway in underway_objects:
             object_key = f"{underway.cruise.name}{cls.FILE_SUFFIX}"
-            with MediaStore(URL, token=TOKEN) as store:
-                prefix = PrefixStore(store, MEDIASTORE_PREFIX)
+            with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
                 try:
-                    data = prefix.get(object_key)
+                    data = store.get(object_key)
                 except Exception as e:
                     print(e, flush=True)
                     raise

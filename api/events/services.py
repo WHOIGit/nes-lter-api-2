@@ -139,10 +139,6 @@ class EventService:
        
     @classmethod
     def get_instruments(cls, cruise_name: str) -> List[str]:
-        URL = os.getenv("URL")
-        TOKEN = os.getenv("TOKEN")
-        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
-
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name) 
             if Event.objects.filter(cruise=cruise).exists():
