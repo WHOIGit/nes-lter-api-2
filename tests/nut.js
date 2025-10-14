@@ -54,7 +54,6 @@ try {
         }
         else {
             console.log('Nut Get All values are missing.');
-            console.log(lines.length);
             console.log('Nut Get All test failed.');
         }
     }
