@@ -54,6 +54,7 @@ async function getData() {
             }
             else {
                 console.log('Chl Get All values are missing.');
+                console.log(lines.length);
                 console.log('Chl Get All test failed.');
             }
         }
