@@ -49,7 +49,7 @@ jobs:
           docker compose -f docker-compose-testing.yml exec -T api python manage.py importall --cruise_name at46
 
           # Run automated tests
-          docker compose -f docker-compose-testing.yml run tests ./RunAllTests-Docker.bat
+          docker compose -f docker-compose-testing.yml run -e GITHUB_ACTIONS=true tests ./RunAllTests-Docker.bat
 
       - name: Build, Tag & Push Production Image
         if: contains(github.ref, 'release')
