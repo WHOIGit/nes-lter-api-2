@@ -33,19 +33,16 @@ class Command(BaseCommand):
     def read_hplc_files(self):
         dfs = []
         directory = f'/vast/raw/all/hplc'
-        hplc_files = sorted(glob.glob(os.path.join(directory, 'Sosik*report.xlsx')))
+        hplc_files = sorted(glob.glob(os.path.join(directory, '*Sosik*report.xlsx')))
 
         for file in hplc_files:
-            if "13-07" in os.path.basename(file):
-                Y = 'year'
-                M = 'month'
-                D = 'day'
-                T = 'time'
-            else:
-                Y = 'Year'
-                M = 'Month'
-                D = 'Day of Gregorian Month'
-                T = 'GMT Time'
+            if file.endswith("Sosik_13-07_report.xlsx") and not file.endswith("Fixed_Sosik_13-07_report.xlsx"):
+                continue
+
+            Y = 'Year'
+            M = 'Month'
+            D = 'Day of Gregorian Month'
+            T = 'GMT Time'
 
             report = pd.read_excel(file, skiprows=8, dtype={
                 Y: str,
