@@ -155,8 +155,8 @@ try {
         console.error('Error:', err);
     }
 
-    // Delete events in docker only, need to rerun import events to recreate
-/*    if (__dirname === "/tests") {
+    // Delete events in github actions only, otherwise need to rerun import events to recreate
+    if (process.env.GITHUB_ACTIONS === 'true') {
         try {
             const response = await fetch(`http://localhost:8000/api/events/delete/${cruise}`, {
                 method: 'DELETE',
@@ -181,7 +181,7 @@ try {
             console.log(`${cruise} Delete Event test failed.`);
             console.error('Error:', err);
         }
-    } */
+    } 
 }
 
 async function runAll() {
