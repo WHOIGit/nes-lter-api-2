@@ -164,6 +164,7 @@ def _use_dictstore() -> bool:
 def get_store( url, token, prefix):
 
     if _use_dictstore():
+        print("USE DICTSTORE", flush=True)
         # In-memory store for CI/tests; no network
         root = "/data/.store"
         os.makedirs(root, exist_ok=True)
