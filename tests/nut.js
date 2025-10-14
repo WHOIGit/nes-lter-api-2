@@ -48,12 +48,24 @@ try {
         .map(line => line.trim())
         .filter(line => line.length > 0);
 
-    if (lines.length == 4434) {
-        console.log('Nut Get All test successful.');
+    if (process.env.GITHUB_ACTIONS === 'true') {
+        if (lines.length == 4434) {  // only 5 test cruises
+            console.log('Nut Get All test successful.');
+        }
+        else {
+            console.log('Nut Get All values are missing.');
+            console.log(lines.length);
+            console.log('Nut Get All test failed.');
+        }
     }
     else {
-        console.log('Nut Get All values are missing.');
-        console.log('Nut Get All test failed.');
+        if (lines.length == 4434) {
+            console.log('Nut Get All test successful.');
+        }
+        else {
+            console.log('Nut Get All values are missing.');
+            console.log('Nut Get All test failed.');
+        }
     }
   } catch (err) {
     console.log('Nut Get All test failed.');
