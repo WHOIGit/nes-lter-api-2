@@ -73,9 +73,8 @@ class Command(BaseCommand):
             try:
                 data = store.get(object_key)
             except Exception as e:
-                print(e, flush=True)
                 self.stdout.write(self.style.ERROR(f'Run ImportNiskin.py to create bottle summary file for cruise {cruise}.'))
-                raise
+                return pd.DataFrame()
 
             btl_sum = pd.read_csv(io.BytesIO(data))
             btl_sum.cast = btl_sum.cast.astype(str).str.lstrip("0")  #remove leading 0s for merge

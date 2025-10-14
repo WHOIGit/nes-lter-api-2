@@ -2,8 +2,7 @@ import io
 import os
 import csv
 from django.http import FileResponse, HttpResponse, Http404
-from storage.mediastore import MediaStore
-from storage.utils import PrefixStore
+from core.utils import get_store
 from core.models import Cruise
 
 class NutService:
@@ -18,10 +17,9 @@ class NutService:
         try:
             Cruise.objects.get(name__iexact=cruise_name) 
             object_key = f"{cruise_name.lower()}{cls.FILE_SUFFIX}"
-            with MediaStore(cls.URL, token=cls.TOKEN) as store:
-                prefix = PrefixStore(store, cls.MEDIASTORE_PREFIX)
+            with get_store(cls.URL, cls.TOKEN, cls.MEDIASTORE_PREFIX) as store:
                 try:
-                    data = prefix.get(object_key)
+                    data = store.get(object_key)
                 except Exception as e:
                     print(e, flush=True)
                     raise
@@ -42,10 +40,9 @@ class NutService:
 
         for cruise in cruises:
             object_key = f"{cruise.name}{cls.FILE_SUFFIX}"
-            with MediaStore(cls.URL, token=cls.TOKEN) as store:
-                prefix = PrefixStore(store, cls.MEDIASTORE_PREFIX)
+            with get_store(cls.URL, cls.TOKEN, cls.MEDIASTORE_PREFIX) as store:
                 try:
-                    data = prefix.get(object_key)
+                    data = store.get(object_key)
                 except Exception as e:
                     continue
 
