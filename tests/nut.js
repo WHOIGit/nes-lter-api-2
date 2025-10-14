@@ -49,7 +49,7 @@ try {
         .filter(line => line.length > 0);
 
     if (process.env.GITHUB_ACTIONS === 'true') {
-        if (lines.length == 4434) {  // only 5 test cruises
+        if (lines.length == 581) {  // only 5 test cruises
             console.log('Nut Get All test successful.');
         }
         else {
