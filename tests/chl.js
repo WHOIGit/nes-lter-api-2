@@ -49,12 +49,11 @@ async function getData() {
             .filter(line => line.length > 0);
 
         if (process.env.GITHUB_ACTIONS === 'true') {
-            if (lines.length == 797) {
+            if (lines.length == 979) {
                 console.log('Chl Get All test successful.');
             }
             else {
                 console.log('Chl Get All values are missing.');
-                console.log(lines.length);
                 console.log('Chl Get All test failed.');
             }
         }
