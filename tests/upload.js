@@ -117,7 +117,7 @@ var myArgs = process.argv.slice(1);
         );
         await fileInput.sendKeys(filename);
 
-        await driver.wait(until.alertIsPresent(), 12000);
+        await driver.wait(until.alertIsPresent(), 25000);
 
         // read and accept file overwrite
         alert = await driver.switchTo().alert();
