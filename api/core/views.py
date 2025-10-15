@@ -24,17 +24,6 @@ def file_upload_view(request):
 
         if _use_dictstore():
             dest_dir_lookup = {
-                'ctd': lambda cruise_name: Path(f'/vast/raw/{cruise_name}/ctd'),
-                'elog': lambda cruise_name: Path(f'/vast/raw/{cruise_name}/elog'),
-                'underway': lambda cruise_name: Path(f'/vast/raw/{cruise_name}/underway'),
-                'nutrient': Path('/vast/raw/all/nut'),
-                'sample_log': Path('/vast/raw/all'),
-                'station_list' : Path('/vast/raw/all/metadata'),
-                'hplc' : Path('/vast/raw/all/hplc'),
-                'chlorophyll': Path('/vast/raw/all/chl'),
-            }
-        else:
-            dest_dir_lookup = {
                 'ctd': lambda cruise_name: Path(f'/raw/{cruise_name}/ctd'),
                 'elog': lambda cruise_name: Path(f'/raw/{cruise_name}/elog'),
                 'underway': lambda cruise_name: Path(f'/raw/{cruise_name}/underway'),
@@ -43,6 +32,17 @@ def file_upload_view(request):
                 'station_list' : Path('/raw/all/metadata'),
                 'hplc' : Path('/raw/all/hplc'),
                 'chlorophyll': Path('/raw/all/chl'),
+            }
+        else:
+            dest_dir_lookup = {
+                'ctd': lambda cruise_name: Path(f'/vast/raw/{cruise_name}/ctd'),
+                'elog': lambda cruise_name: Path(f'/vast/raw/{cruise_name}/elog'),
+                'underway': lambda cruise_name: Path(f'/vast/raw/{cruise_name}/underway'),
+                'nutrient': Path('/vast/raw/all/nut'),
+                'sample_log': Path('/vast/raw/all'),
+                'station_list' : Path('/vast/raw/all/metadata'),
+                'hplc' : Path('/vast/raw/all/hplc'),
+                'chlorophyll': Path('/vast/raw/all/chl'),
             }
 
         file_obj = request.FILES['file']
