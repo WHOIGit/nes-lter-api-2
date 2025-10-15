@@ -80,11 +80,20 @@ var myArgs = process.argv.slice(1);
         );
         await fileInput.sendKeys(filename);
 
-        await driver.wait(until.alertIsPresent(), 5000);
-
-        // read and accept file overwrite
-        let alert = await driver.switchTo().alert();
-        await alert.accept();  
+        try {
+            await driver.wait(until.alertIsPresent(), 5000);
+            // read and accept file overwrite
+            let alert = await driver.switchTo().alert();
+            await alert.accept();
+        }
+        catch (err) {
+            if (err.name === 'TimeoutError') {
+                console.log("No alert appeared; continuing...");
+            }
+            else {
+                throw err;
+            }
+        }
 
         bodyText = await driver.findElement(By.css('body')).getText();
         if (bodyText.includes("Please wait... Uploading and processing your file.")) {
