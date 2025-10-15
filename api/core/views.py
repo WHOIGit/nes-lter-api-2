@@ -24,14 +24,14 @@ def file_upload_view(request):
 
         if _use_dictstore():
             dest_dir_lookup = {
-                'ctd': lambda cruise_name: Path(f'/raw/{cruise_name}/ctd'),
-                'elog': lambda cruise_name: Path(f'/raw/{cruise_name}/elog'),
-                'underway': lambda cruise_name: Path(f'/raw/{cruise_name}/underway'),
-                'nutrient': Path('/raw/all/nut'),
-                'sample_log': Path('/raw/all'),
-                'station_list' : Path('/raw/all/metadata'),
-                'hplc' : Path('/raw/all/hplc'),
-                'chlorophyll': Path('/raw/all/chl'),
+                'ctd': lambda cruise_name: Path(f'/data/raw/{cruise_name}/ctd'),
+                'elog': lambda cruise_name: Path(f'/data/raw/{cruise_name}/elog'),
+                'underway': lambda cruise_name: Path(f'/data/raw/{cruise_name}/underway'),
+                'nutrient': Path('/data/raw/all/nut'),
+                'sample_log': Path('/data/raw/all'),
+                'station_list' : Path('/data/raw/all/metadata'),
+                'hplc' : Path('/data/raw/all/hplc'),
+                'chlorophyll': Path('/data/raw/all/chl'),
             }
         else:
             dest_dir_lookup = {
@@ -43,7 +43,7 @@ def file_upload_view(request):
                 'station_list' : Path('/vast/raw/all/metadata'),
                 'hplc' : Path('/vast/raw/all/hplc'),
                 'chlorophyll': Path('/vast/raw/all/chl'),
-            }
+            }    
 
         file_obj = request.FILES['file']
         cruise_name = request.POST.get('cruise_name', '').strip().lower()
@@ -79,6 +79,10 @@ def file_upload_view(request):
                 'error': f"The file '{filename}' already exists in {destination_dir}.",
                 'conflict': True  # Flag for frontend to prompt user
             }, status=409)
+
+        # Create dir in github actions
+        if _use_dictstore():
+            upload_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Save file
         try:
