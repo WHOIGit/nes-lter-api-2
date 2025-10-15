@@ -5,13 +5,9 @@ import os
 import io
 import json
 import pandas as pd
-import re
-from django.conf import settings
 from django.core.management.base import CommandError
 from .models import Cruise, Cast
-from storage.mediastore import MediaStore
-from storage.utils import PrefixStore
-from django.conf import settings
+from core.utils import get_store
 import matplotlib.pyplot as plt
 from io import BytesIO
 from pathlib import Path
@@ -141,10 +137,9 @@ def cruise_track_view(request, cruise_name):
         MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
 
         object_key = f"{cruise_name}{UNDERWAY_SUFFIX}"
-        with MediaStore(URL, token=TOKEN) as store:
-            prefix = PrefixStore(store, MEDIASTORE_PREFIX)
+        with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
             try:
-                data = prefix.get(object_key)
+                data = store.get(object_key)
             except Exception as e:
                 print(e, flush=True)
 
@@ -224,13 +219,13 @@ def ctd_plot_view(request, cruise_name, cast_number):
     MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
 
     object_key = f"{cruise_name}_ctd_cast_{cast_number}.csv"
-    with MediaStore(URL, token=TOKEN) as store:
-        prefix = PrefixStore(store, MEDIASTORE_PREFIX)
-        try:
-            data = prefix.get(object_key)
-        except Exception as e:
-            print(e, flush=True)
-            return HttpResponse("CTD file not found.", status=404)
+
+    with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
+            try:
+                data = store.get(object_key)
+            except Exception as e:
+                print(e, flush=True)
+                return HttpResponse("CTD file not found.", status=404)
 
     df = pd.read_csv(io.BytesIO(data))
 
