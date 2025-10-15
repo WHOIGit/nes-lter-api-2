@@ -72,7 +72,7 @@ jobs:
           #echo $VERSION
 
           # Build Production Container
-          docker compose -f docker-compose.yml build -t $IMAGE_ID .
+          docker build -f Dockerfile -t $IMAGE_ID .
 
           docker image ls
 
