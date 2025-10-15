@@ -71,7 +71,7 @@ jobs:
           #echo "VERSION:"
           #echo $VERSION
 
-          # Build Production Django Container
+          # Build Production Container
           docker compose -f docker-compose.yml build -t $IMAGE_ID .
 
           docker image ls
