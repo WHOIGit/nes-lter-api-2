@@ -2,6 +2,7 @@ name: Create and publish a package
 on:
   push:
     branches:
+      - "main"
       - "github-actions"
 
 env:
@@ -52,7 +53,7 @@ jobs:
           docker compose -f docker-compose-testing.yml run -e GITHUB_ACTIONS=true tests ./RunAllTests-Docker.bat
 
       - name: Build, Tag & Push Production Image
-        if: contains(github.ref, 'actions')
+        if: contains(github.ref, 'main')
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           IMAGE_ID=ghcr.io/${{ github.repository }}
