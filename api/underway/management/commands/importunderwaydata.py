@@ -97,18 +97,18 @@ class Command(BaseCommand):
                     date_column = metadata['date_column']
                     date_format = metadata['date_format']
                     if date_format:
-                        start_datetime = pd.to_datetime(combined_data[date_column].iloc[0], format=date_format)
-                        end_datetime = pd.to_datetime(combined_data[date_column].iloc[-1], format=date_format)
+                        start_datetime = pd.to_datetime(combined_data[date_column].min(), format=date_format)
+                        end_datetime = pd.to_datetime(combined_data[date_column].max(), format=date_format)
                     else:
-                        start_datetime = pd.to_datetime(combined_data[date_column].iloc[0])
-                        end_datetime = pd.to_datetime(combined_data[date_column].iloc[-1])
+                        start_datetime = pd.to_datetime(combined_data[date_column].min())
+                        end_datetime = pd.to_datetime(combined_data[date_column].max())
 
                     df_data = clean_column_names(combined_data)
 
                 else:
                     raise ValueError(f"Unsupported cruise type for cruise_name: {cruise_name}")
                 start_datetime = None if pd.isna(start_datetime) else self.make_aware_if_naive(start_datetime)
-                end_datetime = None if pd.isna(end_datetime) else self.make_aware_if_naive(end_datetime)
+                end_datetime = None if pd.isna(end_datetime) else self.make_aware_if_naive(end_datetime)                
                 print(start_datetime, end_datetime, flush=True)
                 Underway.objects.update_or_create(
                         cruise=cruise,
