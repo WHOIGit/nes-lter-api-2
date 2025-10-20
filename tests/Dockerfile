@@ -35,6 +35,7 @@ COPY ./tests/*.js /tests/
 COPY ./tests/*.csv /tests/
 COPY ./tests/*.xlsx /tests/
 COPY ./tests/*.hdr /tests/
+COPY ./tests/import/ /tests/import/
 
 RUN npm install selenium-webdriver
 

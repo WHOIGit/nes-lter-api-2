@@ -109,7 +109,7 @@ class Command(BaseCommand):
                     raise ValueError(f"Unsupported cruise type for cruise_name: {cruise_name}")
                 start_datetime = None if pd.isna(start_datetime) else self.make_aware_if_naive(start_datetime)
                 end_datetime = None if pd.isna(end_datetime) else self.make_aware_if_naive(end_datetime)                
-                print(start_datetime, end_datetime, flush=True)
+
                 Underway.objects.update_or_create(
                         cruise=cruise,
                         start_datetime=start_datetime,
