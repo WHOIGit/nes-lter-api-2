@@ -68,23 +68,28 @@ var myArgs = process.argv.slice(1);
         // Upload CTD file
         console.log("Upload CTD file.");
         await driver.findElement(By.id("cruise-name")).sendKeys("ar77");
-        if (myArgs[1] == 'headless') {
-            filename = process.cwd() + "//ar77_001.hdr";
-        }
-        else {
-            filename = process.cwd() + "\\ar77_001.hdr";
-        }
+        const path = require('path');
+        filename = path.join(process.cwd(), 'import', 'ar77_001.hdr');
         let fileInput = await driver.wait(
             until.elementLocated(By.css('#myDropzone input[type="file"], .dz-hidden-input')),
             10_000
         );
         await fileInput.sendKeys(filename);
 
-        await driver.wait(until.alertIsPresent(), 5000);
-
-        // read and accept file overwrite
-        let alert = await driver.switchTo().alert();
-        await alert.accept();  
+        try {
+            await driver.wait(until.alertIsPresent(), 5000);
+            // read and accept file overwrite
+            let alert = await driver.switchTo().alert();
+            await alert.accept();
+        }
+        catch (err) {
+            if (err.name === 'TimeoutError') {
+                console.log("No alert appeared; continuing...");
+            }
+            else {
+                throw err;
+            }
+        }
 
         bodyText = await driver.findElement(By.css('body')).getText();
         if (bodyText.includes("Please wait... Uploading and processing your file.")) {
@@ -105,23 +110,27 @@ var myArgs = process.argv.slice(1);
         // Upload Elog file
         console.log("Upload Elog file.");
         await driver.findElement(By.id("file-type")).sendKeys("Elog");
-        if (myArgs[1] == 'headless') {
-            filename = process.cwd() + "//R2R_ELOG_ar77_FINAL_EVENTLOG_20231016_162511.csv";
-        }
-        else {
-            filename = process.cwd() + "\\R2R_ELOG_ar77_FINAL_EVENTLOG_20231016_162511.csv";
-        }
+        filename = path.join(process.cwd(), 'import', 'R2R_ELOG_ar77_FINAL_EVENTLOG_20231016_162511.csv');
         fileInput = await driver.wait(
             until.elementLocated(By.css('#myDropzone input[type="file"], .dz-hidden-input')),
             10_000
         );
         await fileInput.sendKeys(filename);
 
-        await driver.wait(until.alertIsPresent(), 5000);
-
-        // read and accept file overwrite
-        alert = await driver.switchTo().alert();
-        await alert.accept();
+        try {
+            await driver.wait(until.alertIsPresent(), 5000);
+            // read and accept file overwrite
+            let alert = await driver.switchTo().alert();
+            await alert.accept();
+        }
+        catch (err) {
+            if (err.name === 'TimeoutError') {
+                console.log("No alert appeared; continuing...");
+            }
+            else {
+                throw err;
+            }
+        }
 
         bodyText = await driver.findElement(By.css('body')).getText();
         if (bodyText.includes("Please wait... Uploading and processing your file.")) {
@@ -142,22 +151,13 @@ var myArgs = process.argv.slice(1);
         // Upload Underway files
         console.log("Upload Underway files.");
         await driver.findElement(By.id("file-type")).sendKeys("Underway"); 
-        if (myArgs[1] == 'headless') {
-            file1 = process.cwd() + "//AR231011_0000.csv";
-            file2 = process.cwd() + "//AR231015_0000.csv";
-            file3 = process.cwd() + "//AR231014_0000.csv";
-            file4 = process.cwd() + "//AR231013_0000.csv";
-            file5 = process.cwd() + "//AR231012_0000.csv";
-            file6 = process.cwd() + "//AR231011_0000.csv";
-        }
-        else {
-            file1 = process.cwd() + "\\AR231011_0000.csv";
-            file2 = process.cwd() + "\\AR231015_0000.csv";
-            file3 = process.cwd() + "\\AR231014_0000.csv";
-            file4 = process.cwd() + "\\AR231013_0000.csv";
-            file5 = process.cwd() + "\\AR231012_0000.csv";
-            file6 = process.cwd() + "\\AR231011_0000.csv";
-        }
+        file1 = path.join(process.cwd(), 'import', 'AR231011_0000.csv');
+        file2 = path.join(process.cwd(), 'import', 'AR231015_0000.csv');
+        file3 = path.join(process.cwd(), 'import', 'AR231014_0000.csv');
+        file4 = path.join(process.cwd(), 'import', 'AR231012_0000.csv');
+        file5 = path.join(process.cwd(), 'import', 'AR231011_0000.csv');
+        file6 = path.join(process.cwd(), 'import', 'AR231011_0000.csv');
+
         fileInput = await driver.wait(
             until.elementLocated(By.css('#myDropzone input[type="file"], .dz-hidden-input')),
             10_000
@@ -167,9 +167,20 @@ var myArgs = process.argv.slice(1);
 
         // read and accept file exists alert for the 6 files
         for (var j = 0; j < 6; j++) {
-            await driver.wait(until.alertIsPresent(), 5000);
-            alert = await driver.switchTo().alert();
-            await alert.accept();
+            try {
+                await driver.wait(until.alertIsPresent(), 5000);
+                // read and accept file overwrite
+                let alert = await driver.switchTo().alert();
+                await alert.accept();
+            }
+            catch (err) {
+                if (err.name === 'TimeoutError') {
+                    console.log("No alert appeared; continuing...");
+                }
+                else {
+                    throw err;
+                }
+            }
         }
         
         bodyText = await driver.findElement(By.css('body')).getText();
@@ -193,23 +204,27 @@ var myArgs = process.argv.slice(1);
         // Upload LTERnut file
         console.log("Upload LTERnut file.");
         await driver.findElement(By.id("file-type")).sendKeys("LTERnut.xlsx");
-        if (myArgs[1] == 'headless') {
-            filename = process.cwd() + "//LTERnut.xlsx";
-        }
-        else {
-            filename = process.cwd() + "\\LTERnut.xlsx";
-        }
+        filename = path.join(process.cwd(), 'import', 'LTERnut.xlsx');
         fileInput = await driver.wait(
             until.elementLocated(By.css('#myDropzone input[type="file"], .dz-hidden-input')),
             10_000
         );
         await fileInput.sendKeys(filename);
 
-        await driver.wait(until.alertIsPresent(), 5000);
-
-        // read and accept file overwrite
-        alert = await driver.switchTo().alert();
-        await alert.accept();
+        try {
+            await driver.wait(until.alertIsPresent(), 5000);
+            // read and accept file overwrite
+            let alert = await driver.switchTo().alert();
+            await alert.accept();
+        }
+        catch (err) {
+            if (err.name === 'TimeoutError') {
+                console.log("No alert appeared; continuing...");
+            }
+            else {
+                throw err;
+            }
+        }
 
         bodyText = await driver.findElement(By.css('body')).getText();
         if (bodyText.includes("Please wait... Uploading and processing your file.")) {
@@ -232,23 +247,27 @@ var myArgs = process.argv.slice(1);
         // Upload Sample Log file
         console.log("Upload Sample Log file.");
         await driver.findElement(By.id("file-type")).sendKeys("LTER_sample_log.xlsx");
-        if (myArgs[1] == 'headless') {
-            filename = process.cwd() + "//LTER_sample_log.xlsx";
-        }
-        else {
-            filename = process.cwd() + "\\LTER_sample_log.xlsx";
-        }
+        filename = path.join(process.cwd(), 'import', 'LTER_sample_log.xlsx');
         fileInput = await driver.wait(
             until.elementLocated(By.css('#myDropzone input[type="file"], .dz-hidden-input')),
             10_000
         );
         await fileInput.sendKeys(filename);
 
-        await driver.wait(until.alertIsPresent(), 5000);
-
-        // read and accept file overwrite
-        alert = await driver.switchTo().alert();
-        await alert.accept();
+        try {
+            await driver.wait(until.alertIsPresent(), 5000);
+            // read and accept file overwrite
+            let alert = await driver.switchTo().alert();
+            await alert.accept();
+        }
+        catch (err) {
+            if (err.name === 'TimeoutError') {
+                console.log("No alert appeared; continuing...");
+            }
+            else {
+                throw err;
+            }
+        }
 
         bodyText = await driver.findElement(By.css('body')).getText();
         if (bodyText.includes("Please wait... Uploading and processing your file.")) {
@@ -271,23 +290,27 @@ var myArgs = process.argv.slice(1);
         // Upload Station List file
         console.log("Upload Station List file.");
         await driver.findElement(By.id("file-type")).sendKeys("NES-LTER_station_list_compilation.xlsx");
-        if (myArgs[1] == 'headless') {
-            filename = process.cwd() + "//NES-LTER_station_list_compilation.xlsx";
-        }
-        else {
-            filename = process.cwd() + "\\NES-LTER_station_list_compilation.xlsx";
-        }
+        filename = path.join(process.cwd(), 'import', 'NES-LTER_station_list_compilation.xlsx');
         fileInput = await driver.wait(
             until.elementLocated(By.css('#myDropzone input[type="file"], .dz-hidden-input')),
             10_000
         );
         await fileInput.sendKeys(filename);
 
-        await driver.wait(until.alertIsPresent(), 5000);
-
-        // read and accept file overwrite
-        alert = await driver.switchTo().alert();
-        await alert.accept();
+        try {
+            await driver.wait(until.alertIsPresent(), 5000);
+            // read and accept file overwrite
+            let alert = await driver.switchTo().alert();
+            await alert.accept();
+        }
+        catch (err) {
+            if (err.name === 'TimeoutError') {
+                console.log("No alert appeared; continuing...");
+            }
+            else {
+                throw err;
+            }
+        }
 
         bodyText = await driver.findElement(By.css('body')).getText();
         if (bodyText.includes("Please wait... Uploading and processing your file.")) {
@@ -309,24 +332,28 @@ var myArgs = process.argv.slice(1);
 
         // Upload Sosik Report file
         console.log("Upload Sosik Report file.");
-        await driver.findElement(By.id("file-type")).sendKeys("Sosik*report.xlsx");
-        if (myArgs[1] == 'headless') {
-            filename = process.cwd() + "//Sosik_13-07_report.xlsx";
-        }
-        else {
-            filename = process.cwd() + "\\Sosik_13-07_report.xlsx";
-        }
+        await driver.findElement(By.id("file-type")).sendKeys("");
+        filename = path.join(process.cwd(), 'import', 'Sosik_13-07_report.xlsx');
         fileInput = await driver.wait(
             until.elementLocated(By.css('#myDropzone input[type="file"], .dz-hidden-input')),
             10_000
         );
         await fileInput.sendKeys(filename);
 
-        await driver.wait(until.alertIsPresent(), 5000);
-
-        // read and accept file overwrite
-        alert = await driver.switchTo().alert();
-        await alert.accept();
+        try {
+            await driver.wait(until.alertIsPresent(), 5000);
+            // read and accept file overwrite
+            let alert = await driver.switchTo().alert();
+            await alert.accept();
+        }
+        catch (err) {
+            if (err.name === 'TimeoutError') {
+                console.log("No alert appeared; continuing...");
+            }
+            else {
+                throw err;
+            }
+        }
 
         bodyText = await driver.findElement(By.css('body')).getText();
         if (bodyText.includes("Please wait... Uploading and processing your file.")) {
@@ -349,23 +376,27 @@ var myArgs = process.argv.slice(1);
         // Upload Chlorophyll file
         console.log("Upload Chlorophyll file.");
         await driver.findElement(By.id("file-type")).sendKeys("NESLTERchl.xlsx");
-        if (myArgs[1] == 'headless') {
-            filename = process.cwd() + "//NESLTERchl.xlsx";
-        }
-        else {
-            filename = process.cwd() + "\\NESLTERchl.xlsx";
-        }
+        filename = path.join(process.cwd(), 'import', 'NESLTERchl.xlsx');
         fileInput = await driver.wait(
             until.elementLocated(By.css('#myDropzone input[type="file"], .dz-hidden-input')),
             10_000
         );
         await fileInput.sendKeys(filename);
 
-        await driver.wait(until.alertIsPresent(), 5000);
-
-        // read and accept file overwrite
-        alert = await driver.switchTo().alert();
-        await alert.accept();
+        try {
+            await driver.wait(until.alertIsPresent(), 5000);
+            // read and accept file overwrite
+            let alert = await driver.switchTo().alert();
+            await alert.accept();
+        }
+        catch (err) {
+            if (err.name === 'TimeoutError') {
+                console.log("No alert appeared; continuing...");
+            }
+            else {
+                throw err;
+            }
+        }
 
         bodyText = await driver.findElement(By.css('body')).getText();
         if (bodyText.includes("Please wait... Uploading and processing your file.")) {

@@ -1,16 +1,12 @@
 import os
 import io
-import glob
 import pandas as pd
 import re
 from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError
 from core.models import Cruise
-from storage.mediastore import MediaStore
-from storage.utils import PrefixStore
-from django.conf import settings
 import numpy as np
-from core.utils import clean_column_names, float_to_datetime, cast_columns
+from core.utils import clean_column_names, float_to_datetime, cast_columns, get_store
 
 CHL_SUFFIX = '_chl.csv'
 BTLSUM_SUFFIX = '_ctd_bottle_summary.csv'
@@ -37,10 +33,9 @@ class Command(BaseCommand):
     def read_btl_summary(self, cruise, chl):
 
         object_key = f"{cruise}{BTLSUM_SUFFIX}"
-        with MediaStore(self.URL, token=self.TOKEN) as store:
-            prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
+        with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
             try:
-                data = prefix.get(object_key)
+                data = store.get(object_key)
             except Exception as e:
                 print(e, flush=True)
                 print("Run ImportCast.py & ImportNiskin.py to import bottle summary file.", flush=True)
@@ -149,10 +144,9 @@ class Command(BaseCommand):
                 csv_binary = csv_buffer.getvalue().encode("utf-8")
 
                 object_key = f"{cruise_name}{CHL_SUFFIX}"
-                with MediaStore(self.URL, token=self.TOKEN) as store:
-                    prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
+                with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
                     try:
-                        prefix.put(object_key, csv_binary)
+                        store.put(object_key, csv_binary)
                         self.stdout.write(self.style.SUCCESS(f'{cruise_name}{CHL_SUFFIX} successfully created.'))
                     except Exception as e:
                         print(e, flush=True)

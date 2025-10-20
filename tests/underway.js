@@ -68,14 +68,14 @@ try {
     const data = await response.json();
 
     if (data[0].file_name == `${cruise}_underway.csv`) {
-        console.log('Underway Find test successful.');
+        console.log(`${cruise} Underway Find test successful.`);
     } else {
-        console.log('Underway Find test failed.');
+        console.log(`${ cruise } Underway Find test failed.`);
     }
 
   } catch (err) {
-     console.log('Underway Find test failed.');
-     console.error('Error:', err);
+     console.log(`${cruise} Underway Find test failed.`);
+     console.log('Error:', err);
     }
 
 

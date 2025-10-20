@@ -7,10 +7,8 @@ from django.http import FileResponse, HttpResponse
 from pydantic import BaseModel
 
 from core.models import Station, StationLocation
+from core.utils import get_store
 
-from storage.mediastore import MediaStore
-from storage.utils import PrefixStore
-from django.conf import settings
 
 class StationInput(BaseModel):
     name: str
@@ -130,10 +128,9 @@ class StationService:
         FILE_SUFFIX = 'stations.csv'
 
         object_key = f"{FILE_SUFFIX}"
-        with MediaStore(URL, token=TOKEN) as store:
-            prefix = PrefixStore(store, MEDIASTORE_PREFIX)
+        with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
             try:
-                data = prefix.get(object_key)
+                data = store.get(object_key)
             except Exception as e:
                 print(e, flush=True)
                 raise

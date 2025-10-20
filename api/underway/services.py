@@ -2,10 +2,9 @@ import csv
 import os
 import glob
 
-from io import BytesIO, StringIO
+from io import BytesIO
 
-from django.conf import settings
-from datetime import datetime
+from datetime import datetime, time, timedelta, timezone as dt_tz
 from django.http import JsonResponse
 from django.http import HttpResponse
 
@@ -16,13 +15,10 @@ import pandas as pd
 from core.models import Cruise
 from core.models import Underway
 
-from django.db import IntegrityError
 from django.http import FileResponse, Http404
 from ninja.errors import HttpError
 
-from storage.fs import FilesystemStore
-from storage.mediastore import MediaStore
-from storage.utils import PrefixStore
+from core.utils import get_store
 
 class UnderwayOutput(BaseModel):
     file_name: str
@@ -39,13 +35,12 @@ class UnderwayService:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
             if Underway.objects.filter(cruise=cruise).exists():
                 object_key = f"{cruise_name.lower()}{cls.FILE_SUFFIX}"
-                with MediaStore(URL, token=TOKEN) as store:
-                    prefix = PrefixStore(store, MEDIASTORE_PREFIX)
-                    try:
-                        data = prefix.get(object_key)
-                    except Exception as e:
-                        print(e, flush=True)
-                        raise
+                with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
+                   try:
+                       data = store.get(object_key)
+                   except Exception as e:
+                       print(e, flush=True)
+                       raise
                 csv_buffer = BytesIO(data)
                 response = HttpResponse(csv_buffer, content_type='text/csv')
                 response['Content-Disposition'] = f'attachment; filename="{object_key}"'
@@ -64,10 +59,9 @@ class UnderwayService:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
             if Underway.objects.filter(cruise=cruise).exists(): 
                 object_key = f"{cruise_name.lower()}{cls.FILE_SUFFIX}"
-                with MediaStore(URL, token=TOKEN) as store:
-                    prefix = PrefixStore(store, MEDIASTORE_PREFIX)
+                with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
                     try:
-                        data = prefix.get(object_key)
+                        data = store.get(object_key)
                     except Exception as e:
                         print(e, flush=True)
                         raise
@@ -89,35 +83,27 @@ class UnderwayService:
 
     @classmethod
     def find_underway_files(cls, start_timestamp: str, end_timestamp: str) -> list[UnderwayOutput]:
-        URL = os.getenv("URL")
-        TOKEN = os.getenv("TOKEN")
-        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
-
         try:
-            start_dt = datetime.strptime(start_timestamp, "%Y-%m-%d")
-            end_dt = datetime.strptime(end_timestamp, "%Y-%m-%d")
+            start_date = datetime.strptime(start_timestamp, "%Y-%m-%d")
+            end_date = datetime.strptime(end_timestamp, "%Y-%m-%d")
         except ValueError:
             raise HttpError(400, "Invalid date format. Use yyyy-mm-dd")
 
         # datetime format yyyy-mm-dd hh:mm:ss
-        if end_timestamp < start_timestamp:
+        if end_date < start_date:
             raise HttpError(500, f"end_timestamp must be greater than or equal to start_timestamp")
-        responses = []
+
+        UTC = dt_tz.utc
+        start_dt = datetime.combine(start_date, time.min, tzinfo=UTC)
+        end_dt = datetime.combine(end_date + timedelta(days=1), time.min, tzinfo=UTC)
+
         underway_objects = Underway.objects.filter(
-            Q(start_datetime__lte=end_timestamp) & Q(end_datetime__gte=start_timestamp)
+            Q(start_datetime__lte=end_dt) & Q(end_datetime__gte=start_dt)
         )
+
+        responses = []
         for underway in underway_objects:
             object_key = f"{underway.cruise.name}{cls.FILE_SUFFIX}"
-            with MediaStore(URL, token=TOKEN) as store:
-                prefix = PrefixStore(store, MEDIASTORE_PREFIX)
-                try:
-                    data = prefix.get(object_key)
-                except Exception as e:
-                    print(e, flush=True)
-                    raise
-            csv_buffer = BytesIO(data)
-            response = HttpResponse(csv_buffer, content_type='text/csv')
-            response['Content-Disposition'] = f'attachment; filename="{object_key}"'
             responses.append(UnderwayOutput(file_name=object_key))
         if not responses:
             raise Http404(f"Underway data files not found between start timestamp {start_timestamp} and {end_timestamp}.")   

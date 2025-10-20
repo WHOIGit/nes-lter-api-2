@@ -1,0 +1,83 @@
+name: Create and publish a package
+on:
+  push:
+    branches:
+      - "main"
+      - "github-actions"
+
+env:
+  IMAGE_NAME: nes-lter-api-2
+
+jobs:
+  # NES-LTER API 2 Automated Testing and Tagging
+  setup-build-publish:
+    name: NES-LTER API 2 Setup, Build, and Publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Running Automated tests
+        run: |
+
+          # Build and run development version
+          mv dotenv.template .env
+          sed -i 's|^VAST_DATA_DIR=.*|VAST_DATA_DIR=./tests|' .env
+          sed -i 's|^USE_DICTSTORE=FALSE$|USE_DICTSTORE=TRUE|' .env
+
+          docker compose -f docker-compose-testing.yml build
+
+          docker compose -f docker-compose-testing.yml up --detach
+          sleep 30
+
+          # Run migrations
+          docker compose -f docker-compose-testing.yml exec -T api python manage.py migrate --noinput
+
+          sh -c "until curl -Is http://localhost:8000; do echo 'waiting for http://localhost:8000'; sleep 10; done"
+          echo "localhost:8000 running"
+
+          # Create admin user and capture token
+          docker compose -f docker-compose-testing.yml exec -T api \
+          python manage.py shell -c "from django.contrib.auth import get_user_model;from rest_framework.authtoken.models import Token;from pathlib import Path;User = get_user_model();u, _ = User.objects.get_or_create(username='admin');u.set_password('admin');u.is_superuser = u.is_staff = True;u.save();token, _ = Token.objects.get_or_create(user=u);Path('/data/token.txt').write_text(token.key); print(token.key)"
+
+
+          # Import the test cruise and CTD data
+          docker compose -f docker-compose-testing.yml exec -T api python manage.py importall --cruise_name ar77
+          docker compose -f docker-compose-testing.yml exec -T api python manage.py importall --cruise_name en617
+          docker compose -f docker-compose-testing.yml exec -T api python manage.py importall --cruise_name hrs2303
+          docker compose -f docker-compose-testing.yml exec -T api python manage.py importall --cruise_name ae2426
+          docker compose -f docker-compose-testing.yml exec -T api python manage.py importall --cruise_name at46
+
+          # Run automated tests
+          docker compose -f docker-compose-testing.yml run -e GITHUB_ACTIONS=true tests ./RunAllTests-Docker.bat
+
+      - name: Build, Tag & Push Production Image
+        if: contains(github.ref, 'main')
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          IMAGE_ID=ghcr.io/${{ github.repository }}
+
+          # Change all uppercase to lowercase
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+
+          # Strip git ref prefix from branch
+          #BRANCH=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+
+          # Strip "release-" prefix from version
+          #VERSION=$(echo $BRANCH | sed -e 's/.*-//')
+
+          echo "IMAGE_ID:"
+          echo $IMAGE_ID
+          #echo "VERSION:"
+          #echo $VERSION
+
+          # Build Production Container
+          docker build -f Dockerfile -t $IMAGE_ID .
+
+          docker image ls
+
+          docker push $IMAGE_ID
+
+      - name: Stopping API 2 application
+        run: docker compose --file docker-compose-testing.yml down

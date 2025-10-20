@@ -6,9 +6,7 @@ from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.gis.geos import Point
 from core.models import Cruise, HPLC, Station
-from storage.mediastore import MediaStore
-from storage.utils import PrefixStore
-from django.conf import settings
+from core.utils import get_store
 import numpy as np
 
 HPLC_SUFFIX = '_hplc.csv'
@@ -35,19 +33,16 @@ class Command(BaseCommand):
     def read_hplc_files(self):
         dfs = []
         directory = f'/vast/raw/all/hplc'
-        hplc_files = sorted(glob.glob(os.path.join(directory, 'Sosik*report.xlsx')))
+        hplc_files = sorted(glob.glob(os.path.join(directory, '*Sosik*report.xlsx')))
 
         for file in hplc_files:
-            if "13-07" in os.path.basename(file):
-                Y = 'year'
-                M = 'month'
-                D = 'day'
-                T = 'time'
-            else:
-                Y = 'Year'
-                M = 'Month'
-                D = 'Day of Gregorian Month'
-                T = 'GMT Time'
+            if file.endswith("Sosik_13-07_report.xlsx") and not file.endswith("Fixed_Sosik_13-07_report.xlsx"):
+                continue
+
+            Y = 'Year'
+            M = 'Month'
+            D = 'Day of Gregorian Month'
+            T = 'GMT Time'
 
             report = pd.read_excel(file, skiprows=8, dtype={
                 Y: str,
@@ -133,10 +128,9 @@ class Command(BaseCommand):
                 csv_binary = csv_buffer.getvalue().encode("utf-8")
 
                 object_key = f"{cruise_name}{HPLC_SUFFIX}"
-                with MediaStore(self.URL, token=self.TOKEN) as store:
-                    prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
+                with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
                     try:
-                        prefix.put(object_key, csv_binary)
+                        store.put(object_key, csv_binary)
                         self.stdout.write(self.style.SUCCESS(f'{cruise_name}{HPLC_SUFFIX} successfully created.'))
                     except Exception as e:
                         print(e, flush=True)

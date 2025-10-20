@@ -5,13 +5,9 @@ import os
 import io
 import json
 import pandas as pd
-import re
-from django.conf import settings
 from django.core.management.base import CommandError
 from .models import Cruise, Cast
-from storage.mediastore import MediaStore
-from storage.utils import PrefixStore
-from django.conf import settings
+from core.utils import get_store, _use_dictstore
 import matplotlib.pyplot as plt
 from io import BytesIO
 from pathlib import Path
@@ -26,16 +22,28 @@ def is_staff(user):
 def file_upload_view(request):
     if request.method == 'POST':
 
-        dest_dir_lookup = {
-            'ctd': lambda cruise_name: Path(f'/vast/raw/{cruise_name}/ctd'),
-            'elog': lambda cruise_name: Path(f'/vast/raw/{cruise_name}/elog'),
-            'underway': lambda cruise_name: Path(f'/vast/raw/{cruise_name}/underway'),
-            'nutrient': Path('/vast/raw/all/nut'),
-            'sample_log': Path('/vast/raw/all'),
-            'station_list' : Path('/vast/raw/all/metadata'),
-            'hplc' : Path('/vast/raw/all/hplc'),
-            'chlorophyll': Path('/vast/raw/all/chl'),
-        }
+        if _use_dictstore():
+            dest_dir_lookup = {
+                'ctd': lambda cruise_name: Path(f'/data/raw/{cruise_name}/ctd'),
+                'elog': lambda cruise_name: Path(f'/data/raw/{cruise_name}/elog'),
+                'underway': lambda cruise_name: Path(f'/data/raw/{cruise_name}/underway'),
+                'nutrient': Path('/data/raw/all/nut'),
+                'sample_log': Path('/data/raw/all'),
+                'station_list' : Path('/data/raw/all/metadata'),
+                'hplc' : Path('/data/raw/all/hplc'),
+                'chlorophyll': Path('/data/raw/all/chl'),
+            }
+        else:
+            dest_dir_lookup = {
+                'ctd': lambda cruise_name: Path(f'/vast/raw/{cruise_name}/ctd'),
+                'elog': lambda cruise_name: Path(f'/vast/raw/{cruise_name}/elog'),
+                'underway': lambda cruise_name: Path(f'/vast/raw/{cruise_name}/underway'),
+                'nutrient': Path('/vast/raw/all/nut'),
+                'sample_log': Path('/vast/raw/all'),
+                'station_list' : Path('/vast/raw/all/metadata'),
+                'hplc' : Path('/vast/raw/all/hplc'),
+                'chlorophyll': Path('/vast/raw/all/chl'),
+            }    
 
         file_obj = request.FILES['file']
         cruise_name = request.POST.get('cruise_name', '').strip().lower()
@@ -71,6 +79,10 @@ def file_upload_view(request):
                 'error': f"The file '{filename}' already exists in {destination_dir}.",
                 'conflict': True  # Flag for frontend to prompt user
             }, status=409)
+
+        # Create dir in github actions
+        if _use_dictstore():
+            upload_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Save file
         try:
@@ -141,10 +153,9 @@ def cruise_track_view(request, cruise_name):
         MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
 
         object_key = f"{cruise_name}{UNDERWAY_SUFFIX}"
-        with MediaStore(URL, token=TOKEN) as store:
-            prefix = PrefixStore(store, MEDIASTORE_PREFIX)
+        with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
             try:
-                data = prefix.get(object_key)
+                data = store.get(object_key)
             except Exception as e:
                 print(e, flush=True)
 
@@ -224,13 +235,13 @@ def ctd_plot_view(request, cruise_name, cast_number):
     MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
 
     object_key = f"{cruise_name}_ctd_cast_{cast_number}.csv"
-    with MediaStore(URL, token=TOKEN) as store:
-        prefix = PrefixStore(store, MEDIASTORE_PREFIX)
-        try:
-            data = prefix.get(object_key)
-        except Exception as e:
-            print(e, flush=True)
-            return HttpResponse("CTD file not found.", status=404)
+
+    with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
+            try:
+                data = store.get(object_key)
+            except Exception as e:
+                print(e, flush=True)
+                return HttpResponse("CTD file not found.", status=404)
 
     df = pd.read_csv(io.BytesIO(data))
 

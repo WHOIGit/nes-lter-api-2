@@ -6,11 +6,8 @@ from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.gis.geos import Point
 from core.models import Cruise, Station
-from storage.mediastore import MediaStore
-from storage.utils import PrefixStore
-from django.conf import settings
 import numpy as np
-from core.utils import clean_column_names, wide_to_long, path_to_cast
+from core.utils import clean_column_names, wide_to_long, path_to_cast, get_store
 
 NUT_SUFFIX = '_nut.csv'
 BTLSUM_SUFFIX = '_ctd_bottle_summary.csv'
@@ -72,10 +69,9 @@ class Command(BaseCommand):
     def read_btl_summary(self, cruise, sample_ids):
 
         object_key = f"{cruise}{BTLSUM_SUFFIX}"
-        with MediaStore(self.URL, token=self.TOKEN) as store:
-            prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
+        with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
             try:
-                data = prefix.get(object_key)
+                data = store.get(object_key)
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f'Run ImportNiskin.py to create bottle summary file for cruise {cruise}.'))
                 return pd.DataFrame()
@@ -300,10 +296,9 @@ class Command(BaseCommand):
         JP_STUDENT_CRUISES = ['ar22', 'ar32', 'ar38']
 
         object_key = f"{cruise}{BTLDATA_SUFFIX}"
-        with MediaStore(self.URL, token=self.TOKEN) as store:
-            prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
+        with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
             try:
-                data = prefix.get(object_key)
+                data = store.get(object_key)
             except Exception as e:
                 print(e, flush=True)
                 print("Run ImportNiskin.py to import bottle file.", flush=True)
@@ -381,10 +376,9 @@ class Command(BaseCommand):
                     csv_binary = csv_buffer.getvalue().encode("utf-8")
 
                     object_key = f"{cruise_name}{NUT_SUFFIX}"
-                    with MediaStore(self.URL, token=self.TOKEN) as store:
-                        prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
+                    with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
                         try:
-                            prefix.put(object_key, csv_binary)
+                            store.put(object_key, csv_binary)
                             self.stdout.write(self.style.SUCCESS(f'{cruise_name}{NUT_SUFFIX} successfully created.'))
                         except Exception as e:
                             print(e, flush=True)

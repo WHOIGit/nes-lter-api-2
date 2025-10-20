@@ -6,11 +6,7 @@ from io import BytesIO, StringIO
 import pandas as pd
 from core.models import Cruise
 from core.models import Underway
-from core.utils import clean_column_names
-from storage.fs import FilesystemStore
-from storage.mediastore import MediaStore
-from storage.utils import PrefixStore
-from django.conf import settings
+from core.utils import clean_column_names, get_store
 from pathlib import Path
 from django.utils import timezone
 
@@ -37,11 +33,11 @@ class Command(BaseCommand):
         cruise_name = options['cruise_name']
         
         underway_metadata = {
-           'ar': {'read_csv_args': {'skiprows': 1}, 'date_column': 'DATE_GMT', 'date_format': '%Y/%m/%d'},
-           'at': {'read_csv_args': {'skiprows': 1}, 'date_column': 'DATE_GMT', 'date_format': '%Y/%m/%d'},
-           'en': {'read_csv_args': {'comment': '#'}, 'date_column': 'DateTime_ISO8601', 'date_format': None},
-           'hrs': {'read_csv_args': {'header': [0]}, 'date_column': 'date', 'date_format': '%Y-%m-%d %H:%M:%S%z'},
-           'ae': {'read_csv_args': {'header': [0]}, 'date_column': 'YMD', 'date_format': '%Y%m%d'}
+           'ar': {'read_csv_args': {'skiprows': 1}, 'date_column': 'DATE_GMT', 'date_format': '%Y/%m/%d', 'time_column': ' TIME_GMT'},
+           'at': {'read_csv_args': {'skiprows': 1}, 'date_column': 'DATE_GMT', 'date_format': '%Y/%m/%d', 'time_column': ' TIME_GMT'},
+           'en': {'read_csv_args': {'comment': '#'}, 'date_column': 'DateTime_ISO8601', 'date_format': None, 'time_column': None},
+           'hrs': {'read_csv_args': {'header': [0]}, 'date_column': 'date', 'date_format': '%Y-%m-%d %H:%M:%S%z', 'time_column': None},
+           'ae': {'read_csv_args': {'header': [0]}, 'date_column': 'YMD', 'date_format': '%Y%m%d', 'time_column': 'HMS'}
         }
 
         if cruise_name is None:
@@ -74,6 +70,24 @@ class Command(BaseCommand):
                         data_frames.append(df)
 
                     combined_data = pd.concat(data_frames, ignore_index=True)
+
+                    if metadata['time_column']:
+                        combined_data['datetime'] = pd.to_datetime(
+                            combined_data[metadata['date_column']].astype(str).str.strip() + ' ' +
+                            combined_data[metadata['time_column']].astype(str).str.zfill(6),
+                            format=f"{metadata['date_format']} %H%M%S",
+                            errors='coerce'
+                        )
+                    else:
+                        combined_data['datetime'] = pd.to_datetime(
+                            combined_data[metadata['date_column']])
+
+                    combined_data = combined_data.sort_values(
+                        by='datetime',
+                        ascending=True,
+                        ignore_index=True
+                    )
+                    combined_data = combined_data.drop(columns=['datetime'])
                     
                     # Select only numeric columns and fill NaN values with 'NaN'
                     combined_data[combined_data.select_dtypes(include=['number']).columns] = combined_data.select_dtypes(include=['number']).fillna('NaN')
@@ -83,19 +97,18 @@ class Command(BaseCommand):
                     date_column = metadata['date_column']
                     date_format = metadata['date_format']
                     if date_format:
-                        start_datetime = pd.to_datetime(combined_data[date_column].iloc[0], format=date_format)
-                        end_datetime = pd.to_datetime(combined_data[date_column].iloc[-1], format=date_format)
+                        start_datetime = pd.to_datetime(combined_data[date_column].min(), format=date_format)
+                        end_datetime = pd.to_datetime(combined_data[date_column].max(), format=date_format)
                     else:
-                        start_datetime = pd.to_datetime(combined_data[date_column].iloc[0])
-                        end_datetime = pd.to_datetime(combined_data[date_column].iloc[-1])
+                        start_datetime = pd.to_datetime(combined_data[date_column].min())
+                        end_datetime = pd.to_datetime(combined_data[date_column].max())
 
                     df_data = clean_column_names(combined_data)
 
                 else:
                     raise ValueError(f"Unsupported cruise type for cruise_name: {cruise_name}")
                 start_datetime = None if pd.isna(start_datetime) else self.make_aware_if_naive(start_datetime)
-                end_datetime = None if pd.isna(end_datetime) else self.make_aware_if_naive(end_datetime)
-
+                end_datetime = None if pd.isna(end_datetime) else self.make_aware_if_naive(end_datetime)                
 
                 Underway.objects.update_or_create(
                         cruise=cruise,
@@ -108,10 +121,9 @@ class Command(BaseCommand):
                 csv_binary = csv_buffer.getvalue().encode('utf-8')
                 # Use the put method to store the CSV in the vast media store
                 object_key = f"{cruise_name}{self.FILE_SUFFIX}"
-                with MediaStore(self.URL, token=self.TOKEN) as store:
-                    prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
+                with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
                     try:
-                        prefix.put(object_key, csv_binary)
+                        store.put(object_key, csv_binary)
                     except Exception as e:
                         print(e, flush=True)
                         raise

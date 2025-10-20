@@ -24,6 +24,8 @@ services:
     build:
       context: .
       dockerfile: ./tests/Dockerfile
+    volumes:
+      - ${PRIMARY_DATA_DIR:-./data}:/data
     depends_on:
       - api
     profiles:

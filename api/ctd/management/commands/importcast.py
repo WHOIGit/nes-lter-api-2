@@ -1,21 +1,15 @@
-import csv
 import os
 import io
 import glob
 import re
 import pandas as pd
-import sys
 from django.core.management.base import BaseCommand, CommandError
 from core.models import Cruise, Cast, Station
+from core.utils import get_store
 from pathlib import Path
 from django.contrib.gis.geos import Point
-from storage.mediastore import MediaStore
-from storage.utils import PrefixStore
-from django.conf import settings
 
-from core.utils import convert_to_decimal, format_utc_date, \
-                       path_to_cast, parse_lat_lon, parse_time, \
-                       clean_column_names
+from core.utils import path_to_cast, parse_lat_lon, parse_time, clean_column_names
 
 CRUISE_COL = 'cruise'
 CAST_COL = 'cast'
@@ -90,13 +84,12 @@ class Command(BaseCommand):
             csv_binary = csv_buffer.getvalue().encode("utf-8")
 
             object_key = f"{cruise}{"_ctd_cast_"}{cast}{".csv"}"
-            with MediaStore(self.URL, token=self.TOKEN) as store:
-                prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
+            with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
                 try:
-                    prefix.put(object_key, csv_binary)
+                    store.put(object_key, csv_binary)
                 except Exception as e:
                     print(e, flush=True)
-                    raise        
+                    raise  
         except FileNotFoundError:
             self.stdout.write(self.style.ERROR(f'No .asc file found for cruise {cruise} cast {cast}.'))
         except pd.errors.ParserError as e:
@@ -187,11 +180,9 @@ class Command(BaseCommand):
                 csv_binary = csv_buffer.getvalue().encode("utf-8")
 
                 object_key = f"{cruise.name}{METADATA_SUFFIX}"
-                with MediaStore(self.URL, token=self.TOKEN) as store:
-                    prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
+                with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
                     try:
-                        prefix.put(object_key, csv_binary)
-                        self.stdout.write(self.style.SUCCESS(f'{cruise.name}{METADATA_SUFFIX} successfully created.'))
+                        store.put(object_key, csv_binary)
                     except Exception as e:
                         print(e, flush=True)
                         raise

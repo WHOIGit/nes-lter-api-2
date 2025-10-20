@@ -1,7 +1,8 @@
 rem Runs all NESLTER API 2 Selenium Webdriver automated tests in Windows cmd prompt launching Chrome. Takes about 5 minutes to run. 
-cmd /c node station.js >> API2Testing.log 
+rem create /data/token.txt for localhost admin user token
+cmd /c node station.js > API2Testing.log 
 >> API2Testing.log echo.
-cmd /c node vessels.js > API2Testing.log 
+cmd /c node vessels.js >> API2Testing.log 
 >> API2Testing.log echo.
 cmd /c node cruise.js >> API2Testing.log 
 >> API2Testing.log echo.

@@ -3,7 +3,6 @@ import glob
 import re
 import io
 import pandas as pd
-import numpy as np
 import sys
 from django.core.management.color import color_style
 from django.core.management.base import BaseCommand, CommandError
@@ -12,11 +11,8 @@ from core.models import Cast, Niskin
 from pathlib import Path
 from django.contrib.gis.geos import Point
 from django.core.exceptions import ObjectDoesNotExist
-from storage.mediastore import MediaStore
-from storage.utils import PrefixStore
-from django.conf import settings
 
-from core.utils import convert_to_decimal, p_to_depth, path_to_cast, \
+from core.utils import p_to_depth, path_to_cast, get_store, \
                        parse_lat_lon, clean_column_names
 
 # date column is the second column (index 1)
@@ -249,10 +245,9 @@ class Command(BaseCommand):
                     csv_binary = csv_buffer.getvalue().encode("utf-8")
 
                     object_key = f"{cruise_name}{BOTTLES_SUFFIX}"
-                    with MediaStore(self.URL, token=self.TOKEN) as store:
-                        prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
+                    with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
                         try:
-                            prefix.put(object_key, csv_binary)
+                            store.put(object_key, csv_binary)
                         except Exception as e:
                             print(e, flush=True)
                             raise
@@ -266,10 +261,9 @@ class Command(BaseCommand):
                     csv_binary = csv_buffer.getvalue().encode("utf-8")
 
                     object_key = f"{cruise_name}{SUMMARY_SUFFIX}"
-                    with MediaStore(self.URL, token=self.TOKEN) as store:
-                        prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
+                    with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
                         try:
-                            prefix.put(object_key, csv_binary)
+                            store.put(object_key, csv_binary)
                             self.stdout.write(self.style.SUCCESS(f'Niskins for Cruise {cruise_name} successfully imported.'))
                         except Exception as e:
                             print(e, flush=True)

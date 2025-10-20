@@ -3,10 +3,8 @@ import io
 import pandas as pd
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
-from core.models import Station, StationLocation, Cruise, Cast
-from storage.mediastore import MediaStore
-from storage.utils import PrefixStore
-from django.conf import settings
+from core.models import Station, StationLocation
+from core.utils import get_store
 from django.db import transaction
 
 STATION_FULL_COL = 'stationfullname'
@@ -73,18 +71,14 @@ class Command(BaseCommand):
                 csv_binary = csv_buffer.getvalue().encode("utf-8")
 
                 object_key = f'{STATION_FILENAME}'
-                with MediaStore(self.URL, token=self.TOKEN) as store:
-                    prefix = PrefixStore(store, self.MEDIASTORE_PREFIX)
+                with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
                     try:
-                        prefix.put(object_key, csv_binary)
-                        self.stdout.write(self.style.SUCCESS(f'{STATION_FILENAME} successfully created.'))
+                        store.put(object_key, csv_binary)
+                        self.stdout.write(self.style.SUCCESS(f"{STATION_FILENAME} successfully created."))
                     except Exception as e:
                         print(e, flush=True)
                         raise
 
-                # create and write ctd metadata file to media store
-                #for cruise in Cruise.objects.all():
-                    
                 self.stdout.write(self.style.SUCCESS(f'Stations successfully imported.'))
             except Exception as e:
                 raise CommandError(f'An error occurred: {str(e)}')

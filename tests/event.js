@@ -4,7 +4,7 @@ console.log("Running Event Test.");
 
 const cruises = ["ar77", "en617", "hrs2303", "ae2426", "at46"];
 
-const getCounts = { ar77: 166, en617: 111, hrs2303: 159, ae2426: 168, at46: 228 };
+const getCounts = { ar77: 166, en617: 111, hrs2303: 159, ae2426: 168, at46: 266 };
 const instCounts = { ar77: 18, en617: 19, hrs2303: 20, ae2426: 21, at46: 19 };
 const r2rEvent = {
     ar77: '20231011.1311.001', en617: 'en617-SE-20180720.1404.001', hrs2303: '20230502.1302.001',
@@ -32,8 +32,16 @@ async function getData(cruise) {
         console.log(`${cruise} Events Get test successful.`);
     }
     else {
-        console.log(`${cruise} Events are missing.`);
-        console.log(`${cruise} Events Get test failed.`);
+        // at46 has duplicate r2r_events which are suposed to be unique;
+        // after edit elog, the duplicate events are not stored in the model
+        if ((cruise === 'at46') && (lines.length === 228)) {
+            console.log(`${cruise} Events Get test successful.`);
+        }
+        else { 
+            console.log("lines, expected: ", lines.length, expected);
+            console.log(`${cruise} Events are missing.`);
+            console.log(`${cruise} Events Get test failed.`);
+        }
     }
   } catch (err) {
     console.log(`${cruise} Events Get test failed.`);
@@ -62,13 +70,13 @@ async function getData(cruise) {
 
     var token;
     const tokenPath = path.resolve(__dirname, 'token.txt');
-    if (path.basename(process.cwd()) === 'tests') {
-        token = (await fs.readFile("token.txt", 'utf-8')).trim();
+    if (__dirname === "/tests") {
+        token = (await fs.readFile("/data/token.txt", 'utf-8')).trim();
     }
     else {
-        token = (await fs.readFile(tokenPath, 'utf-8')).trim();
-    }      
-
+        const dataPath = tokenPath.replace('\\tests\\', '\\data\\');
+        token = (await fs.readFile(dataPath, 'utf-8')).trim();
+    }   
 
   try {
     const response = await fetch(`http://localhost:8000/api/events/filter/${cruise}`, {
@@ -154,31 +162,33 @@ try {
         console.error('Error:', err);
     }
 
-/*   FIX - NEED TO RUN IMPORT EVENTS AFTER THIS
-     try {
-        const response = await fetch(`http://localhost:8000/api/events/delete/${cruise}`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+    // Delete events in github actions only, otherwise need to rerun import events to recreate
+    if (process.env.GITHUB_ACTIONS === 'true') {
+        try {
+            const response = await fetch(`http://localhost:8000/api/events/delete/${cruise}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (!response.ok) {
+                throw new Error('HTTP error ' + response.status);
             }
-        });
-        if (!response.ok) {
-            throw new Error('HTTP error ' + response.status);
-        }
-        const data = await response.json();
+            const data = await response.json();
 
-        if (data.message == `Events on cruise ${cruise} deleted.`) {
-            console.log(`${cruise} Delete Event test successful.`);
-        } else {
+            if (data.message == `Events on cruise ${cruise} deleted.`) {
+                console.log(`${cruise} Delete Event test successful.`);
+            } else {
+                console.log(`${cruise} Delete Event test failed.`);
+            }
+
+        }
+        catch (err) {
             console.log(`${cruise} Delete Event test failed.`);
+            console.error('Error:', err);
         }
-
-    }
-    catch (err) {
-        console.log(`${cruise} Delete Event test failed.`);
-        console.error('Error:', err);
-    } */
+    } 
 }
 
 async function runAll() {
