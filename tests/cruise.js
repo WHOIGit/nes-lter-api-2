@@ -21,9 +21,19 @@ else {
     ];
 }
 
+var myArgs = process.argv.slice(1);
+
 async function getData() {
     try {
-        const response = await fetch('http://localhost:8000/api/ctd/cruises/get/all');
+
+        if (myArgs[1] == 'public') {
+            url = `https://mullen.whoi.edu`;
+        }
+        else {
+            url = `http://localhost:8000`;
+        }
+
+        const response = await fetch(`${url}/api/ctd/cruises/get/all`);
         if (!response.ok) {
             throw new Error(`HTTP error ${response.status}`);
         }
@@ -54,7 +64,7 @@ async function getData() {
     for (const cruise of expectedCruiseNames) {
         error = false;
         try {
-            const response = await fetch(`http://localhost:8000/api/ctd/cruises/get/${encodeURIComponent(cruise)}`);
+            const response = await fetch(`${url}/api/ctd/cruises/get/${encodeURIComponent(cruise)}`);
             if (!response.ok) {
                 throw new Error('HTTP error ' + response.status);
             }
@@ -90,7 +100,7 @@ async function getData() {
     }    
 
     try {
-        const response = await fetch('http://localhost:8000/api/ctd/cruises/create', {
+        const response = await fetch(`${url}/api/ctd/cruises/create`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -124,7 +134,7 @@ async function getData() {
     }
 
     try {
-        const response = await fetch('http://localhost:8000/api/ctd/cruises/update/test', {
+        const response = await fetch(`${url}/api/ctd/cruises/update/test`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -157,7 +167,7 @@ async function getData() {
     }
 
     try {
-        const response = await fetch('http://localhost:8000/api/ctd/cruises/delete/test', {
+        const response = await fetch(`${url}/api/ctd/cruises/delete/test`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',

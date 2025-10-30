@@ -11,9 +11,18 @@ const r2rEvent = {
     ae2426: '20241106.1442.001', at46: 'at46-SE-20220216.1627.001'
 };
 
+var myArgs = process.argv.slice(1);
+
 async function getData(cruise) {
+
+  if (myArgs[1] == 'public') {
+      url = `https://mullen.whoi.edu`;
+  }
+  else {
+      url = `http://localhost:8000`;
+  }
   try {
-    const response = await fetch(`http://localhost:8000/api/events/get/${cruise}`);
+    const response = await fetch(`${url}/api/events/get/${cruise}`);
     if (!response.ok) {
       throw new Error('HTTP error ' + response.status);
       }
@@ -50,7 +59,7 @@ async function getData(cruise) {
 
 
   try {
-    const response = await fetch(`http://localhost:8000/api/events/instruments/${cruise}`);
+      const response = await fetch(`${url}/api/events/instruments/${cruise}`);
     if (!response.ok) {
         throw new Error('HTTP error ' + response.status);
     }
@@ -79,7 +88,7 @@ async function getData(cruise) {
     }   
 
   try {
-    const response = await fetch(`http://localhost:8000/api/events/filter/${cruise}`, {
+      const response = await fetch(`${url}/api/events/filter/${cruise}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -108,7 +117,7 @@ async function getData(cruise) {
   }
 
 try {
-    const response = await fetch(`http://localhost:8000/api/events/history/${cruise}`);
+    const response = await fetch(`${url}/api/events/history/${cruise}`);
     if (!response.ok) {
         throw new Error('HTTP error ' + response.status);
     }
@@ -124,7 +133,7 @@ try {
     const r2r = r2rEvent[cruise];
 
     try {
-        const response = await fetch(`http://localhost:8000/api/events/edit/${cruise}/${r2r}`, {
+        const response = await fetch(`${url}/api/events/edit/${cruise}/${r2r}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -165,7 +174,7 @@ try {
     // Delete events in github actions only, otherwise need to rerun import events to recreate
     if (process.env.GITHUB_ACTIONS === 'true') {
         try {
-            const response = await fetch(`http://localhost:8000/api/events/delete/${cruise}`, {
+            const response = await fetch(`${url}/api/events/delete/${cruise}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',

@@ -2,9 +2,19 @@ const fs = require('fs/promises');
 const path = require('path');
 console.log("Running Station Test.");
 
+var myArgs = process.argv.slice(1);
+
 async function getData() {
+
+  if (myArgs[1] == 'public') {
+      url = `https://mullen.whoi.edu`;
+  }
+  else {
+      url = `http://localhost:8000`;
+  }
+
   try {
-    const response = await fetch('http://localhost:8000/api/stations/file');
+    const response = await fetch(`${url}/api/stations/file`);
     if (!response.ok) {
       throw new Error('HTTP error ' + response.status);
       }
@@ -16,7 +26,7 @@ async function getData() {
           .map(line => line.trim())
           .filter(line => line.length > 0); 
 
-    if (lines.length == 81)
+    if (lines.length == 86)
       {
         console.log('Stations File Get test successful.');
     }
@@ -40,7 +50,7 @@ async function getData() {
   }      
 
   try {
-      const response = await fetch('http://localhost:8000/api/stations/add_nearest', {
+      const response = await fetch(`${url}/api/stations/add_nearest`, {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json',

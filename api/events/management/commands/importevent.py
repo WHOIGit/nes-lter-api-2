@@ -1,16 +1,13 @@
-import csv
 import os
 import glob
 import io
 from django.core.management.base import BaseCommand, CommandError
 import pandas as pd
-import numpy as np
 from core.models import Cruise
 from core.models import Event
 from core.utils import get_store
 from django.contrib.gis.geos import Point
-import pytz
-from datetime import datetime
+from collections import Counter
 
 DATETIME = 'dateTime8601'
 MESSAGE_ID = 'Message ID'
@@ -152,6 +149,12 @@ class Command(BaseCommand):
                            "Longitude": longitude,
                            "Comment": event.comment,
                        })
+
+                   # duplicate r2r_events not stored in the model
+                   r2r_counts = Counter(row[R2R_EVENT] for row in csv_data)
+                   duplicates = [r for r, c in r2r_counts.items() if c > 1]
+                   if duplicates:
+                       self.stdout.write(self.style.WARNING(f'Duplicates found: {duplicates}'))
 
                    self.store_csv_file(cruise_name, csv_data)
 

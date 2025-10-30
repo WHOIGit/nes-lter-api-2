@@ -1,10 +1,11 @@
-from django.shortcuts import render
+from django.shortcuts import render, Http404
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponse
 import os
 import io
 import json
 import pandas as pd
+import re
 from django.core.management.base import CommandError
 from .models import Cruise, Cast
 from core.utils import get_store, _use_dictstore
@@ -13,6 +14,9 @@ from io import BytesIO
 from pathlib import Path
 from django.core.management import call_command
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.shortcuts import render
+from django.db.models import Q
+from django.db.models.functions import ExtractYear, ExtractMonth, Coalesce
 
 def is_staff(user):
     return user.is_staff
@@ -128,6 +132,155 @@ def clean_float(val):
         return float(str(val).strip().replace("–", "-"))
     except Exception:
         return None
+
+PREFIXES = [
+    ("ar",  "AR Cruises",  "🚢"),   # Ship
+    ("en",  "EN Cruises",  "🛳️"),  # Passenger ship
+    ("hrs", "HRS Cruises", "🛥️"),  # Motor boat
+    ("at",  "AT Cruises",  "⛴️"),   # Ferry
+    ("ae",  "AE Cruises",  "⛵"),   # Sailboat
+]
+
+def landing(request):
+    cruise_count = Cruise.objects.count()
+
+    return render(request, "landing.html", {
+        "cruise_count": cruise_count,
+    })
+
+def cruises_by_type(request):
+    cruise_types = []
+    for prefix, label, emoji in PREFIXES:
+        count = Cruise.objects.filter(name__istartswith=prefix).count()
+        cruise_types.append({
+            "prefix": prefix,
+            "label": label,
+            "emoji": emoji,
+            "count": count,
+        })
+
+    return render(request, "cruises_by_type.html", {
+        "cruise_types": cruise_types,
+    })
+
+def cruises_by_year(request):
+    cruises = (
+        Cruise.objects
+        .filter(Q(start_time__isnull=False) | Q(end_time__isnull=False))
+        .annotate(year=Coalesce(ExtractYear('start_time'), ExtractYear('end_time')))
+        .order_by('-year', 'name')
+    )
+
+    # Group: {year: [Cruise, ...]}
+    year_map = {}
+    for c in cruises:
+        year_map.setdefault(c.year, []).append(c)
+
+    # Transform to a list for templates
+    cruise_years = [
+        {'year': year, 'cruises': year_map[year], 'count': len(year_map[year])}
+        for year in sorted(year_map.keys(), reverse=True)
+    ]
+
+    return render(request, "cruises_by_year.html", {
+        "cruise_years": cruise_years,
+    })
+
+def cruises_for_year(request, year):
+    # Get all cruises where start_time or end_time matches the given year
+    cruises = Cruise.objects.filter(
+        start_time__year=year
+    ) | Cruise.objects.filter(
+        end_time__year=year
+    )
+    cruises = cruises.order_by('name')
+
+    label = f"Cruises in {year}"
+    emoji = "🗓️"
+
+    return render(request, "cruise_list.html", {
+        "label": label,
+        "emoji": emoji,
+        "cruises": cruises,
+    })
+
+SEASON_META = {
+    "spring": {"label": "Spring", "emoji": "🌱", "months": [3, 4, 5]},
+    "summer": {"label": "Summer", "emoji": "🌞", "months": [6, 7, 8]},
+    "fall":   {"label": "Fall",   "emoji": "🍂", "months": [9, 10, 11]},
+    "winter": {"label": "Winter", "emoji": "❄️", "months": [12, 1, 2]},
+}
+
+def _month_to_season(m: int) -> str:
+    if m in (3, 4, 5):   return "spring"
+    if m in (6, 7, 8):   return "summer"
+    if m in (9, 10, 11): return "fall"
+    return "winter"  # 12, 1, 2
+
+def cruises_by_season(request):
+    qs = (
+        Cruise.objects
+        .filter(Q(start_time__isnull=False) | Q(end_time__isnull=False))
+        .annotate(month=Coalesce(ExtractMonth("start_time"), ExtractMonth("end_time")))
+        .order_by("name")
+    )
+
+    # Bucket cruises into seasons
+    season_map = {k: [] for k in SEASON_META.keys()}
+    for c in qs:
+        season_map[_month_to_season(c.month)].append(c)
+
+    season_groups = [
+        {
+            "season": key,
+            "label": SEASON_META[key]["label"],
+            "emoji": SEASON_META[key]["emoji"],
+            "count": len(season_map[key]),
+        }
+        for key in ["spring", "summer", "fall", "winter"]
+    ]
+
+    return render(request, "cruises_by_season.html", {"season_groups": season_groups})
+
+def cruises_for_season(request, season: str):
+    season = season.lower()
+    if season not in SEASON_META:
+        raise Http404("Unknown season")
+
+    qs = (
+        Cruise.objects
+        .filter(Q(start_time__isnull=False) | Q(end_time__isnull=False))
+        .annotate(month=Coalesce(ExtractMonth("start_time"), ExtractMonth("end_time")))
+        .filter(month__in=SEASON_META[season]["months"])
+        .order_by("name")
+    )
+
+    return render(request, "cruise_list.html", {
+        "label": f"{SEASON_META[season]['label']} Cruises",
+        "emoji": SEASON_META[season]["emoji"],
+        "cruises": qs,
+    })
+
+def cruise_list(request, prefix: str):
+    prefix = prefix.lower()
+    # Filter cruises by prefix
+    qs = Cruise.objects.filter(name__istartswith=prefix)
+
+    cruises = sorted(
+        qs,
+        key=lambda c: int(re.search(r'\d+', c.name).group())
+        if re.search(r'\d+', c.name) else 0
+    )
+
+    label = next((lbl for p, lbl, _ in PREFIXES if p == prefix), prefix.upper())
+    emoji = next((em for p, _, em in PREFIXES if p == prefix), "🚢")
+
+    return render(request, "cruise_list.html", {
+        "prefix": prefix,
+        "label": label,
+        "emoji": emoji,
+        "cruises": cruises,
+    })
 
 def cruise_track_view(request, cruise_name):
     UNDERWAY_SUFFIX = '_underway.csv'

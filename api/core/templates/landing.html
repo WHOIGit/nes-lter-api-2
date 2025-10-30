@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NES-LTER API 2</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            margin: 2rem;
+            line-height: 1.6;
+        }
+
+        .wrap {
+            max-width: 780px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin-bottom: .25rem;
+        }
+
+        /* --- dropdown --- */
+        .nav-row {
+            margin: 0.75rem 0 1.25rem;
+            display: flex;
+            gap: .5rem;
+            align-items: center;
+        }
+
+            .nav-row label {
+                font-weight: 600;
+            }
+
+        .nav-select {
+            padding: .55rem .7rem;
+            border: 1px solid #ccc;
+            border-radius: .6rem;
+            background: #fff;
+        }
+        /* --- end dropdown --- */
+
+        .cta {
+            display: inline-block;
+            padding: .7rem 1rem;
+            border-radius: .6rem;
+            text-decoration: none;
+            border: 1px solid #ccc;
+            margin-right: .5rem;
+        }
+
+            .cta:hover {
+                background: #f6f6f6;
+            }
+
+        pre {
+            background: #f7f7f7;
+            padding: 1rem;
+            border-radius: .5rem;
+            overflow: auto;
+        }
+
+        code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+
+        /* cruise type cards */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+            margin-top: 1rem;
+        }
+
+        .card {
+            position: relative;
+            display: block;
+            border: 1px solid #e5e5e5;
+            border-radius: 10px;
+            padding: 10px;
+            text-decoration: none;
+            color: inherit;
+            background: white;
+            text-align: center;
+            transition: transform .06s ease, box-shadow .06s ease;
+        }
+
+            .card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            }
+
+        .emoji-icon {
+            font-size: 1.8rem;
+            display: block;
+        }
+
+        .label {
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .count {
+            font-size: 0.9rem;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <h1 style="color: dodgerblue;">🌊 NES-LTER API 2 🌊</h1>
+
+        <h2>Number of Transect Cruises since 2017: {{ cruise_count }}</h2>
+
+        <!-- Dropdown menu -->
+        <div class="nav-row" role="navigation" aria-label="Cruise navigation">
+            <h3><label for="cruise-nav">Display Cruises:</label></h3>
+            <select id="cruise-nav" class="nav-select">
+                <option value="" selected disabled>Select…</option>
+                <option value="/cruises/type/">by Ship</option>
+                <option value="/cruises/year/">by Year</option>
+                <option value="/cruises/season/">by Season</option>
+            </select>
+        </div>
+
+        <h3>Wiki Link</h3>
+        <p>
+            <a class="link" href="https://github.com/WHOIGit/nes-lter-api-2/wiki" target="_blank">
+                Link to NES-LTER API 2 Wiki
+            </a>
+        </p>
+
+        <p style="margin-top:1.5rem;">
+            <h3>Access Cruise and CTD metadata programmatically. Explore the schema and try endpoints in your browser.</h3>
+        </p>
+        <p>
+            <a class="cta" href="https://mullen.whoi.edu/api/docs" target="_blank" rel="noopener noreferrer">
+                Interactive Docs
+            </a>
+        </p>
+
+        <h3>Colab Notebook</h3>
+        <p>
+            <a class="link" href="" target="_blank">
+                Link to Colab Notebook coming soon...
+            </a>
+        </p>
+
+        <h3>NES EDI Packages</h3>
+        <p>
+            <a class="link" href="https://portal.edirepository.org/nis/browseServlet?searchValue=NES" target="_blank">
+                Link to NES EDI Packages
+            </a>
+        </p>
+
+    </div>
+
+    <script>
+        (function () {
+            const sel = document.getElementById('cruise-nav');
+            sel.addEventListener('change', function () {
+                const url = this.value;
+                if (url) window.location.href = url;
+            });
+        })();
+    </script>
+</body>
+</html>
+

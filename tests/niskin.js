@@ -6,9 +6,19 @@ const cruises = ["ar77", "en617", "hrs2303", "ae2426", "at46"];
 
 const lineCounts = { ar77: 24, en617: 6, hrs2303: 12, ae2426: 24, at46: 4 };
 
+var myArgs = process.argv.slice(1);
+
 async function getData(cruise) {
+
+    if (myArgs[1] == 'public') {
+        url = `https://mullen.whoi.edu`;
+    }
+    else {
+        url = `http://localhost:8000`;
+    }
+
     try {
-        const response = await fetch(`http://localhost:8000/api/ctd/niskins/get/all/${cruise}/10`);
+        const response = await fetch(`${url}/api/ctd/niskins/get/all/${cruise}/10`);
         if (!response.ok) {
             throw new Error('HTTP error ' + response.status);
         }
@@ -29,7 +39,7 @@ async function getData(cruise) {
     }
 
   try {
-    const response = await fetch(`http://localhost:8000/api/ctd/niskins/get/${cruise}/10/1`);
+      const response = await fetch(`${url}/api/ctd/niskins/get/${cruise}/10/1`);
     if (!response.ok) {
         throw new Error('HTTP error ' + response.status);
     }
@@ -57,7 +67,7 @@ async function getData(cruise) {
     }  
 
     try {
-        const response = await fetch('http://localhost:8000/api/ctd/niskins/create', {
+        const response = await fetch(`${url}/api/ctd/niskins/create`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -93,7 +103,7 @@ async function getData(cruise) {
     }
 
     try {
-        const response = await fetch(`http://localhost:8000/api/ctd/niskins/update/${cruise}/1/99`, {
+        const response = await fetch(`${url}/api/ctd/niskins/update/${cruise}/1/99`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -126,7 +136,7 @@ async function getData(cruise) {
     }
 
     try {
-        const response = await fetch(`http://localhost:8000/api/ctd/niskins/delete/${cruise}/1/99`, {
+        const response = await fetch(`${url}/api/ctd/niskins/delete/${cruise}/1/99`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',

@@ -5,9 +5,19 @@ const cruises = ["ar77", "en617", "hrs2303", "ae2426", "at46"];
 // Expected line counts
 const lineCounts = { ar77: 34, en617: 30, hrs2303: 32, ae2426: 1, at46: 30 };
 
+var myArgs = process.argv.slice(1);
+
 async function getData(cruise) {
+
+  if (myArgs[1] == 'public') {
+      url = `https://mullen.whoi.edu`;
+  }
+  else {
+      url = `http://localhost:8000`;
+    }
+
   try {
-    const response = await fetch(`http://localhost:8000/api/hplc/${cruise}`);
+    const response = await fetch(`${url}/api/hplc/${cruise}`);
     if (!response.ok) {
       throw new Error('HTTP error ' + response.status);
       }

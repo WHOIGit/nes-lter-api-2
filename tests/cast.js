@@ -6,9 +6,19 @@ const cruises = ["ar77", "en617", "hrs2303", "ae2426", "at46"];
 
 const lineCounts = { ar77: 35, en617: 35, hrs2303: 12, ae2426: 20, at46: 23 };
 
+var myArgs = process.argv.slice(1);
+
 async function getData(cruise) {
   try {
-    const response = await fetch(`http://localhost:8000/api/ctd/casts/get/${cruise}`);
+      if (myArgs[1] == 'public') {
+          url = `https://mullen.whoi.edu`;
+      }
+      else {
+          url = `http://localhost:8000`;
+      }
+
+    response = await fetch(`${url}/api/ctd/casts/get/${cruise}`);
+
     if (!response.ok) {
       throw new Error(`HTTP error ` + response.status);
     }
@@ -31,7 +41,8 @@ async function getData(cruise) {
 
 
   try {
-    const response = await fetch(`http://localhost:8000/api/ctd/cast/get/${cruise}/10`);
+    response = await fetch(`${url}/api/ctd/cast/get/${cruise}/10`);
+
     if (!response.ok) {
         if (cruise === 'ae2426') {
             console.log(`${cruise} Cast Get Single test unsuccessful. This is the expected result for ae2426.`);
@@ -66,10 +77,10 @@ async function getData(cruise) {
     else {
         const dataPath = tokenPath.replace('\\tests\\', '\\data\\');
         token = (await fs.readFile(dataPath, 'utf-8')).trim();
-    }      
+    }  
 
     try {
-        const response = await fetch(`http://localhost:8000/api/ctd/casts/create`, {
+        const response = await fetch(`${url}/api/ctd/casts/create`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -106,7 +117,7 @@ async function getData(cruise) {
     }
 
     try {
-        const response = await fetch(`http://localhost:8000/api/ctd/casts/update/${cruise}/99`, {
+        const response = await fetch(`${url}/api/ctd/casts/update/${cruise}/99`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -141,7 +152,7 @@ async function getData(cruise) {
     }
 
     try {
-        const response = await fetch(`http://localhost:8000/api/ctd/casts/delete/${cruise}/99`, {
+        const response = await fetch(`${url}/api/ctd/casts/delete/${cruise}/99`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',

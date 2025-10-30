@@ -2,9 +2,19 @@ const fs = require('fs/promises');
 const path = require('path');
 console.log("Running Vessels Test.");
 
+var myArgs = process.argv.slice(1);
+
 async function getData() {
+
+  if (myArgs[1] == 'public') {
+      url = `https://mullen.whoi.edu`;
+  }
+  else {
+      url = `http://localhost:8000`;
+  }
+
   try {
-    const response = await fetch('http://localhost:8000/api/ctd/vessels/get/all');
+    const response = await fetch(`${url}/api/ctd/vessels/get/all`);
     if (!response.ok) {
       throw new Error('HTTP error ' + response.status);
     }
@@ -28,7 +38,7 @@ async function getData() {
 
 
   try {
-    const response = await fetch('http://localhost:8000/api/ctd/vessels/get/neil armstrong');
+      const response = await fetch(`${url}/api/ctd/vessels/get/neil armstrong`);
     if (!response.ok) {
         throw new Error('HTTP error ' + response.status);
     }
@@ -57,7 +67,7 @@ async function getData() {
     } 
 
   try {
-    const response = await fetch('http://localhost:8000/api/ctd/vessels/create', {
+      const response = await fetch(`${url}/api/ctd/vessels/create`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -88,7 +98,7 @@ async function getData() {
     }
 
     try {
-        const response = await fetch('http://localhost:8000/api/ctd/vessels/update/Test Vessel', {
+        const response = await fetch(`${url}/api/ctd/vessels/update/Test Vessel`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -118,7 +128,7 @@ async function getData() {
     }
 
     try {
-        const response = await fetch('http://localhost:8000/api/ctd/vessels/delete/test vessel', {
+        const response = await fetch(`${url}/api/ctd/vessels/delete/test vessel`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
