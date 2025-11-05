@@ -4,9 +4,20 @@ const cruises = ["ar77", "en617", "hrs2303", "ae2426", "at46"];
 
 const lineCounts = { ar77: 310, en617: 359, hrs2303: 145, ae2426: 266, at46: 305 };
 
+var myArgs = process.argv.slice(1);
+
 async function getData(cruise) {
   try {
-    const response = await fetch(`http://localhost:8000/api/ctd/bottles/${cruise}`);
+
+      if (myArgs[1] == 'public') {
+          url = `https://mullen.whoi.edu`;
+      }
+      else {
+          url = `http://localhost:8000`;
+      }
+
+    response = await fetch(`${url}/api/ctd/bottles/${cruise}`);
+
     if (!response.ok) {
       throw new Error('HTTP error ' + response.status);
       }
@@ -35,7 +46,9 @@ async function getData(cruise) {
 
 
   try {
-    const response = await fetch(`http://localhost:8000/api/ctd/bottle_summary/${cruise}`);
+
+    response = await fetch(`${url}/api/ctd/bottle_summary/${cruise}`);
+
     if (!response.ok) {
         throw new Error('HTTP error ' + response.status);
     }

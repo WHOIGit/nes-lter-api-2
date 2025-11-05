@@ -10,9 +10,19 @@ const times = {
     at46: '2022-02-21/2022-02-21'
 }
 
+var myArgs = process.argv.slice(1);
+
 async function getData(cruise) {
+
+  if (myArgs[1] == 'public') {
+      url = `https://mullen.whoi.edu`;
+  }
+  else {
+      url = `http://localhost:8000`;
+  }
+
   try {
-    const response = await fetch(`http://localhost:8000/api/underway/get/${cruise}`);
+    const response = await fetch(`${url}/api/underway/get/${cruise}`);
     if (!response.ok) {
       throw new Error('HTTP error ' + response.status);
       }
@@ -41,7 +51,7 @@ async function getData(cruise) {
 
 
   try {
-      const response = await fetch(`http://localhost:8000/api/underway/get_column_headers/${cruise}`);
+      const response = await fetch(`${url}/api/underway/get_column_headers/${cruise}`);
     if (!response.ok) {
         throw new Error('HTTP error ' + response.status);
     }
@@ -61,7 +71,7 @@ async function getData(cruise) {
 
 try {
     const search = times[cruise];
-    const response = await fetch(`http://localhost:8000/api/underway/find/${search}`);
+    const response = await fetch(`${url}/api/underway/find/${search}`);
     if (!response.ok) {
         throw new Error('HTTP error ' + response.status);
     }

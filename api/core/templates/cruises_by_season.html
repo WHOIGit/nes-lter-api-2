@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cruises by Season – NES-LTER API 2</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; line-height: 1.6; }
+    .wrap { max-width: 780px; margin: 0 auto; }
+    h1 { color: dodgerblue; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-top: 1rem; }
+    .card { border: 1px solid #e5e5e5; border-radius: 10px; padding: 10px; text-align: center; text-decoration: none; color: inherit; background: white; transition: transform .06s ease, box-shadow .06s ease; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .emoji-icon { font-size: 1.8rem; display: block; }
+    .label { font-weight: 600; margin-top: 4px; }
+    .count { font-size: 0.9rem; color: #555; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🌤️ Cruises by Season 🌤️</h1>
+
+  <div class="grid">
+    {% for s in season_groups %}
+      <a class="card" href="{% url 'cruises_for_season' s.season %}" aria-label="{{ s.label }}">
+        <span class="emoji-icon">{{ s.emoji }}</span>
+        <div class="label">{{ s.label }}</div>
+        <div class="count">{{ s.count }}</div>
+      </a>
+    {% empty %}
+      <div>No cruises found.</div>
+    {% endfor %}
+  </div>
+</div>
+</body>
+</html>

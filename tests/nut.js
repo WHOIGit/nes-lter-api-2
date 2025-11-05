@@ -5,10 +5,20 @@ const cruises = ["ar77", "en617", "hrs2303", "ae2426", "at46"];
 // Expected line counts - ae2426 has no data
 const lineCounts = { ar77: 143, en617: 157, hrs2303: 141, ae2426: 1, at46: 143 };
 
+var myArgs = process.argv.slice(1);
+
 async function getData() {
+
+    if (myArgs[1] == 'public') {
+        url = `https://mullen.whoi.edu`;
+    }
+    else {
+        url = `http://localhost:8000`;
+    }
+
     for (const cruise of cruises) {
         try {
-            const response = await fetch(`http://localhost:8000/api/nut/${cruise}`);
+            const response = await fetch(`${url}/api/nut/${cruise}`);
             if (!response.ok) {
                 throw new Error('HTTP error ' + response.status);
             }
@@ -36,7 +46,7 @@ async function getData() {
     }
 
 try {
-    const response = await fetch('http://localhost:8000/api/nut/all');
+    const response = await fetch(`${url}/api/nut/all`);
     if (!response.ok) {
         throw new Error('HTTP error ' + response.status);
     }
