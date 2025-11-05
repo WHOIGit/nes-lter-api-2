@@ -1,5 +1,5 @@
 rem Runs all NESLTER API 2 Selenium Webdriver automated tests in Windows cmd prompt launching Chrome. Takes about 5 minutes to run. Not for run in docker container.
-rem create /data/token.txt for mullen.whoi.edu
+rem create /data/token.txt for nes-lter-api.whoi.edu
 cmd /c node station.js public > API2TestingonMullen.log 
 cmd /c node vessels.js public >> API2TestingonMullen.log 
 cmd /c node cruise.js public >> API2TestingonMullen.log 

@@ -3,10 +3,11 @@ import io
 import glob
 import pandas as pd
 from pathlib import Path
+import numpy as np
+import logging
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.gis.geos import Point
 from core.models import Cruise, Station
-import numpy as np
 from core.utils import clean_column_names, wide_to_long, path_to_cast, get_store
 
 NUT_SUFFIX = '_nut.csv'
@@ -27,6 +28,7 @@ class Command(BaseCommand):
         self.URL = os.getenv("URL")
         self.TOKEN = os.getenv("TOKEN")
         self.MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+        self.logger = logging.getLogger('management')
 
     def add_arguments(self, parser):
         parser.add_argument('--cruise_name', type=str, help='Optional name of the cruise.', default=None)
@@ -74,6 +76,7 @@ class Command(BaseCommand):
                 data = store.get(object_key)
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f'Run ImportNiskin.py to create bottle summary file for cruise {cruise}.'))
+                self.logger.error((f'Run ImportNiskin.py to create bottle summary file for cruise {cruise}.'))
                 return pd.DataFrame()
 
             btl_sum = pd.read_csv(io.BytesIO(data))
@@ -114,6 +117,7 @@ class Command(BaseCommand):
                 'lter_sample_id': lter[mismatch_mask]
             })
             print(mismatches.to_string(index=False), flush=True)
+            self.logger.error(f'Nutrient Number and LTER Sample ID: {num_mismatches} column values do not match in LTERnut.xlsx')
             raise ValueError(f'Nutrient Number and LTER Sample ID: {num_mismatches} column values do not match in LTERnut.xlsx')
 
         df['comments'] = df['comments'].fillna('')
@@ -302,6 +306,7 @@ class Command(BaseCommand):
             except Exception as e:
                 print(e, flush=True)
                 print("Run ImportNiskin.py to import bottle file.", flush=True)
+                self.logger.error("Run ImportNiskin.py to import bottle file.")
                 raise
 
         bottles = pd.read_csv(io.BytesIO(data))
@@ -380,12 +385,17 @@ class Command(BaseCommand):
                         try:
                             store.put(object_key, csv_binary)
                             self.stdout.write(self.style.SUCCESS(f'{cruise_name}{NUT_SUFFIX} successfully created.'))
+                            self.logger.error((f'{cruise_name}{NUT_SUFFIX} successfully created.'))
                         except Exception as e:
                             print(e, flush=True)
+                            self.logger.error(f'An error occurred: {str(e)}')
                             raise
 
                     self.stdout.write(self.style.SUCCESS(f'Nut files successfully imported.'))
+                    self.logger.error((f'Nut files successfully imported.'))
             except Cruise.DoesNotExist:
+                    self.logger.error(f'Cruise not found {cruise_name}. Run importcruise.py')
                     raise CommandError(f'Cruise not found {cruise_name}. Run importcruise.py')
             except Exception as e:
+                self.logger.error(f'An error occurred: {str(e)}')
                 raise CommandError(f'An error occurred: {str(e)}')

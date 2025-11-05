@@ -2,12 +2,13 @@ import os
 import io
 import glob
 import pandas as pd
+import numpy as np
+import logging
 from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.gis.geos import Point
 from core.models import Cruise, HPLC, Station
 from core.utils import get_store
-import numpy as np
 
 HPLC_SUFFIX = '_hplc.csv'
 
@@ -26,6 +27,7 @@ class Command(BaseCommand):
         self.URL = os.getenv("URL")
         self.TOKEN = os.getenv("TOKEN")
         self.MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+        self.logger = logging.getLogger('management')
 
     def add_arguments(self, parser):
         parser.add_argument('--cruise_name', type=str, help='Optional name of the cruise.', default=None)
@@ -132,12 +134,17 @@ class Command(BaseCommand):
                     try:
                         store.put(object_key, csv_binary)
                         self.stdout.write(self.style.SUCCESS(f'{cruise_name}{HPLC_SUFFIX} successfully created.'))
+                        self.logger.error((f'{cruise_name}{HPLC_SUFFIX} successfully created.'))
                     except Exception as e:
                         print(e, flush=True)
+                        self.logger.error(f'An error occurred: {str(e)}')
                         raise
 
                 self.stdout.write(self.style.SUCCESS(f'HPLC files successfully imported.'))
+                self.logger.error((f'HPLC files successfully imported.'))
             except Cruise.DoesNotExist:
+                    self.logger.error(f'Cruise not found {cruise_name}. Run importcruise.py')
                     raise CommandError(f'Cruise not found {cruise_name}. Run importcruise.py')
             except Exception as e:
+                self.logger.error(f'An error occurred: {str(e)}')
                 raise CommandError(f'An error occurred: {str(e)}')

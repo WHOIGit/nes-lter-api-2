@@ -8,6 +8,7 @@ from core.models import Cruise, Cast, Station
 from core.utils import get_store
 from pathlib import Path
 from django.contrib.gis.geos import Point
+import logging
 
 from core.utils import path_to_cast, parse_lat_lon, parse_time, clean_column_names
 
@@ -26,6 +27,7 @@ class Command(BaseCommand):
         self.URL = os.getenv("URL")
         self.TOKEN = os.getenv("TOKEN")
         self.MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+        self.logger = logging.getLogger('management')
 
     def add_arguments(self, parser):
         parser.add_argument('--cruise_name', type=str, help='Optional name of the cruise.', default=None)
@@ -89,11 +91,14 @@ class Command(BaseCommand):
                     store.put(object_key, csv_binary)
                 except Exception as e:
                     print(e, flush=True)
+                    self.logger.error(f'Exception {e}')
                     raise  
         except FileNotFoundError:
             self.stdout.write(self.style.ERROR(f'No .asc file found for cruise {cruise} cast {cast}.'))
+            self.logger.error((f'No .asc file found for cruise {cruise} cast {cast}.'))
         except pd.errors.ParserError as e:
             self.stdout.write(self.style.ERROR(f"{ascfile} not parsable."))
+            self.logger.error((f"{ascfile} not parsable."))
 
     def handle(self, *args, **options):
         #self.stdout = options.get('stdout', sys.stdout) # removes /n's
@@ -106,11 +111,11 @@ class Command(BaseCommand):
             cruises = [cruise_name]
 
         self.stdout.write(self.style.SUCCESS(f'For each .hdr file, look for a matching .asc file.'))
+        self.logger.error((f'For each .hdr file, look for a matching .asc file.'))
 
         for cruise_name in cruises:
             try:
                 cruise = Cruise.objects.get(name__iexact=cruise_name)
-
                 directory = f'/vast/raw/{cruise_name}/ctd/'
                 hdr_files = sorted(glob.glob(os.path.join(directory, '*.hdr')))
                 if cruise_name.lower() == "en627":
@@ -149,14 +154,17 @@ class Command(BaseCommand):
                             )
                         else:
                             print(f"Cast {cast} for {cruise.name} has null lat, lon, start_time. Will not be saved in the model!")
+                            self.logger.error(f"Cast {cast} for {cruise.name} has null lat, lon, start_time. Will not be saved in the model!")
                      
                         # create individual cast file
                         self.create_cast_file(file, cruise_name, cast, start_time)
 
                 if glob.glob(os.path.join(directory, "*.hdr")):
                     self.stdout.write(self.style.SUCCESS(f'Casts for Cruise {cruise_name} successfully imported.'))
+                    self.logger.error((f'Casts for Cruise {cruise_name} successfully imported.'))
                 else:
                     self.stdout.write(self.style.ERROR(f'No Casts found for Cruise {cruise_name}.'))
+                    self.logger.error((f'No Casts found for Cruise {cruise_name}.'))
 
                 data = []
                 for cast in Cast.objects.filter(cruise=cruise):
@@ -185,9 +193,12 @@ class Command(BaseCommand):
                         store.put(object_key, csv_binary)
                     except Exception as e:
                         print(e, flush=True)
+                        self.logger.error(f'Exception {e}')
                         raise
 
             except Cruise.DoesNotExist:
+                self.logger.error(f'Cruise not found {cruise_name}. Run importcruise.py')
                 raise CommandError(f'Cruise not found {cruise_name}. Run importcruise.py')
             except Exception as e:
+                self.logger.error(f'An error occurred: {str(e)}')
                 raise CommandError(f'An error occurred: {str(e)}')

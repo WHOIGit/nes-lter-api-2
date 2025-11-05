@@ -8,9 +8,10 @@ const lineCounts = { ar77: 143, en617: 157, hrs2303: 141, ae2426: 1, at46: 143 }
 var myArgs = process.argv.slice(1);
 
 async function getData() {
+    let url;
 
     if (myArgs[1] == 'public') {
-        url = `https://mullen.whoi.edu`;
+        url = `https://nes-lter-api.whoi.edu`;
     }
     else {
         url = `http://localhost:8000`;

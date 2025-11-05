@@ -10,13 +10,13 @@ async function getData(cruise) {
   try {
 
       if (myArgs[1] == 'public') {
-          url = `https://mullen.whoi.edu`;
+          url = `https://nes-lter-api.whoi.edu`;
       }
       else {
           url = `http://localhost:8000`;
       }
 
-    response = await fetch(`${url}/api/ctd/bottles/${cruise}`);
+    const response = await fetch(`${url}/api/ctd/bottles/${cruise}`);
 
     if (!response.ok) {
       throw new Error('HTTP error ' + response.status);

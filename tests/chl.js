@@ -10,7 +10,7 @@ var myArgs = process.argv.slice(1);
 async function getData() {
 
     if (myArgs[1] == 'public') {
-        url = `https://mullen.whoi.edu`;
+        url = `https://nes-lter-api.whoi.edu`;
     }
     else {
         url = `http://localhost:8000`;

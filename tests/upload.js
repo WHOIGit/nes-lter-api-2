@@ -41,7 +41,7 @@ var myArgs = process.argv.slice(1);
 
     try {
         if (myArgs[2] == 'public') {
-            await driver.get("https://mullen.whoi.edu/upload/");
+            await driver.get("https://nes-lter-api.whoi.edu/upload/");
         }
         else {           
             await driver.get("http://localhost:8000/upload");

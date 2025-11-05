@@ -1,6 +1,6 @@
-from django.shortcuts import render, Http404
+from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, Http404
 import os
 import io
 import json
@@ -14,7 +14,6 @@ from io import BytesIO
 from pathlib import Path
 from django.core.management import call_command
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.shortcuts import render
 from django.db.models import Q
 from django.db.models.functions import ExtractYear, ExtractMonth, Coalesce
 

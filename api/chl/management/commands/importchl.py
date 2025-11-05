@@ -7,6 +7,7 @@ from django.core.management.base import BaseCommand, CommandError
 from core.models import Cruise
 import numpy as np
 from core.utils import clean_column_names, float_to_datetime, cast_columns, get_store
+import logging
 
 CHL_SUFFIX = '_chl.csv'
 BTLSUM_SUFFIX = '_ctd_bottle_summary.csv'
@@ -26,6 +27,7 @@ class Command(BaseCommand):
         self.URL = os.getenv("URL")
         self.TOKEN = os.getenv("TOKEN")
         self.MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+        self.logger = logging.getLogger('management')
 
     def add_arguments(self, parser):
         parser.add_argument('--cruise_name', type=str, help='Optional name of the cruise.', default=None)
@@ -39,6 +41,7 @@ class Command(BaseCommand):
             except Exception as e:
                 print(e, flush=True)
                 print("Run ImportCast.py & ImportNiskin.py to import bottle summary file.", flush=True)
+                self.logger.error("Run ImportCast.py & ImportNiskin.py to import bottle summary file.")
                 return pd.DataFrame()
 
             btl_sum = pd.read_csv(io.BytesIO(data))
@@ -148,12 +151,16 @@ class Command(BaseCommand):
                     try:
                         store.put(object_key, csv_binary)
                         self.stdout.write(self.style.SUCCESS(f'{cruise_name}{CHL_SUFFIX} successfully created.'))
+                        self.logger.error((f'{cruise_name}{CHL_SUFFIX} successfully created.'))
                     except Exception as e:
                         print(e, flush=True)
                         raise
 
                 self.stdout.write(self.style.SUCCESS(f'Chl files successfully imported.'))
+                self.logger.error((f'Chl files successfully imported.'))
             except Cruise.DoesNotExist:
+                    self.logger.error(f'Cruise not found {cruise_name}. Run importcruise.py')
                     raise CommandError(f'Cruise not found {cruise_name}. Run importcruise.py')
             except Exception as e:
+                self.logger.error(f'An error occurred: {str(e)}')
                 raise CommandError(f'An error occurred: {str(e)}')
