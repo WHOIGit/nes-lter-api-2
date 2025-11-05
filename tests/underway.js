@@ -14,6 +14,7 @@ var myArgs = process.argv.slice(1);
 
 async function getData(cruise) {
 
+  let url;
   if (myArgs[1] == 'public') {
       url = `https://mullen.whoi.edu`;
   }

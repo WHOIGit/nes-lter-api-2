@@ -1,6 +1,7 @@
 import os
 import io
 import pandas as pd
+import logging
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 from core.models import Station, StationLocation
@@ -26,6 +27,7 @@ class Command(BaseCommand):
         self.URL = os.getenv("URL")
         self.TOKEN = os.getenv("TOKEN")
         self.MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+        self.logger = logging.getLogger('management')
 
     def handle(self, *args, **options):
 
@@ -75,10 +77,14 @@ class Command(BaseCommand):
                     try:
                         store.put(object_key, csv_binary)
                         self.stdout.write(self.style.SUCCESS(f"{STATION_FILENAME} successfully created."))
+                        self.logger.error((f"{STATION_FILENAME} successfully created."))
                     except Exception as e:
                         print(e, flush=True)
+                        self.logger.error(f'An error occurred: {str(e)}')
                         raise
 
                 self.stdout.write(self.style.SUCCESS(f'Stations successfully imported.'))
+                self.logger.error((f'Stations successfully imported.'))
             except Exception as e:
+                self.logger.error(f'An error occurred: {str(e)}')
                 raise CommandError(f'An error occurred: {str(e)}')

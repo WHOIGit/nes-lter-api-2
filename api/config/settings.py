@@ -118,6 +118,25 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Logging - output from import management commands
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {'default': {'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'}},
+    'handlers': {
+        'importmgmt_file': {
+            'class': 'logging.FileHandler',
+            'filename': 'importcmds.log',
+        }
+    },
+    'loggers': {
+        'management': {
+            'handlers': ['importmgmt_file'],
+            'level': 'INFO',
+            'propagate': False,
+        }
+    }
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/

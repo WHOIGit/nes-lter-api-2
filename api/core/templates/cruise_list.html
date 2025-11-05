@@ -32,48 +32,48 @@
                 <span class="meta">({{ cruise.start_time|date:"Y-m-d" }}{% if cruise.end_time %} – {{ cruise.end_time|date:"Y-m-d" }}{% endif %})</span>
                 {% endif %}
                 {% load static %}
-                <a href="https://mullen.whoi.edu/cruise/{{ cruise.name|lower }}/track/" target="_blank" class="track-link">
+                <a href="/cruise/{{ cruise.name|lower }}/track/" target="_blank" class="track-link">
                     <img src="{% static 'img/cruise_track_thumb_64.png' %}" alt="Track thumbnail"
                          style="width:24px;height:24px;vertical-align:-3px;margin-right:.35rem;border-radius:4px;">
                     Cruise Track
                 </a>
-                <a href="https://mullen.whoi.edu/api/ctd/cruises/get/{{ cruise.name|lower }}" target="_blank" class="link">
+                <a href="/api/ctd/cruises/get/{{ cruise.name|lower }}" target="_blank" class="link">
                     📊 Cruise Data
                 </a>
-                <a href="https://mullen.whoi.edu/api/ctd/casts/get/{{ cruise.name|lower }}" target="_blank" class="link">
+                <a href="/api/ctd/casts/get/{{ cruise.name|lower }}" target="_blank" class="link">
                     🪣 Casts
                 </a>
-                <a href="https://mullen.whoi.edu/api/ctd/bottles/{{ cruise.name|lower }}" target="_blank" class="link">
+                <a href="/api/ctd/bottles/{{ cruise.name|lower }}" target="_blank" class="link">
                     🧴 Bottles
                 </a>
-                <a href="https://mullen.whoi.edu/api/ctd/bottle_summary/{{ cruise.name|lower }}" target="_blank" class="link">
+                <a href="/api/ctd/bottle_summary/{{ cruise.name|lower }}" target="_blank" class="link">
                     📊 Bottle Summary
                 </a>
-                <a href="https://mullen.whoi.edu/api/ctd/metadata/{{ cruise.name|lower }}" target="_blank" class="link">
+                <a href="/api/ctd/metadata/{{ cruise.name|lower }}" target="_blank" class="link">
                     🗒️ Metadata
                 </a>
-                <a href="https://mullen.whoi.edu/api/events/get/{{ cruise.name|lower }}" target="_blank" class="link">
+                <a href="/api/events/get/{{ cruise.name|lower }}" target="_blank" class="link">
                     📅 Events
                 </a>
-                <a href="https://mullen.whoi.edu/api/events/instruments/{{ cruise.name|lower }}" target="_blank" class="link">
+                <a href="/api/events/instruments/{{ cruise.name|lower }}" target="_blank" class="link">
                     🔬 Event Instruments
                 </a>
-                <a href="https://mullen.whoi.edu/api/events/history/{{ cruise.name|lower }}" target="_blank" class="link">
+                <a href="/api/events/history/{{ cruise.name|lower }}" target="_blank" class="link">
                     🕰️ Event History
                 </a>
-                <a href="https://mullen.whoi.edu/api/underway/get/{{ cruise.name|lower }}" target="_blank" class="link">
+                <a href="/api/underway/get/{{ cruise.name|lower }}" target="_blank" class="link">
                     🚢 Underway Data
                 </a>
-                <a href="https://mullen.whoi.edu/api/underway/get_column_headers/{{ cruise.name|lower }}" target="_blank" class="link">
+                <a href="/api/underway/get_column_headers/{{ cruise.name|lower }}" target="_blank" class="link">
                     💧 Underway Column Headers
                 </a>
-                <a href="https://mullen.whoi.edu/api/hplc/{{ cruise.name|lower }}" target="_blank" class="link">
+                <a href="/api/hplc/{{ cruise.name|lower }}" target="_blank" class="link">
                     🧫 HPLC
                 </a>
-                <a href="https://mullen.whoi.edu/api/nut/{{ cruise.name|lower }}" target="_blank" class="link">
+                <a href="/api/nut/{{ cruise.name|lower }}" target="_blank" class="link">
                     🧪 Nutrients
                 </a>
-                <a href="https://mullen.whoi.edu/api/chl/{{ cruise.name|lower }}" target="_blank" class="link">
+                <a href="/api/chl/{{ cruise.name|lower }}" target="_blank" class="link">
                     🌿 Chlorophyll
                 </a>
             </li>

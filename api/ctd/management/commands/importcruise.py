@@ -1,19 +1,18 @@
-import csv
 import os
 import glob
 from django.core.management.base import BaseCommand, CommandError
-from io import BytesIO, StringIO
 import pandas as pd
 from core.models import Cruise
 from core.models import Vessel
-from django.conf import settings
 from pathlib import Path
+import logging
 
 class Command(BaseCommand):
     help = 'Create Cruise Model. If Cruise Name is not supplied, all Cruises will be created.'
 
     URL = os.getenv("URL")
     TOKEN = os.getenv("TOKEN")
+    logger = logging.getLogger('management')
 
     def add_arguments(self, parser):
         parser.add_argument('--cruise_name', type=str, help='Optional name of the cruise.', default=None)
@@ -65,11 +64,14 @@ class Command(BaseCommand):
                             start_time, end_time = self.parse_elog(file_pattern)
                         if start_time is None and end_time is None:
                             self.stdout.write(self.style.SUCCESS(f'Cruise {cruise_name} event log not found.'))
+                            self.logger.error((f'Cruise {cruise_name} event log not found.'))
 
                 if start_time is None:
                     self.stdout.write(self.style.WARNING(f'Cruise {cruise_name} startCruise event not found.'))
+                    self.logger.error((f'Cruise {cruise_name} startCruise event not found.'))
                 if end_time is None:
                     self.stdout.write(self.style.WARNING(f'Cruise {cruise_name} stopCruise event not found.'))
+                    self.logger.error((f'Cruise {cruise_name} stopCruise event not found.'))
 
                 Cruise.objects.update_or_create(
                     name=cruise_name,
@@ -81,7 +83,10 @@ class Command(BaseCommand):
                 )
 
                 self.stdout.write(self.style.SUCCESS(f'Cruise {cruise_name} successfully imported.'))
+                self.logger.error((f'Cruise {cruise_name} successfully imported.'))
             except Vessel.DoesNotExist:
+                self.logger.error(f'Vessel not found. Run importvessel.py')
                 raise CommandError(f'Vessel not found. Run importvessel.py')
             except Exception as e:
+                self.logger.error(f'An error occurred: {str(e)}')
                 raise CommandError(f'An error occurred: {str(e)}')

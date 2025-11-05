@@ -6,8 +6,9 @@ var myArgs = process.argv.slice(1);
 
 async function getData() {
 
+  let url;
   if (myArgs[1] == 'public') {
-      url = `https://mullen.whoi.edu`;
+      url = `https://nes-lter-api.whoi.edu`;
   }
   else {
       url = `http://localhost:8000`;
@@ -26,7 +27,7 @@ async function getData() {
           .map(line => line.trim())
           .filter(line => line.length > 0); 
 
-    if (lines.length == 86)
+    if (lines.length == 87)
       {
         console.log('Stations File Get test successful.');
     }

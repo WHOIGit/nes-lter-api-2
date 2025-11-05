@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 import pandas as pd
+import logging
 from core.models import Vessel
 
 class Command(BaseCommand):
@@ -15,6 +16,8 @@ class Command(BaseCommand):
 
     vessel_df = pd.DataFrame(vessel_data)
 
+    logger = logging.getLogger('management')
+
     def handle(self, *args, **options):    
 
         for _, row in self.vessel_df.iterrows():
@@ -28,5 +31,7 @@ class Command(BaseCommand):
                         }
                 )
                 self.stdout.write(self.style.SUCCESS(f'Vessel {row["name"]} successfully created.'))
+                self.logger.error((f'Vessel {row["name"]} successfully created.'))
             except Exception as e:
+              self.logger.error(f'An error occurred: {str(e)}')
               raise CommandError(f'An error occurred: {str(e)}')

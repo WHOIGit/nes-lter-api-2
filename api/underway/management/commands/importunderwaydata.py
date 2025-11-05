@@ -1,6 +1,7 @@
 import csv
 import os
 import glob
+import logging
 from django.core.management.base import BaseCommand, CommandError
 from io import BytesIO, StringIO
 import pandas as pd
@@ -18,6 +19,7 @@ class Command(BaseCommand):
         self.URL = os.getenv("URL")
         self.TOKEN = os.getenv("TOKEN")
         self.MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+        self.logger = logging.getLogger('management')
 
     FILE_SUFFIX = '_underway.csv'
 
@@ -58,6 +60,7 @@ class Command(BaseCommand):
                     if os.path.isfile(f) and "README" not in os.path.basename(f)
                 ]
                 if not underway_files:
+                    self.logger.error(f'Cruise {cruise_name} underway data not found.')
                     raise CommandError(f'Cruise {cruise_name} underway data not found.')
 
                 # Concatenate the CSV files
@@ -106,7 +109,9 @@ class Command(BaseCommand):
                     df_data = clean_column_names(combined_data)
 
                 else:
+                    self.logger.error(f"Unsupported cruise type for cruise_name: {cruise_name}")
                     raise ValueError(f"Unsupported cruise type for cruise_name: {cruise_name}")
+
                 start_datetime = None if pd.isna(start_datetime) else self.make_aware_if_naive(start_datetime)
                 end_datetime = None if pd.isna(end_datetime) else self.make_aware_if_naive(end_datetime)                
 
@@ -126,9 +131,13 @@ class Command(BaseCommand):
                         store.put(object_key, csv_binary)
                     except Exception as e:
                         print(e, flush=True)
+                        self.logger.error(f'An error occurred: {str(e)}')
                         raise
                 self.stdout.write(self.style.SUCCESS(f'Underway Data for {cruise.name} successfully imported.'))
+                self.logger.error((f'Underway Data for {cruise.name} successfully imported.'))
             except Cruise.DoesNotExist:
+               self.logger.error(f'Cruise {cruise_name} not found.')
                raise CommandError(f'Cruise {cruise_name} not found.')
             except Exception as e:
+                self.logger.error(f'An error occurred: {str(e)}')
                 raise CommandError(f'An error occurred: {str(e)}')

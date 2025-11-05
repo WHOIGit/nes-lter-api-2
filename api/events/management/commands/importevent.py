@@ -1,6 +1,7 @@
 import os
 import glob
 import io
+import logging
 from django.core.management.base import BaseCommand, CommandError
 import pandas as pd
 from core.models import Cruise
@@ -54,6 +55,7 @@ class Command(BaseCommand):
         self.URL = os.getenv("URL")
         self.TOKEN = os.getenv("TOKEN")
         self.MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+        self.logger = logging.getLogger('management')
 
     def add_arguments(self, parser):
         parser.add_argument('--cruise_name', type=str, help='Optional name of the cruise.', default=None)
@@ -72,6 +74,7 @@ class Command(BaseCommand):
                 store.put(object_key, csv_binary)
             except Exception as e:
                 print(e, flush=True)
+                self.logger.error(f'An error occurred: {str(e)}')
                 raise
 
     def handle(self, *args, **options):
@@ -155,11 +158,15 @@ class Command(BaseCommand):
                    duplicates = [r for r, c in r2r_counts.items() if c > 1]
                    if duplicates:
                        self.stdout.write(self.style.WARNING(f'Duplicates found: {duplicates}'))
+                       self.logger.error((f'Duplicates found: {duplicates}'))
 
                    self.store_csv_file(cruise_name, csv_data)
 
                    self.stdout.write(self.style.SUCCESS(f'Events for {cruise_name} have been successfully imported.'))
+                   self.logger.error((f'Events for {cruise_name} have been successfully imported.'))
             except Cruise.DoesNotExist:
+                self.logger.error(f'Cruise {cruise_name} not found.')
                 raise CommandError(f'Cruise {cruise_name} not found.')
             except Exception as e:
+                self.logger.error(f'An error occurred: {str(e)}')
                 raise CommandError(f'An error occurred: {str(e)}')

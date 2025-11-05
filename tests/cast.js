@@ -4,20 +4,20 @@ console.log("Running Cast Test.");
 
 const cruises = ["ar77", "en617", "hrs2303", "ae2426", "at46"];
 
-const lineCounts = { ar77: 35, en617: 35, hrs2303: 12, ae2426: 20, at46: 23 };
+const lineCounts = { ar77: 35, en617: 35, hrs2303: 12, ae2426: 17, at46: 23 };
 
 var myArgs = process.argv.slice(1);
 
 async function getData(cruise) {
   try {
       if (myArgs[1] == 'public') {
-          url = `https://mullen.whoi.edu`;
+          url = `https://nes-lter-api.whoi.edu`;
       }
       else {
           url = `http://localhost:8000`;
       }
 
-    response = await fetch(`${url}/api/ctd/casts/get/${cruise}`);
+    const response = await fetch(`${url}/api/ctd/casts/get/${cruise}`);
 
     if (!response.ok) {
       throw new Error(`HTTP error ` + response.status);
@@ -41,7 +41,7 @@ async function getData(cruise) {
 
 
   try {
-    response = await fetch(`${url}/api/ctd/cast/get/${cruise}/10`);
+    const response = await fetch(`${url}/api/ctd/cast/get/${cruise}/10`);
 
     if (!response.ok) {
         if (cruise === 'ae2426') {

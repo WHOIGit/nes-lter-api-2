@@ -42,7 +42,7 @@ var myArgs = process.argv.slice(1);
 
     try {
         if (myArgs[2] == 'public') {
-            await driver.get("https://mullen.whoi.edu/cruise/ar77/track/");
+            await driver.get("https://nes-lter-api.whoi.edu/cruise/ar77/track/");
         }
         else {           
             await driver.get("http://localhost:8000/cruise/ar77/track/");

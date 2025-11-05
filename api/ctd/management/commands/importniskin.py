@@ -4,6 +4,7 @@ import re
 import io
 import pandas as pd
 import sys
+import logging
 from django.core.management.color import color_style
 from django.core.management.base import BaseCommand, CommandError
 from core.models import Cruise
@@ -11,7 +12,6 @@ from core.models import Cast, Niskin
 from pathlib import Path
 from django.contrib.gis.geos import Point
 from django.core.exceptions import ObjectDoesNotExist
-
 from core.utils import p_to_depth, path_to_cast, get_store, \
                        parse_lat_lon, clean_column_names
 
@@ -30,6 +30,8 @@ NISKIN_COL = 'niskin'
 
 BOTTLES_SUFFIX = '_ctd_bottles.csv'
 SUMMARY_SUFFIX = '_ctd_bottle_summary.csv'
+
+logger = logging.getLogger('management')
 
 def col_values(line, col_widths, justification='right'):
     """read fixed-width column values"""
@@ -112,6 +114,7 @@ def to_dataframe(cruise_name, cast, in_lines):
     except:
         style = color_style()
         sys.stdout.write(style.ERROR(f'Bad formatted .btl file columns found for cruise {cruise_name} cast {cast}.'))
+        logger.error((f'Bad formatted .btl file columns found for cruise {cruise_name} cast {cast}.'))
         return
 
     # convert df columns to reasonable types
@@ -230,6 +233,7 @@ class Command(BaseCommand):
 
                         except ObjectDoesNotExist:
                             self.stdout.write(self.style.ERROR(f'Cast {cast} for Cruise {cruise_name} not imported. Run importcast.py'))
+                            self.logger.error((f'Cast {cast} for Cruise {cruise_name} not imported. Run importcast.py'))
 
                 if glob.glob(os.path.join(directory, "*.btl")) and dfs:
                     dfs = [df for df in dfs if not df.empty]  #remove empty dataframes
@@ -250,6 +254,7 @@ class Command(BaseCommand):
                             store.put(object_key, csv_binary)
                         except Exception as e:
                             print(e, flush=True)
+                            self.logger.error(f'Exception {e}')
                             raise
 
                     # bottle summary
@@ -265,12 +270,17 @@ class Command(BaseCommand):
                         try:
                             store.put(object_key, csv_binary)
                             self.stdout.write(self.style.SUCCESS(f'Niskins for Cruise {cruise_name} successfully imported.'))
+                            logger.error((f'Niskins for Cruise {cruise_name} successfully imported.'))
                         except Exception as e:
                             print(e, flush=True)
+                            logger.error(f'Exception {e}')
                             raise
                 else:
                     self.stdout.write(self.style.ERROR(f'No Bottle or Header files found for Cruise {cruise_name}.'))
+                    logger.error((f'No Bottle or Header files found for Cruise {cruise_name}.'))
             except Cruise.DoesNotExist:
+                logger.error(f'Cruise not found {cruise_name}. Run importcruise.py')
                 raise CommandError(f'Cruise not found {cruise_name}. Run importcruise.py')
             except Exception as e:
+                logger.error(f'An error occurred: {str(e)}')
                 raise CommandError(f'An error occurred: {str(e)}')
