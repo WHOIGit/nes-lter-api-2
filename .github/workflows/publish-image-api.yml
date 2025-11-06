@@ -12,6 +12,10 @@ jobs:
   # NES-LTER API 2 Automated Testing and Tagging
   setup-build-publish:
     name: NES-LTER API 2 Setup, Build, and Publish
+    permissions:
+      contents: read
+      packages: read
+
     runs-on: ubuntu-latest
 
     steps:
