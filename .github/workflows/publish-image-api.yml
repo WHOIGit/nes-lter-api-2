@@ -74,7 +74,7 @@ jobs:
           echo "$EXISTING_TAGS"
 
           # Filter numeric or v-prefixed tags like v1, 2, v10
-          LAST_TAG=$(echo "$EXISTING_TAGS" | grep -E '^v?[0-9]+$' | sed 's/^v//' | sort -n | tail -1)
+          LAST_TAG=$(echo "$EXISTING_TAGS" | sed 's/^v//' | sed 's/\.0b$//' | grep -E '^[0-9]+$' | sort -n | tail -1)
 
           # Default to 1 if no valid tags found
           VERSION=$(( ${LAST_TAG:-0} + 1 ))
