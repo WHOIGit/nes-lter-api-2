@@ -65,7 +65,7 @@ jobs:
 
           echo "Fetching existing tags from GHCR..."
           EXISTING_TAGS=$(curl -fsSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-  "https://ghcr.io/v2/${{ github.repository }}/tags/list" 2>/dev/null | jq -r '.tags[]?' || true)
+            "https://ghcr.io/v2/${{ github.repository }}/tags/list" 2>/dev/null | jq -r '.tags[]?' || true)
 
           if [ -z "$EXISTING_TAGS" ]; then
             VERSION=1
