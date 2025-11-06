@@ -61,7 +61,7 @@ jobs:
           IMAGE_ID=ghcr.io/${{ github.repository }}
 
           # Change all uppercase to lowercase
-          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          #IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
 
           echo "Fetching existing tags from GHCR..."
           EXISTING_TAGS=$(curl -fsSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
