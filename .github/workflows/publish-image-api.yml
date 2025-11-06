@@ -54,7 +54,7 @@ jobs:
 
       - name: Build, Tag & Push Production Image
         #if: contains(github.ref, 'main')
-        if: contains(github.ref, 'main') || contains(github.ref, 'landing_page')
+        if: contains(github.ref, 'landing_page')
 
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
