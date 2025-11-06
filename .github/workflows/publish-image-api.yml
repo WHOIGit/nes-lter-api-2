@@ -64,7 +64,9 @@ jobs:
           REPO_PATH=${IMAGE_ID#ghcr.io/}
 
           echo "Fetching existing tags from GHCR..."
-          EXISTING_TAGS=$(curl -fsSL "https://ghcr.io/v2/${REPO_PATH}/tags/list" | jq .)
+          EXISTING_TAGS=$(curl -fsSL \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://ghcr.io/v2/${REPO_PATH}/tags/list" | jq -r '.tags[]?' || true)
 
           # Filter numeric or v-prefixed tags like v1, 2, v10
           LAST_TAG=$(echo "$EXISTING_TAGS" | grep -E '^v?[0-9]+$' | sed 's/^v//' | sort -n | tail -1)
