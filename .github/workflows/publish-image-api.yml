@@ -69,7 +69,6 @@ jobs:
 
           echo "Fetching existing tags from GHCR..."
           EXISTING_TAGS=$(curl -fsSL \
-            -H "Authorization: Bearer ${{ github.token }}" \
             "https://ghcr.io/v2/${REPO_PATH}/tags/list" \
             | jq -r '.tags[]?' || true)
 
@@ -79,6 +78,7 @@ jobs:
           # Default to 1 if no valid tags found
           VERSION=$(( ${LAST_TAG:-0} + 1 ))
 
+          echo "Repo path: ${REPO_PATH}"
           echo "Last tag: ${LAST_TAG}"          
           echo "Next version: v${VERSION}"
 
