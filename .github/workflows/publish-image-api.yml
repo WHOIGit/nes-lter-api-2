@@ -65,10 +65,9 @@ jobs:
 
           IMAGE_ID=ghcr.io/${{ github.repository }} 
           IMAGE_ID=$(echo "$IMAGE_ID" | tr '[:upper:]' '[:lower:]')
-          REPO_PATH=${IMAGE_ID#ghcr.io/}
 
           echo "Fetching existing tags from GHCR..."
-          EXISTING_TAGS=$(curl -sL https://api.github.com/repos/${REPO_PATH}/tags | jq -r '.[].name')
+          EXISTING_TAGS=$(curl -sL https://api.github.com/repos/repos/WHOIGit/nes-lter-api-2/tags | jq -r '.[].name')
 
           echo "Existing tags:"
           echo "$EXISTING_TAGS"
@@ -79,7 +78,6 @@ jobs:
           # Default to 1 if no valid tags found
           VERSION=$(( ${LAST_TAG:-0} + 1 ))
 
-          echo "Repo path: ${REPO_PATH}"
           echo "Last tag: ${LAST_TAG}"          
           echo "Next version: v${VERSION}"
 
