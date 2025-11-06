@@ -68,7 +68,7 @@ jobs:
           REPO_PATH=${IMAGE_ID#ghcr.io/}
 
           echo "Fetching existing tags from GHCR..."
-          EXISTING_TAGS=$(curl -sL https://api.github.com/repos/WHOIGit/nes-lter-api-2/tags | jq -r '.[].name')
+          EXISTING_TAGS=$(curl -sL https://api.github.com/repos/${REPO_PATH}/tags | jq -r '.[].name')
 
           echo "Existing tags:"
           echo "$EXISTING_TAGS"
