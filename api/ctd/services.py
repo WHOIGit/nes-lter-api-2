@@ -244,7 +244,7 @@ class CtdService:
             )            
             return cls.serialize_cruise(new_cruise)
         except IntegrityError:
-            raise HttpError(409, f"error': f'Cruise with name {input.name} already exists.")
+            raise HttpError(409, f"Cruise with name {input.name} already exists.")
         except Vessel.DoesNotExist:
             raise Http404(f"Vessel with name {input.vessel_name} not found.")
 
@@ -309,7 +309,7 @@ class CtdService:
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
             cast = Cast.objects.get(cruise=cruise, number__iexact=cast_number)
-            object_key = f"{cruise_name}{"_ctd_cast_"}{cast.number}{".csv"}"
+            object_key = f"{cruise_name}_ctd_cast_{cast.number}.csv"
             with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
                 try:
                     data = store.get(object_key)

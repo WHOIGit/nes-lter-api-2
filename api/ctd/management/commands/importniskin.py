@@ -14,6 +14,7 @@ from django.contrib.gis.geos import Point
 from django.core.exceptions import ObjectDoesNotExist
 from core.utils import p_to_depth, path_to_cast, get_store, \
                        parse_lat_lon, clean_column_names
+from collections import defaultdict
 
 # date column is the second column (index 1)
 DATE_COL_IX = 1
@@ -171,7 +172,12 @@ class Command(BaseCommand):
                 if cruise_name.lower() == "en627":
                     added_dir = os.path.join(directory, "cast_1_files_used_for_corrected_cast_2")
                     btl_files += sorted(glob.glob(os.path.join(added_dir, '*.btl')))
+
+                # track seen niskin numbers for each cast
+                seen_niskins: dict[int, set[int]] = defaultdict(set)
+
                 for file in btl_files:
+
                     filename = os.path.basename(file).lower()
                     if cruise_name == 'ar24a':
                         cruise_pattern = re.escape(cruise_name[:-1])  
@@ -223,8 +229,12 @@ class Command(BaseCommand):
                                             'geolocation': geolocation
                                         }
                                     )
+
+                                    seen_niskins[cast_obj.id].add(row[NISKIN_COL])
+
                                 else:
                                     self.stdout.write(self.style.ERROR(f'Depth for Cruise {cruise_name} cast {cast} niskin {row[NISKIN_COL]} null. Model not updated.'))
+
                             # compile bottle files into a single dataframe
                             df = clean_column_names(df)  #converts to lower case
                             df = df.loc[:,~df.columns.duplicated()].copy()
@@ -233,7 +243,13 @@ class Command(BaseCommand):
 
                         except ObjectDoesNotExist:
                             self.stdout.write(self.style.ERROR(f'Cast {cast} for Cruise {cruise_name} not imported. Run importcast.py'))
-                            self.logger.error((f'Cast {cast} for Cruise {cruise_name} not imported. Run importcast.py'))
+                            logger.error((f'Cast {cast} for Cruise {cruise_name} not imported. Run importcast.py'))
+
+                # delete niskins from model not in the current files
+                for cast_id, keep_numbers in seen_niskins.items():
+                    qs = Niskin.objects.filter(cast_id=cast_id).exclude(number__in=keep_numbers).delete()
+                    if qs[0] > 0:
+                        self.stdout.write(self.style.WARNING(f'Deleted {qs[0]} niskins for cast id {cast_id} not present in current bottle files.'))
 
                 if glob.glob(os.path.join(directory, "*.btl")) and dfs:
                     dfs = [df for df in dfs if not df.empty]  #remove empty dataframes
@@ -254,7 +270,7 @@ class Command(BaseCommand):
                             store.put(object_key, csv_binary)
                         except Exception as e:
                             print(e, flush=True)
-                            self.logger.error(f'Exception {e}')
+                            logger.error(f'Exception {e}')
                             raise
 
                     # bottle summary

@@ -221,7 +221,7 @@ class Event(models.Model):
         ]
 
     def __str__(self):
-        return '{} event {}'.format(self.cruise, self.number)
+        return '{} event {}'.format(self.cruise, self.r2r_event)
 
 class Underway(models.Model):
     cruise = models.ForeignKey(Cruise, on_delete=models.CASCADE, related_name='underway')
@@ -337,4 +337,4 @@ class HPLC(models.Model):
         return cls.COLUMNS
 
     def __str__(self):
-        return f"HPLC Mapping for {self.name}"
+        return f"HPLC Mapping"

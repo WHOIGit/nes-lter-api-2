@@ -310,6 +310,7 @@ def cruise_track_view(request, cruise_name):
                 data = store.get(object_key)
             except Exception as e:
                 print(e, flush=True)
+                return HttpResponse("Underway file not found.", status=404)
 
         underway_data = pd.read_csv(io.BytesIO(data))
 

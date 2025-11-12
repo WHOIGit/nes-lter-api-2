@@ -9,6 +9,7 @@ from core.utils import get_store
 from pathlib import Path
 from django.contrib.gis.geos import Point
 import logging
+from collections import defaultdict
 
 from core.utils import path_to_cast, parse_lat_lon, parse_time, clean_column_names
 
@@ -121,6 +122,10 @@ class Command(BaseCommand):
                 if cruise_name.lower() == "en627":
                     added_dir = os.path.join(directory, "cast_1_files_used_for_corrected_cast_2")
                     hdr_files += sorted(glob.glob(os.path.join(added_dir, '*.hdr')))
+
+                # track seen casts for each cruise 
+                seen_casts: dict[int, set[int]] = defaultdict(set)
+
                 for file in hdr_files:
                     filename = os.path.basename(file).lower()
                     if cruise_name == 'ar24a':
@@ -152,6 +157,8 @@ class Command(BaseCommand):
                                     "end_time": None
                                 }
                             )
+
+                            seen_casts[cruise.id].add(cast)
                         else:
                             print(f"Cast {cast} for {cruise.name} has null lat, lon, start_time. Will not be saved in the model!")
                             self.logger.error(f"Cast {cast} for {cruise.name} has null lat, lon, start_time. Will not be saved in the model!")
@@ -165,6 +172,12 @@ class Command(BaseCommand):
                 else:
                     self.stdout.write(self.style.ERROR(f'No Casts found for Cruise {cruise_name}.'))
                     self.logger.error((f'No Casts found for Cruise {cruise_name}.'))
+
+                # delete casts from model not in the current files
+                for cruise_id, keep_numbers in seen_casts.items():
+                    qs = Cast.objects.filter(cruise_id=cruise_id).exclude(number__in=keep_numbers).delete()
+                    if qs[0] > 0:
+                        self.stdout.write(self.style.WARNING(f'Deleted {qs[0]} casts for cruise id {cruise_id} not present in current hdr files.'))
 
                 data = []
                 for cast in Cast.objects.filter(cruise=cruise):

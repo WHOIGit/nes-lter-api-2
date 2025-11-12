@@ -2,12 +2,12 @@ const fs = require('fs/promises');
 const path = require('path');
 console.log("Running Vessels Test.");
 
-var myArgs = process.argv.slice(1);
+var myArgs = process.argv.slice(2);
 
 async function getData() {
 
   let url;
-  if (myArgs[1] == 'public') {
+  if (myArgs[0] == 'public') {
       url = `https://nes-lter-api.whoi.edu`;
   }
   else {

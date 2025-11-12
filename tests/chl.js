@@ -5,11 +5,11 @@ const cruises = ["ar77", "en617", "hrs2303", "ae2426", "at46"];
 // Expected line counts - hrs2303 & ae2426 have no data
 const lineCounts = { ar77: 315, en617: 339, hrs2303: 1, ae2426: 1, at46: 327 };
 
-var myArgs = process.argv.slice(1);
+var myArgs = process.argv.slice(2);
 
 async function getData() {
 
-    if (myArgs[1] == 'public') {
+    if (myArgs[0] == 'public') {
         url = `https://nes-lter-api.whoi.edu`;
     }
     else {
