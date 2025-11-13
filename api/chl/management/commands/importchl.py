@@ -140,24 +140,25 @@ class Command(BaseCommand):
 
                 # read and merge bottle summary
                 merged = self.read_btl_summary(cruise_name, chl_cruise)
+                if not merged.empty:
 
-                # write chl file to media store
-                csv_buffer = io.StringIO()
-                merged.to_csv(csv_buffer, index=False, na_rep="NaN")
-                csv_binary = csv_buffer.getvalue().encode("utf-8")
+                    # write chl file to media store
+                    csv_buffer = io.StringIO()
+                    merged.to_csv(csv_buffer, index=False, na_rep="NaN")
+                    csv_binary = csv_buffer.getvalue().encode("utf-8")
 
-                object_key = f"{cruise_name}{CHL_SUFFIX}"
-                with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
-                    try:
-                        store.put(object_key, csv_binary)
-                        self.stdout.write(self.style.SUCCESS(f'{cruise_name}{CHL_SUFFIX} successfully created.'))
-                        self.logger.error((f'{cruise_name}{CHL_SUFFIX} successfully created.'))
-                    except Exception as e:
-                        print(e, flush=True)
-                        raise
+                    object_key = f"{cruise_name}{CHL_SUFFIX}"
+                    with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
+                        try:
+                            store.put(object_key, csv_binary)
+                            self.stdout.write(self.style.SUCCESS(f'{cruise_name}{CHL_SUFFIX} successfully created.'))
+                            self.logger.error((f'{cruise_name}{CHL_SUFFIX} successfully created.'))
+                        except Exception as e:
+                            print(e, flush=True)
+                            raise
 
-                self.stdout.write(self.style.SUCCESS(f'Chl files successfully imported.'))
-                self.logger.error((f'Chl files successfully imported.'))
+                    self.stdout.write(self.style.SUCCESS(f'Chl files successfully imported.'))
+                    self.logger.error((f'Chl files successfully imported.'))
             except Cruise.DoesNotExist:
                     self.logger.error(f'Cruise not found {cruise_name}. Run importcruise.py')
                     raise CommandError(f'Cruise not found {cruise_name}. Run importcruise.py')

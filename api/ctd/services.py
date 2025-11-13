@@ -135,28 +135,25 @@ class CtdService:
 
     @classmethod
     def create_vessel(cls, input: AddVesselInput) -> VesselOutput:
+        existing_vessel = Vessel.objects.filter(name__iexact=input.name).exists()         
+        if existing_vessel:
+            raise HttpError(409, f"Vessel with name '{input.name}' already exists.")
         try:
-            existing_vessel = Vessel.objects.filter(name__iexact=input.name).exists()         
-            if existing_vessel:
-                raise HttpError(409, f"Vessel with name '{input.name}' already exists.")
-            try:
-                new_vessel = Vessel.objects.create(
-                    designation=input.designation,
-                    name=input.name,
-                    short_name=input.short_name,
-                    code=input.code
-                )            
-                return cls.serialize_vessel(new_vessel)
-            except IntegrityError as e:
-                if 'duplicate key value violates unique constraint' in str(e):
-                    if 'vessel_short_name' in str(e):
-                        raise HttpError(409, f"Vessel with short_name '{input.short_name}' already exists.")
-                    if 'vessel_code' in str(e):
-                        raise HttpError(409, f"Vessel with code '{input.code}' already exists.")
-                else:
-                    raise HttpError(500, "An unexpected error occurred while creating the vessel.")
-        except Vessel.DoesNotExist:
-            pass
+            new_vessel = Vessel.objects.create(
+                designation=input.designation,
+                name=input.name,
+                short_name=input.short_name,
+                code=input.code
+            )            
+            return cls.serialize_vessel(new_vessel)
+        except IntegrityError as e:
+            if 'duplicate key value violates unique constraint' in str(e):
+                if 'vessel_short_name' in str(e):
+                    raise HttpError(409, f"Vessel with short_name '{input.short_name}' already exists.")
+                if 'vessel_code' in str(e):
+                    raise HttpError(409, f"Vessel with code '{input.code}' already exists.")
+            else:
+                raise HttpError(500, "An unexpected error occurred while creating the vessel.")
 
     @classmethod
     def delete_vessel(cls, vessel_name: str):
@@ -264,7 +261,7 @@ class CtdService:
             except Vessel.DoesNotExist:
                 raise Http404(f"Vessel with name {input.vessel_name} not found.")
         except Cruise.DoesNotExist:
-            raise HttpError(404, f"Cruise {input.cruise_name} not found.")
+            raise HttpError(404, f"Cruise {cruise_name} not found.")
 
     @classmethod
     def delete_cruise(cls, cruise_name: str):
@@ -364,7 +361,7 @@ class CtdService:
                 cast.save()
                 return cls.serialize_cast(cast)
         except Cruise.DoesNotExist:
-            raise Http404(f"Cruise {cast_input.cruise_name} not found.")
+            raise Http404(f"Cruise {cruise_name} not found.")
         except Cast.DoesNotExist:
             raise Http404(f"Cast not found for {cruise_name} .")
 
@@ -493,7 +490,7 @@ class CtdService:
                     data = store.get(object_key)
                 except Exception as e:
                     print(e, flush=True)
-                    raise
+                    return []
             csv_buffer = io.BytesIO(data)
             response = HttpResponse(csv_buffer, content_type='text/csv')
             response['Content-Disposition'] = f'attachment; filename="{object_key}"'
@@ -515,7 +512,7 @@ class CtdService:
                     data = store.get(object_key)
                 except Exception as e:
                     print(e, flush=True)
-                    raise
+                    return []
             csv_buffer = io.BytesIO(data)
             response = HttpResponse(csv_buffer, content_type='text/csv')
             response['Content-Disposition'] = f'attachment; filename="{object_key}"'

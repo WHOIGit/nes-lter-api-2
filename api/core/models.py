@@ -8,8 +8,6 @@ from django.utils import timezone
 from django.db.models import UniqueConstraint
 from simple_history.models import HistoricalRecords
 from typing import Dict, List
-from pydantic import Field
-
 
 # Ability to add a timestamp to any model instance
 class TimeStampedModelInstance(models.Model):
@@ -229,7 +227,7 @@ class Underway(models.Model):
     end_datetime = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return self.cruise
+        return str(self.cruise)
 
 
 class HPLC(models.Model):    

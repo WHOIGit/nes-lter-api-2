@@ -22,7 +22,7 @@ class NutService:
                     data = store.get(object_key)
                 except Exception as e:
                     print(e, flush=True)
-                    raise
+                    raise Http404(f"Nutrient data not found for cruise {cruise_name}")
             csv_buffer = io.BytesIO(data)
             response = HttpResponse(csv_buffer, content_type='text/csv')
             response['Content-Disposition'] = f'attachment; filename="{object_key}"'
