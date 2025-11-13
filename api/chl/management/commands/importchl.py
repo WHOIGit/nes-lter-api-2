@@ -159,6 +159,9 @@ class Command(BaseCommand):
 
                     self.stdout.write(self.style.SUCCESS(f'Chl files successfully imported.'))
                     self.logger.error((f'Chl files successfully imported.'))
+                else:
+                    self.stdout.write(self.style.WARNING(f'No Chlorophyll data found for cruise {cruise_name}.'))
+                    self.logger.warning(f'No Chlorophyll data found for cruise {cruise_name}.')
             except Cruise.DoesNotExist:
                     self.logger.error(f'Cruise not found {cruise_name}. Run importcruise.py')
                     raise CommandError(f'Cruise not found {cruise_name}. Run importcruise.py')
