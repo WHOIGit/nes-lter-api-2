@@ -84,7 +84,7 @@ jobs:
           # Build Production Container
           docker build -f Dockerfile -t $IMAGE_ID .
 
-          #docker tag $IMAGE_ID $IMAGE_ID:v${VERSION}
+          docker tag $IMAGE_ID $IMAGE_ID:v${VERSION}
           docker image ls
 
           docker push $IMAGE_ID:v$VERSION
