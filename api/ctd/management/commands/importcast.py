@@ -56,7 +56,19 @@ class Command(BaseCommand):
     
     def create_cast_file(self, file, cruise, cast, time):
         delimiter = ';'
-        ascfile = file.name.replace(".hdr", ".asc")
+        base_dir = os.path.dirname(file.name)
+        base_name = os.path.splitext(os.path.basename(file.name))[0]
+
+        # Look for matching .asc file (case-sensitive)
+        ascfile = None
+        for f in os.listdir(base_dir):
+            if f.lower() == f"{base_name.lower()}.asc":
+                ascfile = os.path.join(base_dir, f)
+                break
+
+        if not ascfile:
+            self.stdout.write(self.style.ERROR(f'No .asc file found for cruise {cruise} cast {cast}.'))
+            self.logger.error((f'No .asc file found for cruise {cruise} cast {cast}.'))
         
         #read .asc file
         try:
@@ -94,9 +106,6 @@ class Command(BaseCommand):
                     print(e, flush=True)
                     self.logger.error(f'Exception {e}')
                     raise  
-        except FileNotFoundError:
-            self.stdout.write(self.style.ERROR(f'No .asc file found for cruise {cruise} cast {cast}.'))
-            self.logger.error((f'No .asc file found for cruise {cruise} cast {cast}.'))
         except pd.errors.ParserError as e:
             self.stdout.write(self.style.ERROR(f"{ascfile} not parsable."))
             self.logger.error((f"{ascfile} not parsable."))
