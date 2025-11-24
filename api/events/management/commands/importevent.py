@@ -8,7 +8,7 @@ from core.models import Cruise
 from core.models import Event
 from core.utils import get_store
 from django.contrib.gis.geos import Point
-from collections import Counter
+from collections import Counter, defaultdict
 
 DATETIME = 'dateTime8601'
 MESSAGE_ID = 'Message ID'
@@ -109,6 +109,9 @@ class Command(BaseCommand):
                        df = pd.read_csv(file_path, encoding='latin1',parse_dates=[DATETIME], dtype={'Station': str, 'Cast': str})
 
                if not df.empty:
+                   # track seen events for each cruise 
+                   seen_events: dict[int, set[str]] = defaultdict(set)
+
                    df['Comment'] = df['Comment'].fillna('')
 
                    for _, row in df.iterrows():
@@ -140,6 +143,8 @@ class Command(BaseCommand):
                                    }
                                )
 
+                       seen_events[cruise.id].add(row[R2R_EVENT])
+
                        csv_data.append({
                            R2R_EVENT: event.r2r_event,
                            MESSAGE_ID: event.message_id,
@@ -153,6 +158,12 @@ class Command(BaseCommand):
                            "Comment": event.comment,
                        })
 
+                   # delete events from model not in the current elog files
+                   for cruise_id, keep_events in seen_events.items():
+                       qs = Event.objects.filter(cruise_id=cruise_id).exclude(r2r_event__in=keep_events).delete()
+                       if qs[0] > 0:
+                           self.stdout.write(self.style.WARNING(f'Deleted {qs[0]} events for cruise id {cruise_id} not present in elog files.'))
+                       
                    # duplicate r2r_events not stored in the model
                    r2r_counts = Counter(row[R2R_EVENT] for row in csv_data)
                    duplicates = [r for r, c in r2r_counts.items() if c > 1]

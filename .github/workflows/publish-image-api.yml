@@ -12,6 +12,10 @@ jobs:
   # NES-LTER API 2 Automated Testing and Tagging
   setup-build-publish:
     name: NES-LTER API 2 Setup, Build, and Publish
+    permissions:
+      contents: read
+      packages: read
+
     runs-on: ubuntu-latest
 
     steps:
@@ -54,33 +58,28 @@ jobs:
 
       - name: Build, Tag & Push Production Image
         if: contains(github.ref, 'main')
+        #if: contains(github.ref, 'landing-page')
+
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          IMAGE_ID=ghcr.io/${{ github.repository }}
 
-          # Change all uppercase to lowercase
-          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          IMAGE_ID=ghcr.io/${{ github.repository }} 
+          IMAGE_ID=$(echo "$IMAGE_ID" | tr '[:upper:]' '[:lower:]')
 
           echo "Fetching existing tags from GHCR..."
-          EXISTING_TAGS=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            https://ghcr.io/v2/${{ github.repository }}/tags/list | jq -r '.tags[]?' || echo "")
+          EXISTING_TAGS=$(curl -sL https://api.github.com/repos/WHOIGit/nes-lter-api-2/tags | jq -r '.[].name')
 
-          if [ -z "$EXISTING_TAGS" ]; then
-            VERSION=1
-          else
-            LAST_TAG=$(echo "$EXISTING_TAGS" | grep -E '^[0-9]+$' | sort -n | tail -1)
-            if [ -z "$LAST_TAG" ]; then
-              VERSION=1
-            else
-              VERSION=$((LAST_TAG + 1))
-            fi
-          fi
+          echo "Existing tags:"
+          echo "$EXISTING_TAGS"
 
+          # Filter numeric or v-prefixed tags like v1, 2, v10
+          LAST_TAG=$(echo "$EXISTING_TAGS" | sed 's/^v//' | sed 's/\.0b$//' | grep -E '^[0-9]+$' | sort -n | tail -1)
 
-          echo "IMAGE_ID:"
-          echo $IMAGE_ID
-          echo "VERSION:"
-          echo $VERSION
+          # Default to 1 if no valid tags found
+          VERSION=$(( ${LAST_TAG:-0} + 1 ))
+
+          echo "Last tag: ${LAST_TAG}"          
+          echo "Next version: v${VERSION}"
 
           # Build Production Container
           docker build -f Dockerfile -t $IMAGE_ID .

@@ -1,6 +1,5 @@
 from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse, HttpResponse, Http404
+from django.http import JsonResponse, HttpResponse, Http404, FileResponse
 import os
 import io
 import json
@@ -310,6 +309,7 @@ def cruise_track_view(request, cruise_name):
                 data = store.get(object_key)
             except Exception as e:
                 print(e, flush=True)
+                return HttpResponse("Underway file not found.", status=404)
 
         underway_data = pd.read_csv(io.BytesIO(data))
 
@@ -454,3 +454,6 @@ def ctd_plot_view(request, cruise_name, cast_number):
     resp["X-Plot-Title"] = f"{cruise_name} Cast {cast_number} - CTD Profile"
     return resp
 
+def download_bathymetry(request):
+        filepath = '/vast/raw/all/bathymetry/neslter_bathymetry.csv'
+        return FileResponse(filepath, as_attachment=True, filename='bathymetry.csv')

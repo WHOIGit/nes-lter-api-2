@@ -10,12 +10,12 @@ const times = {
     at46: '2022-02-21/2022-02-21'
 }
 
-var myArgs = process.argv.slice(1);
+var myArgs = process.argv.slice(2);
 
 async function getData(cruise) {
 
   let url;
-  if (myArgs[1] == 'public') {
+  if (myArgs[0] == 'public') {
       url = `https://nes-lter-api.whoi.edu`;
   }
   else {

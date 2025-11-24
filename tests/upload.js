@@ -8,14 +8,14 @@ var driver;
 var filename;
 var bodyText;
 var file1, file2, file3, file4, file5, file6
-var myArgs = process.argv.slice(1);
+var myArgs = process.argv.slice(2);
 
 (async function upload() {
 
     let chromeCapabilities = Capabilities.chrome();
 
     // Docker will only run headless
-    if ((myArgs[1] == 'headless') && (myArgs.length != 0)) {
+    if ((myArgs[0] == 'headless') && (myArgs.length != 0)) {
 
         chromeCapabilities.set("goog:chromeOptions", {
             args: [
@@ -40,7 +40,7 @@ var myArgs = process.argv.slice(1);
     driver = new Builder().forBrowser('chrome').withCapabilities(chromeCapabilities).build();
 
     try {
-        if (myArgs[2] == 'public') {
+        if (myArgs[1] == 'public') {
             await driver.get("https://nes-lter-api.whoi.edu/upload/");
         }
         else {           

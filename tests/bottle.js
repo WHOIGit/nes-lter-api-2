@@ -4,12 +4,12 @@ const cruises = ["ar77", "en617", "hrs2303", "ae2426", "at46"];
 
 const lineCounts = { ar77: 310, en617: 359, hrs2303: 145, ae2426: 266, at46: 305 };
 
-var myArgs = process.argv.slice(1);
+var myArgs = process.argv.slice(2);
 
 async function getData(cruise) {
   try {
 
-      if (myArgs[1] == 'public') {
+      if (myArgs[0] == 'public') {
           url = `https://nes-lter-api.whoi.edu`;
       }
       else {

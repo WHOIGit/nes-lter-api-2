@@ -11,11 +11,11 @@ const r2rEvent = {
     ae2426: '20241106.1442.001', at46: 'at46-SE-20220216.1627.001'
 };
 
-var myArgs = process.argv.slice(1);
+var myArgs = process.argv.slice(2);
 
 async function getData(cruise) {
 
-  if (myArgs[1] == 'public') {
+  if (myArgs[0] == 'public') {
       url = `https://nes-lter-api.whoi.edu`;
   }
   else {
