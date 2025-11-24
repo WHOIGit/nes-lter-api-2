@@ -67,15 +67,16 @@ jobs:
           IMAGE_ID=$(echo "$IMAGE_ID" | tr '[:upper:]' '[:lower:]')
 
           echo "Fetching existing tags from GHCR..."
-          EXISTING_TAGS=$(curl -sL https://api.github.com/repos/WHOIGit/nes-lter-api-2/tags | jq -r '.[].name')
+          EXISTING_TAGS=$(curl -sL \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/orgs/whoigit/packages/container/nes-lter-api-2/versions \
+            | jq -r '.[].metadata.container.tags[]' | sort -u)
 
           echo "Existing tags:"
           echo "$EXISTING_TAGS"
 
           # Filter numeric or v-prefixed tags like v1, 2, v10
-          LAST_TAG=$(echo "$EXISTING_TAGS" | sed 's/^v//' | sed 's/\.0b$//' | grep -E '^[0-9]+$' | sort -n | tail -1)
-
-          # Default to 1 if no valid tags found
+          LAST_TAG=$(echo "$EXISTING_TAGS" | sed 's/^v//' | grep -E '^[0-9]+$' | sort -n | tail -1)
           VERSION=$(( ${LAST_TAG:-0} + 1 ))
 
           echo "Last tag: ${LAST_TAG}"          
