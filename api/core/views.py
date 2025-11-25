@@ -456,4 +456,5 @@ def ctd_plot_view(request, cruise_name, cast_number):
 
 def download_bathymetry(request):
         filepath = '/vast/raw/all/bathymetry/neslter_bathymetry.csv'
-        return FileResponse(filepath, as_attachment=True, filename='bathymetry.csv')
+        return FileResponse(open(filepath, 'rb'), as_attachment=True, filename='bathymetry.csv')
+

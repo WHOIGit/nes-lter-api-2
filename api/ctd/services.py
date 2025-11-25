@@ -542,4 +542,12 @@ class CtdService:
         except Cruise.DoesNotExist:
            raise Http404(f"Cruise {cruise_name} not found.")    
 
+    @classmethod
+    def get_bathymetry(cls) -> FileResponse:
+        filepath = '/vast/raw/all/bathymetry/neslter_bathymetry.csv'
+        try:
+            return FileResponse(open(filepath, 'rb'), as_attachment=True, filename='bathymetry.csv')
+        except FileNotFoundError:
+            raise Http404("Bathymetry file not found.")
+
 
