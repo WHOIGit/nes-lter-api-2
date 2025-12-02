@@ -112,6 +112,20 @@
 
         <h2>Number of Transect Cruises since 2017: {{ cruise_count }}</h2>
 
+        <h2>📅 Cruises by Year 📅</h2>
+
+        <div class="grid">
+            {% for y in cruise_years %}
+            <a class="card" href="{% url 'cruises_for_year' y.year %}" aria-label="{{ y.year }}">
+                <span class="emoji-icon">🗓️</span>
+                <div class="label">{{ y.year }}</div>
+                <div class="count">{{ y.count }}</div>
+            </a>
+            {% empty %}
+            <div>No cruises found.</div>
+            {% endfor %}
+        </div>
+
         <!-- Dropdown menu -->
         <div class="nav-row" role="navigation" aria-label="Cruise navigation">
             <h3><label for="cruise-nav">Display Cruises:</label></h3>
@@ -123,15 +137,15 @@
             </select>
         </div>
 
-        <h3>Wiki Link</h3>
+        <h3>Wiki Link:</h3>
         <p>
             <a class="link" href="https://github.com/WHOIGit/nes-lter-api-2/wiki" target="_blank">
-                Link to NES-LTER API 2 Wiki
+                NES-LTER API 2 Wiki
             </a>
         </p>
 
         <p style="margin-top:1.5rem;">
-            <h3>Access Cruise and CTD metadata programmatically. Explore the schema and try endpoints in your browser.</h3>
+            <h3>Access Cruise and CTD metadata programmatically. Explore the schema and try endpoints in your browser:</h3>
         </p>
         <p>
             <a class="cta" href="/api/docs" target="_blank" rel="noopener noreferrer">
@@ -139,17 +153,17 @@
             </a>
         </p>
 
-        <h3>Colab Notebook</h3>
+        <h3>NES-LTER API 2 client examples in R:</h3>
         <p>
-            <a class="link" href="" target="_blank">
-                Link to Colab Notebook coming soon...
+            <a class="link" href="https://colab.research.google.com/drive/1lI_7uW2aI9MhBgozYWIXj8YaxxIMjpP_?usp=sharing" target="_blank" rel="noopener noreferrer">
+                Colab Notebook
             </a>
         </p>
 
         <h3>Curated packages sourced from these data are in the EDI repository:</h3>
         <p>
             <a class="link" href="https://portal.edirepository.org/nis/browseServlet?searchValue=NES" target="_blank">
-                Link to NES EDI Packages
+                NES EDI Packages
             </a>
         </p>
 

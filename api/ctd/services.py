@@ -305,6 +305,7 @@ class CtdService:
 
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
+            cast_number = cast_number.lstrip("0")
             cast = Cast.objects.get(cruise=cruise, number__iexact=cast_number)
             object_key = f"{cruise_name}_ctd_cast_{cast.number}.csv"
             with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
