@@ -139,11 +139,33 @@ PREFIXES = [
     ("ae",  "AE Cruises",  "⛵"),   # Sailboat
 ]
 
+def get_cruises_grouped_by_year():
+    cruises = (
+        Cruise.objects
+        .filter(Q(start_time__isnull=False) | Q(end_time__isnull=False))
+        .annotate(year=Coalesce(ExtractYear('start_time'), ExtractYear('end_time')))
+        .order_by('-year', 'name')
+    )
+
+    # Group: {year: [Cruise, ...]}
+    year_map = {}
+    for c in cruises:
+        year_map.setdefault(c.year, []).append(c)
+
+    # Transform to a list for templates
+    cruise_years = [
+        {'year': year, 'cruises': year_map[year], 'count': len(year_map[year])}
+        for year in sorted(year_map.keys(), reverse=True)
+    ]
+    return cruise_years
+
 def landing(request):
     cruise_count = Cruise.objects.count()
+    cruise_years = get_cruises_grouped_by_year()
 
     return render(request, "landing.html", {
         "cruise_count": cruise_count,
+        "cruise_years": cruise_years,
     })
 
 def cruises_by_type(request):
@@ -162,23 +184,7 @@ def cruises_by_type(request):
     })
 
 def cruises_by_year(request):
-    cruises = (
-        Cruise.objects
-        .filter(Q(start_time__isnull=False) | Q(end_time__isnull=False))
-        .annotate(year=Coalesce(ExtractYear('start_time'), ExtractYear('end_time')))
-        .order_by('-year', 'name')
-    )
-
-    # Group: {year: [Cruise, ...]}
-    year_map = {}
-    for c in cruises:
-        year_map.setdefault(c.year, []).append(c)
-
-    # Transform to a list for templates
-    cruise_years = [
-        {'year': year, 'cruises': year_map[year], 'count': len(year_map[year])}
-        for year in sorted(year_map.keys(), reverse=True)
-    ]
+    cruise_years = get_cruises_grouped_by_year()
 
     return render(request, "cruises_by_year.html", {
         "cruise_years": cruise_years,
