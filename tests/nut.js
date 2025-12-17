@@ -20,7 +20,7 @@ async function getData() {
     for (const cruise of cruises) {
         try {
             const response = await fetch(`${url}/api/nut/${cruise}`);
-            if (!response.ok) {
+            if ((!response.ok) && (cruise != 'ae2426')) {
                 throw new Error('HTTP error ' + response.status);
             }
 
