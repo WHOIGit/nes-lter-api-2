@@ -307,7 +307,7 @@ class Command(BaseCommand):
                 print(e, flush=True)
                 print("Run ImportNiskin.py to import bottle file.", flush=True)
                 self.logger.error("Run ImportNiskin.py to import bottle file.")
-                raise
+                return nut_profile.head(0)
 
         bottles = pd.read_csv(io.BytesIO(data))
         bottles.cast = bottles.cast.astype(str).str.lstrip("0")
@@ -356,43 +356,47 @@ class Command(BaseCommand):
                    
                     # read and merge temperature and salinity from bottle data
                     nut_profile = self.read_bottle_data(cruise_name, nut_profile)
-                
-                    # calculate and apply quality flags
-                    nut_profile = self.apply_flags(nut_profile)
+                   
+                    if not nut_profile.empty:
+                        # calculate and apply quality flags
+                        nut_profile = self.apply_flags(nut_profile)
 
-                    # add nearest station
-                    nut_profile[NEAREST_STATION_COL] = None
-                    nut_profile[DISTANCE_KM_COL] = None
+                        # add nearest station
+                        nut_profile[NEAREST_STATION_COL] = None
+                        nut_profile[DISTANCE_KM_COL] = None
 
-                    for idx, row in nut_profile.iterrows():
-                        geolocation = Point(row[LONGITUDE_COL], row[LATITUDE_COL], srid=4326)
-                        station_location = Station.nearest_location(
-                            latitude= geolocation.y,
-                            longitude=geolocation.x,
-                            timestamp=row[DATE_COL]
-                        )
-                        if station_location:
-                            nut_profile.at[idx, NEAREST_STATION_COL] = station_location.content_object.name
-                            nut_profile.at[idx, DISTANCE_KM_COL] = round(station_location.distance.km, 3)
+                        for idx, row in nut_profile.iterrows():
+                            geolocation = Point(row[LONGITUDE_COL], row[LATITUDE_COL], srid=4326)
+                            station_location = Station.nearest_location(
+                                latitude= geolocation.y,
+                                longitude=geolocation.x,
+                                timestamp=row[DATE_COL]
+                            )
+                            if station_location:
+                                nut_profile.at[idx, NEAREST_STATION_COL] = station_location.content_object.name
+                                nut_profile.at[idx, DISTANCE_KM_COL] = round(station_location.distance.km, 3)
 
-                    # write nut file to media store
-                    csv_buffer = io.StringIO()
-                    nut_profile.to_csv(csv_buffer, index=False, na_rep="NaN")
-                    csv_binary = csv_buffer.getvalue().encode("utf-8")
+                        # write nut file to media store
+                        csv_buffer = io.StringIO()
+                        nut_profile.to_csv(csv_buffer, index=False, na_rep="NaN")
+                        csv_binary = csv_buffer.getvalue().encode("utf-8")
 
-                    object_key = f"{cruise_name}{NUT_SUFFIX}"
-                    with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
-                        try:
-                            store.put(object_key, csv_binary)
-                            self.stdout.write(self.style.SUCCESS(f'{cruise_name}{NUT_SUFFIX} successfully created.'))
-                            self.logger.error((f'{cruise_name}{NUT_SUFFIX} successfully created.'))
-                        except Exception as e:
-                            print(e, flush=True)
-                            self.logger.error(f'An error occurred: {str(e)}')
-                            raise
+                        object_key = f"{cruise_name}{NUT_SUFFIX}"
+                        with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
+                            try:
+                                store.put(object_key, csv_binary)
+                                self.stdout.write(self.style.SUCCESS(f'{cruise_name}{NUT_SUFFIX} successfully created.'))
+                                self.logger.error((f'{cruise_name}{NUT_SUFFIX} successfully created.'))
+                            except Exception as e:
+                                print(e, flush=True)
+                                self.logger.error(f'An error occurred: {str(e)}')
+                                raise
 
-                    self.stdout.write(self.style.SUCCESS(f'Nut files successfully imported.'))
-                    self.logger.error((f'Nut files successfully imported.'))
+                        self.stdout.write(self.style.SUCCESS(f'Nut files successfully imported.'))
+                        self.logger.error((f'Nut files successfully imported.'))
+                    else:
+                        self.stdout.write(self.style.WARNING(f'No nutrient data found for cruise {cruise_name}.'))
+                        self.logger.warning(f'No nutrient data found for cruise {cruise_name}.')
             except Cruise.DoesNotExist:
                     self.logger.error(f'Cruise not found {cruise_name}. Run importcruise.py')
                     raise CommandError(f'Cruise not found {cruise_name}. Run importcruise.py')
