@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - "main"
-      - "landing-page"
+      - "underway-datetime"
 
 env:
   IMAGE_NAME: nes-lter-api-2
@@ -58,7 +58,6 @@ jobs:
 
       - name: Build, Tag & Push Production Image
         if: contains(github.ref, 'main')
-        #if: contains(github.ref, 'landing-page')
 
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin

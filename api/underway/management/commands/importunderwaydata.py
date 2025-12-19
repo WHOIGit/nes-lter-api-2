@@ -7,7 +7,7 @@ from io import BytesIO, StringIO
 import pandas as pd
 from core.models import Cruise
 from core.models import Underway
-from core.utils import clean_column_names, get_store
+from core.utils import clean_column_names, get_store, date_time_to_datetime
 from pathlib import Path
 from django.utils import timezone
 
@@ -22,6 +22,7 @@ class Command(BaseCommand):
         self.logger = logging.getLogger('management')
 
     FILE_SUFFIX = '_underway.csv'
+    DATETIME = 'date'
 
     def add_arguments(self, parser):
         parser.add_argument('--cruise_name', type=str, help='Optional name of the cruise.', default=None)
@@ -35,11 +36,11 @@ class Command(BaseCommand):
         cruise_name = options['cruise_name']
         
         underway_metadata = {
-           'ar': {'read_csv_args': {'skiprows': 1}, 'date_column': 'DATE_GMT', 'date_format': '%Y/%m/%d', 'time_column': ' TIME_GMT'},
-           'at': {'read_csv_args': {'skiprows': 1}, 'date_column': 'DATE_GMT', 'date_format': '%Y/%m/%d', 'time_column': ' TIME_GMT'},
+           'ar': {'read_csv_args': {'skiprows': 1}, 'date_column': self.DATETIME, 'date_format': '%Y/%m/%d', 'time_column': ' TIME_GMT'},
+           'at': {'read_csv_args': {'skiprows': 1}, 'date_column': self.DATETIME, 'date_format': '%Y/%m/%d', 'time_column': ' TIME_GMT'},
            'en': {'read_csv_args': {'comment': '#'}, 'date_column': 'DateTime_ISO8601', 'date_format': None, 'time_column': None},
            'hrs': {'read_csv_args': {'header': [0]}, 'date_column': 'date', 'date_format': '%Y-%m-%d %H:%M:%S%z', 'time_column': None},
-           'ae': {'read_csv_args': {'header': [0]}, 'date_column': 'YMD', 'date_format': '%Y%m%d', 'time_column': 'HMS'}
+           'ae': {'read_csv_args': {'header': [0]}, 'date_column': self.DATETIME, 'date_format': '%Y%m%d', 'time_column': 'HMS'}
         }
 
         if cruise_name is None:
@@ -74,23 +75,34 @@ class Command(BaseCommand):
 
                     combined_data = pd.concat(data_frames, ignore_index=True)
 
-                    if metadata['time_column']:
-                        combined_data['datetime'] = pd.to_datetime(
-                            combined_data[metadata['date_column']].astype(str).str.strip() + ' ' +
-                            combined_data[metadata['time_column']].astype(str).str.zfill(6),
-                            format=f"{metadata['date_format']} %H%M%S",
-                            errors='coerce'
-                        )
+                    if cruise_prefix in ('ar', 'at'):
+                        combined_data.insert(0, self.DATETIME, date_time_to_datetime(combined_data.pop('DATE_GMT'), combined_data.pop(' TIME_GMT')))
+                        combined_data.index = combined_data[self.DATETIME]
+                    elif cruise_prefix in ('ae'):
+                        ymd = pd.to_datetime(combined_data['YMD'], format=metadata['date_format'])
+                        hms_padded = combined_data[metadata['time_column']].apply(lambda x: f"{x:06}")
+                        hms = hms_padded.str[:2] + ':' + hms_padded.str[2:4] + ':' + hms_padded.str[4:6]
+                        combined_data = combined_data.drop(columns=['YMD', 'HMS'])
+                        combined_data.insert(0, self.DATETIME, date_time_to_datetime(ymd.dt.strftime('%Y-%m-%d'), hms))
+                        combined_data.index = combined_data[self.DATETIME]
                     else:
-                        combined_data['datetime'] = pd.to_datetime(
-                            combined_data[metadata['date_column']])
+                        if metadata['time_column']:
+                            combined_data['datetime'] = pd.to_datetime(
+                                combined_data[metadata['date_column']].astype(str).str.strip() + ' ' +
+                                combined_data[metadata['time_column']].astype(str).str.zfill(6),
+                                format=f"{metadata['date_format']} %H%M%S",
+                                errors='coerce'
+                            )
+                        else:
+                            combined_data['datetime'] = pd.to_datetime(
+                                combined_data[metadata['date_column']])
 
-                    combined_data = combined_data.sort_values(
-                        by='datetime',
-                        ascending=True,
-                        ignore_index=True
-                    )
-                    combined_data = combined_data.drop(columns=['datetime'])
+                        combined_data = combined_data.sort_values(
+                            by='datetime',
+                            ascending=True,
+                            ignore_index=True
+                        )
+                        combined_data = combined_data.drop(columns=['datetime'])
                     
                     # Select only numeric columns and fill NaN values with 'NaN'
                     combined_data[combined_data.select_dtypes(include=['number']).columns] = combined_data.select_dtypes(include=['number']).fillna('NaN')

@@ -175,3 +175,11 @@ def get_store( url, token, prefix):
         with MediaStore(url, token=token) as base_store:
             prefixed = PrefixStore(base_store, prefix or "")
             yield prefixed
+
+def date_time_to_datetime(date, time):
+    try:
+        # for Series objects (e.g., DataFrame columns)
+        return pd.to_timedelta(time.astype(str)) + pd.to_datetime(date, utc=True)
+    except AttributeError:
+        # for a single date/time
+        return pd.to_timedelta(time) + pd.to_datetime(date, utc=True)
