@@ -1,4 +1,3 @@
-import csv
 import os
 import glob
 import logging
@@ -10,6 +9,7 @@ from core.models import Underway
 from core.utils import clean_column_names, get_store, date_time_to_datetime
 from pathlib import Path
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 
 class Command(BaseCommand):
     help = 'Import in Underway Data files for a given Cruise. If Cruise is not supplied, all Cruises will be imported.'
@@ -36,11 +36,11 @@ class Command(BaseCommand):
         cruise_name = options['cruise_name']
         
         underway_metadata = {
-           'ar': {'read_csv_args': {'skiprows': 1}, 'date_column': self.DATETIME, 'date_format': '%Y/%m/%d', 'time_column': ' TIME_GMT'},
-           'at': {'read_csv_args': {'skiprows': 1}, 'date_column': self.DATETIME, 'date_format': '%Y/%m/%d', 'time_column': ' TIME_GMT'},
-           'en': {'read_csv_args': {'comment': '#'}, 'date_column': 'DateTime_ISO8601', 'date_format': None, 'time_column': None},
-           'hrs': {'read_csv_args': {'header': [0]}, 'date_column': 'date', 'date_format': '%Y-%m-%d %H:%M:%S%z', 'time_column': None},
-           'ae': {'read_csv_args': {'header': [0]}, 'date_column': self.DATETIME, 'date_format': '%Y%m%d', 'time_column': 'HMS'}
+           'ar': {'read_csv_args': {'skiprows': 1}, 'date_format': '%Y/%m/%d', 'time_column': ' TIME_GMT'},
+           'at': {'read_csv_args': {'skiprows': 1}, 'date_format': '%Y/%m/%d', 'time_column': ' TIME_GMT'},
+           'en': {'read_csv_args': {'comment': '#'}, 'date_format': None, 'time_column': None},
+           'hrs': {'read_csv_args': {'header': [0]}, 'date_format': '%Y-%m-%d %H:%M:%S%z', 'time_column': None},
+           'ae': {'read_csv_args': {'header': [0]}, 'date_format': '%Y%m%d', 'time_column': 'HMS'}
         }
 
         if cruise_name is None:
@@ -85,17 +85,20 @@ class Command(BaseCommand):
                         combined_data = combined_data.drop(columns=['YMD', 'HMS'])
                         combined_data.insert(0, self.DATETIME, date_time_to_datetime(ymd.dt.strftime('%Y-%m-%d'), hms))
                         combined_data.index = combined_data[self.DATETIME]
+                    elif cruise_prefix in ('en'):
+                        combined_data = combined_data.rename(columns={"DateTime_ISO8601": "date"})
+                        combined_data[self.DATETIME] = pd.to_datetime(combined_data[self.DATETIME], utc=True, errors="coerce")
                     else:
                         if metadata['time_column']:
                             combined_data['datetime'] = pd.to_datetime(
-                                combined_data[metadata['date_column']].astype(str).str.strip() + ' ' +
+                                combined_data[self.DATETIME].astype(str).str.strip() + ' ' +
                                 combined_data[metadata['time_column']].astype(str).str.zfill(6),
                                 format=f"{metadata['date_format']} %H%M%S",
                                 errors='coerce'
                             )
                         else:
                             combined_data['datetime'] = pd.to_datetime(
-                                combined_data[metadata['date_column']])
+                                combined_data[self.DATETIME])
 
                         combined_data = combined_data.sort_values(
                             by='datetime',
@@ -109,14 +112,13 @@ class Command(BaseCommand):
                     if 'QSR - S/N 10367' in combined_data.columns:    #hrs2303
                         combined_data['QSR - S/N 10367'] = combined_data['QSR - S/N 10367'].fillna('NaN')
 
-                    date_column = metadata['date_column']
                     date_format = metadata['date_format']
                     if date_format:
-                        start_datetime = pd.to_datetime(combined_data[date_column].min(), format=date_format)
-                        end_datetime = pd.to_datetime(combined_data[date_column].max(), format=date_format)
+                        start_datetime = pd.to_datetime(combined_data[self.DATETIME].min(), format=date_format)
+                        end_datetime = pd.to_datetime(combined_data[self.DATETIME].max(), format=date_format)
                     else:
-                        start_datetime = pd.to_datetime(combined_data[date_column].min())
-                        end_datetime = pd.to_datetime(combined_data[date_column].max())
+                        start_datetime = pd.to_datetime(combined_data[self.DATETIME].min())
+                        end_datetime = pd.to_datetime(combined_data[self.DATETIME].max())
 
                     df_data = clean_column_names(combined_data)
 
