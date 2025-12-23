@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - "main"
-      - "underway-datetime"
+      - "fix-endeavor-underway-datetime"
 
 env:
   IMAGE_NAME: nes-lter-api-2
