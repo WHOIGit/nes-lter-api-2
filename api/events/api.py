@@ -37,6 +37,8 @@ def delete_events(request, cruise_name: str):
     except ValueError as e:
         return {"status": "error", "message": str(e)}
 
-    
+@router.get("/readme/{cruise_name}", response=str, tags=["Users"])
+def get_readme(request, cruise_name: str):
+    return EventService.get_readme(cruise_name)
 
 

@@ -1,5 +1,6 @@
 import io
 import os
+import glob
 from django.http import FileResponse, HttpResponse, Http404
 from core.utils import get_store
 from core.models import Cruise
@@ -30,4 +31,11 @@ class HplcService:
             return response
         except Cruise.DoesNotExist:
             raise Http404(f"Cruise {cruise_name} not found.")    
+
+    @classmethod
+    def get_readme(cls) -> str:
+        path = glob.glob(os.path.join(f'/vast/raw/all/hplc/', 'README*'))[0]
+        with open(path, 'r') as fin:
+            content = fin.read()
+        return HttpResponse(content, content_type="text/plain")
 

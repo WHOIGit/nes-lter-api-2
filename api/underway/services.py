@@ -18,7 +18,7 @@ from core.models import Underway
 from django.http import FileResponse, Http404
 from ninja.errors import HttpError
 
-from core.utils import get_store
+from core.utils import get_store, find_readme
 
 class UnderwayOutput(BaseModel):
     file_name: str
@@ -110,4 +110,13 @@ class UnderwayService:
         else:
             return responses
 
-    
+    @classmethod
+    def get_readme(cls, cruise_name: str) -> str:
+        try:
+            cruise = Cruise.objects.get(name__iexact=cruise_name)
+            path = find_readme(cruise_name, 'underway')
+            with open(path, 'r') as fin:
+                content = fin.read()
+            return HttpResponse(content, content_type="text/plain")
+        except Cruise.DoesNotExist:
+            raise Http404(f"Cruise {cruise_name} not found.")

@@ -76,6 +76,11 @@
                 <a href="/api/chl/{{ cruise.name|lower }}" target="_blank" class="link">
                     🌿 Chlorophyll
                 </a>
+                <div class="readme-label"
+                     onclick="window.open('{% url 'readmes' %}?cruise_name={{ cruise.name|urlencode }}', '_blank')"
+                     style="cursor: pointer;">
+                    📄 READMEs for Cruise {{ cruise.name|lower }}
+                </div>
             </li>
             <br>
             {% empty %}

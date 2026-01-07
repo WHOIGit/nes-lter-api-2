@@ -14,7 +14,7 @@ from chl.api import router as chl_router
 from .views import file_upload_view, cruise_track_view, ctd_plot_view, \
                    landing, cruise_list, cruises_by_type, cruises_by_year, \
                    cruises_for_year, cruises_by_season, cruises_for_season, \
-                   download_bathymetry
+                   download_bathymetry, readme_page
 
 api = NinjaAPI(
     title="NES-LTER API 2",
@@ -45,5 +45,6 @@ urlpatterns = [
     path("cruises/season/", cruises_by_season, name="cruises_by_season"),
     path("cruises/season/<str:season>/", cruises_for_season, name="cruises_for_season"),
     path("cruises/<str:prefix>/", cruise_list, name="cruise_prefix"),
-    path('download/bathymetry/', download_bathymetry, name='download_bathymetry'),
+    path("download/bathymetry/", download_bathymetry, name="download_bathymetry"),
+    path("readmes/", readme_page, name="readmes"),
 ]

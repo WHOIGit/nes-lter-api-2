@@ -77,8 +77,15 @@ def delete_cruise(request, cruise_name: str):
         return result
     except ValueError as e:
         return {"status": "error", "message": str(e)}
-    
-    
+
+@router.get("/cruises/readme/{cruise_name}", response=str, tags=["Users"])
+def get_cruise_readme(request, cruise_name: str):
+    return CtdService.get_cruise_readme(cruise_name)
+
+@router.get("/cruises/readme", response=str, tags=["Users"])
+def get_cruise_readme_all(request):
+    return CtdService.get_cruise_readme_all()
+        
 @router.get("/casts/get/{cruise_name}", response=List[CastOutput], tags=["Users"])
 def get_casts(request, cruise_name: str):
     return CtdService.get_casts(cruise_name)

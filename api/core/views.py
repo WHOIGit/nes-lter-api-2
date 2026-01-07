@@ -464,3 +464,7 @@ def download_bathymetry(request):
         filepath = '/vast/raw/all/bathymetry/neslter_bathymetry.csv'
         return FileResponse(open(filepath, 'rb'), as_attachment=True, filename='bathymetry.csv')
 
+def readme_page(request):
+    cruise = request.GET.get("cruise_name", "")
+    return render(request, "readmes.html", {"cruise": cruise})
+
