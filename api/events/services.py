@@ -10,7 +10,7 @@ from django.http import HttpResponse
 from pydantic import BaseModel
 from core.models import Cruise, Event
 from django.http import FileResponse, Http404
-from core.utils import get_store
+from core.utils import get_store, find_readme
 
 FILE_SUFFIX = '_elog.csv'
 DATETIME = 'dateTime8601'
@@ -258,5 +258,16 @@ class EventService:
             else:
                 events.delete()
             return {"status": "success", "message": f"Events on cruise {cruise_name} deleted."}   
+        except Cruise.DoesNotExist:
+            raise Http404(f"Cruise {cruise_name} not found.")
+
+    @classmethod
+    def get_readme(cls, cruise_name: str) -> str:
+        try:
+            cruise = Cruise.objects.get(name__iexact=cruise_name)
+            path = find_readme(cruise_name, 'elog')
+            with open(path, 'r') as fin:
+                content = fin.read()
+            return HttpResponse(content, content_type="text/plain")
         except Cruise.DoesNotExist:
             raise Http404(f"Cruise {cruise_name} not found.")

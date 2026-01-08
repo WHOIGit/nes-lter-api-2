@@ -1,6 +1,7 @@
 import io
 import os
 import csv
+import glob
 from django.http import FileResponse, HttpResponse, Http404
 from core.utils import get_store
 from core.models import Cruise
@@ -65,3 +66,10 @@ class ChlService:
         response = HttpResponse(csv_buffer.getvalue(), content_type='text/csv')
         response['Content-Disposition'] = f'attachment; filename="all_chl.csv"'
         return response
+
+    @classmethod
+    def get_readme(cls) -> str:
+        path = glob.glob(os.path.join(f'/vast/raw/all/chl/', 'README*'))[0]
+        with open(path, 'r') as fin:
+            content = fin.read()
+        return HttpResponse(content, content_type="text/plain")

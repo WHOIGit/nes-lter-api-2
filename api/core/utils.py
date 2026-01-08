@@ -3,11 +3,13 @@ from datetime import datetime
 import re
 import pandas as pd
 import os
+import glob
 from contextlib import contextmanager
 from storage.mediastore import MediaStore
 from storage.utils import PrefixStore
 from storage.object import DictStore
 from storage.fs import FilesystemStore
+from django.http import Http404
 
 def path_to_cast(cruise_name, filename):
 
@@ -183,3 +185,11 @@ def date_time_to_datetime(date, time):
     except AttributeError:
         # for a single date/time
         return pd.to_timedelta(time) + pd.to_datetime(date, utc=True)
+
+def find_readme(cruise_name, data_type):
+    for fn in glob.glob(os.path.join(f'/vast/corrected/{cruise_name}/{data_type}/', 'README*')):
+        return fn
+    for fn in glob.glob(os.path.join(f'/vast/raw/{cruise_name}/{data_type}/', 'README*')):
+        return fn
+    raise Http404(f"{data_type} README file for {cruise_name} not found.")
+

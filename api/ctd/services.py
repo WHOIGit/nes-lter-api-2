@@ -1,4 +1,4 @@
-import io, os
+import io, os, glob
 import csv
 from typing import Optional, List, Tuple
 from datetime import datetime
@@ -14,7 +14,7 @@ from django.http import Http404
 from ninja.errors import HttpError
 from django.http import HttpResponse
 from django.http import FileResponse
-from core.utils import get_store
+from core.utils import get_store, find_readme
 
 class VesselOutput(BaseModel):
     designation: str
@@ -272,6 +272,23 @@ class CtdService:
         except Cruise.DoesNotExist:
             raise HttpError(404, f"Cruise {cruise_name} not found.")
 
+    @classmethod
+    def get_cruise_readme(cls, cruise_name: str) -> str:
+        try:
+            cruise = Cruise.objects.get(name__iexact=cruise_name)
+            path = find_readme(cruise_name, 'ctd')
+            with open(path, 'r') as fin:
+                content = fin.read()
+            return HttpResponse(content, content_type="text/plain")
+        except Cruise.DoesNotExist:
+            raise Http404(f"Cruise {cruise_name} not found.")
+
+    @classmethod
+    def get_cruise_readme_all(cls) -> str:
+        path = glob.glob(os.path.join(f'/vast/raw/', 'README*'))[0]
+        with open(path, 'r') as fin:
+            content = fin.read()
+        return HttpResponse(content, content_type="text/plain")
     
     @staticmethod
     def serialize_cast(cast: Cast) -> CastOutput:

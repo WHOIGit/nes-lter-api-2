@@ -7,8 +7,13 @@ router = Router()
 def getall(request):
     return NutService.getall()
 
+@router.get("/readme", response=str, tags=["Users"])
+def get_readme(request):
+    return NutService.get_readme()
+
 @router.get("/{cruise_name}", tags=["Users"])
 def get(request, cruise_name: str):
     return NutService.get(cruise_name)
+
 
 
