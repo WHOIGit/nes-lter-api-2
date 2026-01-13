@@ -25,6 +25,7 @@ class UnderwayOutput(BaseModel):
 
 class UnderwayService:
     FILE_SUFFIX = '_underway.csv'
+    HEADER_SUFFIX = '_underway_column_def.csv'
     
     @classmethod
     def get_data(cls, cruise_name: str) -> FileResponse:
@@ -120,3 +121,30 @@ class UnderwayService:
             return HttpResponse(content, content_type="text/plain")
         except Cruise.DoesNotExist:
             raise Http404(f"Cruise {cruise_name} not found.")
+
+    @classmethod
+    def get_column_definition(cls, cruise_name: str) -> FileResponse:
+        URL = os.getenv("URL")
+        TOKEN = os.getenv("TOKEN")
+        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+        try:
+            cruise = Cruise.objects.get(name__iexact=cruise_name)
+            if Underway.objects.filter(cruise=cruise).exists():
+                if cruise_name.lower().startswith("en"):
+                    object_key = f"{cruise_name.lower()}{cls.HEADER_SUFFIX}"
+                    with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
+                       try:
+                           data = store.get(object_key)
+                       except Exception as e:
+                           print(e, flush=True)
+                           raise
+                    csv_buffer = BytesIO(data)
+                    response = HttpResponse(csv_buffer, content_type='text/csv')
+                    response['Content-Disposition'] = f'attachment; filename="{object_key}"'
+                    return response
+                else:
+                    raise Http404(f"Cruise {cruise_name} is not an Endeavor cruise.")   
+            else:
+                raise Http404(f"Underway data not imported. Import using manage.py importunderwaydata")    
+        except Cruise.DoesNotExist:
+           raise Http404(f"Cruise {cruise_name} not found.")   
