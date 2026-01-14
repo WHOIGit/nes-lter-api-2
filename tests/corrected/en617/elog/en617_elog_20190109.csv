@@ -1,0 +1,165 @@
+dateTime8601,Instrument,Action,Station,Cast,Latitude,Longitude,Comment
+2018-07-18 18:01:27,Other,start,,,41.4922,-71.41873299999999,testing event logger
+2018-07-18 18:01:31,Other,start,,,41.4922,-71.41873299999999,testing event logger
+2018-07-18 18:10:43,Bongo Net,deploy,,Test,41.4922,-71.41873299999999,
+2018-07-18 18:14:18,Attune Flow Cytometer,start,,Test,41.492217,-71.41875,this is a test!
+2018-07-20 13:05:31,Ship,startCruise,,,41.492217,-71.418717,
+2018-07-20 13:57:21,Underway Science seawater diaphragm pump,start,,,41.400917,-71.365217,
+2018-07-20 14:00:51,Underway Science seawater impeller,start,,,41.396167,-71.354383,
+2018-07-20 14:02:25,Thermosalinographs on underway impeller,start,,,41.39405,-71.349583,
+2018-07-20 14:02:59,ADCP300,start,,,41.393233,-71.347817,
+2018-07-20 14:03:31,ADCP75,start,,,41.392517,-71.346233,
+2018-07-20 14:03:53,UHDAS for both ADCPs,start,,,41.392016999999996,-71.345033,
+2018-07-20 14:05:47,Echosounder12,start,,,41.389433000000004,-71.339167,
+2018-07-20 14:14:40,IFCB continuous,start,,,41.375083000000004,-71.313967,
+2018-07-20 17:23:53,CTD911,deploy,L1,1,41.20066666666666,-70.88533333333334,
+2018-07-20 18:45:31,Bongo Net,deploy,L1,B01,41.203333,-70.887017,New Winch from EN608
+2018-07-20 18:55:01,Incubation,start,L1,1,41.205083,-70.89071700000001,
+2018-07-20 19:35:01,Sand Lance Beam Trawl,deploy,L1,SLT1,41.193583000000004,-70.888733,
+2018-07-20 19:41:16,Sand Lance Beam Trawl,offBottom,L1,SLT1,41.190033,-70.88995,
+2018-07-20 20:41:01,Van Veen Grab,deploy,L1.5,VV1,41.113483,-70.881,
+2018-07-20 21:39:58,Van Veen Grab,deploy,L2,VV2,41.02985,-70.87983299999999,
+2018-07-20 22:14:54,Bongo Net,deploy,L2,B02,41.034783000000004,-70.875367,
+2018-07-20 22:57:14,CTD911,deploy,L2,2,41.03033333333333,-70.88066666666667,
+2018-07-20 23:14:00,Underway Science seawater diaphragm pump,TOI discrete,,,41.032503000000005,-70.8784,
+2018-07-20 23:15:00,Underway Science seawater diaphragm pump,TOI discrete,,,41.03269,-70.87829,
+2018-07-21 00:32:00,Underway Science seawater diaphragm pump,TOI discrete,,,41.025502,-70.663102,
+2018-07-21 00:48:00,Underway Science seawater diaphragm pump,TOI discrete,,,41.029697999999996,-70.720297,
+2018-07-21 01:15:21,CTD911,deploy,u2a,3,41.03,-70.76983333333334,
+2018-07-21 02:04:00,Underway Science seawater diaphragm pump,TOI discrete,,,41.030904,-70.8408,
+2018-07-21 02:15:00,Underway Science seawater diaphragm pump,TOI discrete,,,41.02811,-70.881281,
+2018-07-21 02:30:00,Underway Science seawater diaphragm pump,TOI discrete,,,41.027083000000005,-70.93669399999999,
+2018-07-21 02:58:24,CTD911,deploy,d2a,4,41.03033333333333,-70.99116666666667,
+2018-07-21 03:39:00,Underway Science seawater diaphragm pump,TOI discrete,,,41.028118,-71.05439100000001,
+2018-07-21 04:03:00,Underway Science seawater diaphragm pump,TOI discrete,,,41.024409999999996,-71.08687900000001,
+2018-07-21 05:44:01,Van Veen Grab,deploy,L2.5,VV2.5,40.9452,-70.880667,
+2018-07-21 06:39:49,CTD911,deploy,L3,5,40.86366666666667,-70.883,
+2018-07-21 07:38:01,Bongo Net,deploy,L3,B05,40.86585,-70.882533,
+2018-07-21 08:10:02,Incubation,start,L3,5,40.8279,-70.884417,
+2018-07-21 10:23:00,Underway Science seawater diaphragm pump,TOI discrete,,,40.692607,-70.669993,
+2018-07-21 11:04:40,CTD911,deploy,u4a,6,40.700833333333335,-70.77266666666667,
+2018-07-21 11:43:00,Underway Science seawater diaphragm pump,TOI discrete,,,40.70169,-70.8282,
+2018-07-21 11:58:00,Underway Science seawater diaphragm pump,TOI discrete,,,40.7002,-70.8836,
+2018-07-21 12:14:00,Underway Science seawater diaphragm pump,TOI discrete,,,40.69869,-70.94379,
+2018-07-21 12:37:37,CTD911,deploy,d4a,7,40.69716666666667,-70.99316666666667,
+2018-07-21 13:32:00,Underway Science seawater diaphragm pump,TOI discrete,,,40.6966,-71.102903,
+2018-07-21 14:51:08,CTD911,deploy,L4,8,40.69866666666667,-70.88016666666667,
+2018-07-21 15:13:00,Underway Science seawater diaphragm pump,TOI discrete,,,40.70189,-70.87671,
+2018-07-21 15:15:00,Underway Science seawater diaphragm pump,TOI discrete,,,40.7021,-70.8763,
+2018-07-21 15:38:27,Bongo Net,deploy,L4,B08,40.706033000000005,-70.871483,
+2018-07-21 16:00:46,Incubation,start,L4,8,40.690733,-70.868817,
+2018-07-21 17:23:38,CTD911,deploy,L5,9,40.51683333333333,-70.88083333333333,
+2018-07-21 18:04:45,Bongo Net,deploy,L5,B09,40.5224,-70.87265,
+2018-07-21 18:59:46,Incubation,stop,L1,,40.449,-70.87701700000001,
+2018-07-21 20:03:00,Underway Science seawater diaphragm pump,TOI discrete,,,40.368809999999996,-70.77731,
+2018-07-21 21:39:59,CTD911,deploy,u6a,10,40.3645,-70.77083333333333,
+2018-07-21 22:26:00,Underway Science seawater diaphragm pump,TOI discrete,,,40.3651,-70.843715,
+2018-07-21 22:36:00,Underway Science seawater diaphragm pump,TOI discrete,,,40.364,-70.88051,
+2018-07-21 22:51:00,Underway Science seawater diaphragm pump,TOI discrete,,,40.3631,-70.93589,
+2018-07-21 23:17:27,CTD911,deploy,d6a,11,40.3645,-70.989,
+2018-07-22 00:44:00,Underway Science seawater diaphragm pump,TOI discrete,,,40.3583,-71.098691,
+2018-07-22 02:08:27,CTD911,deploy,L6,12,40.36566666666667,-70.8885,
+2018-07-22 02:53:53,Bongo Net,deploy,L6,B12,40.375433,-70.8851,
+2018-07-22 05:00:38,CTD911,deploy,L7,13,40.23416666666667,-70.89216666666667,
+2018-07-22 05:50:27,Bongo Net,deploy,L7,B13,40.23185,-70.88601700000001,
+2018-07-22 07:43:16,Bongo Net,deploy,L8,B14,40.142216999999995,-70.76645,
+2018-07-22 07:59:46,Incubation,stop,L3,,40.14235,-70.7583,
+2018-07-22 08:58:16,CTD911,deploy,L8,14,40.138666666666666,-70.7585,
+2018-07-22 09:27:00,Underway Science seawater diaphragm pump,TOI discrete,,,40.145309999999995,-70.759431,
+2018-07-22 09:28:00,Underway Science seawater diaphragm pump,TOI discrete,,,40.1453,-70.7596,
+2018-07-22 10:30:00,Incubation,start,L8,14,40.130367,-70.7658,
+2018-07-22 12:49:00,Underway Science seawater impeller,TOI discrete,,,40.096273,-70.664427,
+2018-07-22 13:38:24,CTD911,deploy,u9a,15,40.093666666666664,-70.779,
+2018-07-22 14:32:00,Underway Science seawater impeller,TOI discrete,,,40.0988,-70.803308,
+2018-07-22 14:58:00,Underway Science seawater impeller,TOI discrete,,,40.0986,-70.88829100000001,
+2018-07-22 15:13:00,Underway Science seawater impeller,TOI discrete,,,40.09749,-70.9373,
+2018-07-22 15:46:45,CTD911,deploy,d9a,16,40.096,-70.99316666666667,
+2018-07-22 17:00:00,Underway Science seawater impeller,TOI discrete,,,40.105375,-71.09559200000001,
+2018-07-22 17:00:00,Incubation,stop,L4,,40.105333,-71.096317,
+2018-07-22 18:17:39,CTD911,deploy,L9,17,40.0995,-70.87633333333333,
+2018-07-22 19:06:34,Bongo Net,deploy,L9,B17,40.0996,-70.87415,
+2018-07-22 21:46:41,CTD911,deploy,L10,18,39.9495,-70.88433333333333,
+2018-07-22 22:30:00,Incubation,start,L10,18,39.9473,-70.87688299999999,
+2018-07-22 22:50:12,Bongo Net,deploy,L10,B18,39.943733,-70.870183,
+2018-07-23 01:44:01,RMT10 Midwater Trawl (Tucker-style),deploy,L11,MWT1,39.748267,-70.872733,Target net depth of 1000 (based on angle and wire out) with winch speed of 20 down and 15 up and ship speed of 2 kts
+2018-07-23 04:32:36,RMT10 Midwater Trawl (Tucker-style),recover,L11,MWT1,39.67685,-70.833333,
+2018-07-23 07:10:00,Underway Science seawater impeller,TOI discrete,,,39.77341,-70.67138100000001,
+2018-07-23 08:08:23,CTD911,deploy,u11a,19,39.773833333333336,-70.76966666666667,
+2018-07-23 09:00:00,Underway Science seawater diaphragm pump,IFCB discrete,,,39.772067,-70.779083,
+2018-07-23 09:15:00,Underway Science seawater impeller,TOI discrete,,,39.772793,-70.8233,
+2018-07-23 09:39:00,Underway Science seawater impeller,TOI discrete,,,39.77599,-70.89279,
+2018-07-23 09:58:00,Underway Science seawater impeller,TOI discrete,,,39.77621,-70.94857900000001,
+2018-07-23 10:21:49,CTD911,deploy,d11a,20,39.7725,-70.98733333333334,
+2018-07-23 10:30:00,Incubation,stop,L8,,39.771933000000004,-70.98491700000001,
+2018-07-23 11:45:00,Underway Science seawater impeller,TOI discrete,,,39.772649,-71.100215,
+2018-07-23 12:59:50,CTD911,deploy,L11,21,39.7715,-70.87916666666666,1000m cast
+2018-07-23 14:04:00,Underway Science seawater impeller,TOI discrete,,,39.7638,-70.85769,
+2018-07-23 14:06:00,Underway Science seawater impeller,TOI discrete,,,39.7635,-70.8569,
+2018-07-23 14:47:01,Bongo Net,deploy,L11,B21,39.771316999999996,-70.876533,
+2018-07-23 15:46:43,CTD911,deploy,L11,22,39.77133333333333,-70.87233333333333,
+2018-07-23 16:00:00,Incubation,start,L11,21,39.770833,-70.86925,
+2018-07-23 17:28:33,CTD911,deploy,L12,23,39.94116666666667,-70.76816666666667,
+2018-07-23 17:30:00,Underway Science seawater impeller,TOI discrete,,,39.941196999999995,-70.767797,
+2018-07-23 19:20:00,Underway Science seawater impeller,TOI discrete,,,40.141009000000004,-70.7642,
+2018-07-23 20:55:25,CTD911,deploy,L13,24,40.366,-70.766, logger crashed and submitted this event with time stamp mid-way through upcast
+2018-07-23 20:59:00,Underway Science seawater impeller,TOI discrete,,,40.366911,-70.767,
+2018-07-23 22:17:00,Underway Science seawater impeller,TOI discrete,,,40.52171,-70.88441800000001,
+2018-07-23 22:30:00,Incubation,stop,L10,,40.559317,-70.88325,
+2018-07-24 00:18:00,Underway Science seawater impeller,TOI discrete,,,40.86435,-70.88409,
+2018-07-24 01:28:00,Underway Science seawater impeller,TOI discrete,,,40.696998,-70.882998,
+2018-07-24 03:38:31,Underway Science seawater diaphragm pump,IFCB discrete,North-South,UW3,40.366267,-70.876233,testing triggering on scattering
+2018-07-24 03:39:00,Underway Science seawater impeller,TOI discrete,,,40.365092,-70.876292,
+2018-07-24 04:33:00,Underway Science seawater impeller,TOI discrete,,,40.226692,-70.8796,
+2018-07-24 05:05:28,Underway Science seawater diaphragm pump,IFCB discrete,,UW4,40.143817,-70.87603299999999,triggering on scattering
+2018-07-24 05:21:00,Underway Science seawater impeller,TOI discrete,,,40.1016,-70.87361,
+2018-07-24 05:32:16,Underway Science seawater diaphragm pump,IFCB discrete,,UW5,40.071667,-70.873417,triggering on scattering
+2018-07-24 06:14:31,Underway Science seawater diaphragm pump,IFCB discrete,,UW6,39.959633000000004,-70.86715,triggering on scattering
+2018-07-24 06:39:50,Underway Science seawater diaphragm pump,IFCB discrete,,UW7,39.893667,-70.871317,triggering on scattering
+2018-07-24 06:58:46,Underway Science seawater diaphragm pump,IFCB discrete,,UW8,39.8448,-70.87656700000001,triggering on scattering
+2018-07-24 07:30:00,Underway Science seawater impeller,TOI discrete,,,39.7741,-70.878879,
+2018-07-24 07:38:18,CTD911,deploy,L11,25,39.773833333333336,-70.87533333333333,
+2018-07-24 08:19:46,Bongo Net,deploy,L11,B25A,39.768483,-70.856617,tow yo to 10 meters for 1 nm to calibrate flowmeter--tow 1
+2018-07-24 08:20:09,Underway Science seawater diaphragm pump,IFCB discrete,L11,UW9,39.768417,-70.85641700000001,
+2018-07-24 08:31:44,Underway Science seawater diaphragm pump,IFCB discrete,L11,UW10,39.764733,-70.849533,triggering on scattering
+2018-07-24 08:48:46,Bongo Net,recover,L11,B25A,39.757967,-70.837417,tow yo to 10 meters for 1 nm to calibrate flowmeter--tow 1
+2018-07-24 09:12:49,Underway Science seawater diaphragm pump,IFCB discrete,L11,UW11,39.757683,-70.837867,triggering on scattering
+2018-07-24 09:24:16,Bongo Net,deploy,L11,B25B,39.761433000000004,-70.84275,tow yo to 10 meters for 1 nm to calibrate flowmeter--tow 2
+2018-07-24 09:26:26,Underway Science seawater diaphragm pump,IFCB discrete,L11,UW12,39.7622,-70.843983,triggering on scattering
+2018-07-24 09:53:01,Bongo Net,recover,L11,B25B,39.770633000000004,-70.86053299999999,tow yo to 10 meters for 1 nm to calibrate flowmeter--tow 2
+2018-07-24 10:30:49,Underway Science seawater diaphragm pump,IFCB discrete,,UW13,39.841483000000004,-70.88285,triggering on scattering
+2018-07-24 11:18:38,CTD911,deploy,L10,26,39.947833333333335,-70.87916666666666,
+2018-07-24 11:32:44,Underway Science seawater diaphragm pump,IFCB discrete,L10,UW14,39.948367,-70.87915,triggering on scattering
+2018-07-24 11:39:00,Underway Science seawater impeller,TOI discrete,,,39.9487,-70.8789,
+2018-07-24 12:28:26,Underway Science seawater diaphragm pump,IFCB discrete,,UW15,40.053367,-70.88278299999999,triggering on scattering
+2018-07-24 12:57:11,CTD911,deploy,L9,27,40.103833333333334,-70.889,
+2018-07-24 13:05:00,Underway Science seawater impeller,TOI discrete,,,40.105006,-70.8891,
+2018-07-24 14:04:00,Underway Science seawater impeller,TOI discrete,,,40.227990000000005,-70.8892,
+2018-07-24 14:11:34,CTD911,deploy,L7,28,40.22716666666667,-70.88616666666667,
+2018-07-24 15:32:23,CTD911,deploy,L6,29,40.367333333333335,-70.88733333333333,
+2018-07-24 16:10:00,Incubation,stop,L11,,40.426667,-70.886517,
+2018-07-24 16:50:00,Underway Science seawater impeller,TOI discrete,,,40.5148,-70.8794,
+2018-07-24 16:50:32,CTD911,deploy,L5,30,40.514833333333335,-70.87916666666666,
+2018-07-24 18:24:44,CTD911,deploy,L4,31,40.6975,-70.88083333333333,
+2018-07-24 18:26:00,Underway Science seawater impeller,TOI discrete,,,40.697608,-70.8805,
+2018-07-24 19:51:39,CTD911,deploy,L3,32,40.8625,-70.8775,
+2018-07-24 19:52:00,Underway Science seawater impeller,TOI discrete,,,40.862697,-70.87749699999999,
+2018-07-24 21:08:00,Underway Science seawater impeller,TOI discrete,,,41.027289,-70.8858,
+2018-07-24 21:39:44,CTD911,deploy,L2,33,41.028666666666666,-70.87833333333333,
+2018-07-24 23:06:00,Underway Science seawater impeller,TOI discrete,,,41.196703,-70.8824,
+2018-07-24 23:07:46,CTD911,deploy,L1,34,41.196666666666665,-70.88216666666666,
+2018-07-25 01:16:32,CTD911,deploy,MVCO,35,41.32383333333333,-70.58566666666667,
+2018-07-25 01:23:00,Underway Science seawater impeller,TOI discrete,,,41.3247,-70.58519100000001,
+2018-07-25 01:43:00,Bongo Net,deploy,MVCO,B35,41.3223,-70.57515,
+2018-07-25 02:10:18,Bongo Net,deploy,MVCO,B35b,41.31645,-70.558483,Flowmeter calibration 
+2018-07-25 09:12:39,EIMS,stop,,,41.413383,-71.379467,was running on impellor pump and stopped all operations now
+2018-07-25 09:14:22,IFCB continuous,stop,,,41.416483,-71.384217,Running entire cruise on diaphragm pump
+2018-07-25 09:21:00,Fluorometers on underway impeller,stop,,,41.428917,-71.40265,Just South of Narragansett Bay near end of cruise
+2018-07-25 09:21:29,Thermosalinographs on underway impeller,stop,,,41.429666999999995,-71.403767,Just South of Narragansett Bay near end of cruise
+2018-07-25 09:26:17,Underway Science seawater impeller,stop,,,41.4398,-71.411767,Just South of Narragansett Bay near end of cruise
+2018-07-25 09:36:36,Underway Science seawater diaphragm pump,stop,,,41.4627,-71.409883,In Narragansett Bay near end of cruise
+2018-07-25 09:38:33,Underway Science seawater diaphragm pump,other,,,41.467133000000004,-71.40945,In Narragansett Bay near end of cruise. Fresh water forward flush.
+2018-07-25 09:39:18,ADCP300,stop,,,41.468833000000004,-71.40933299999999,In Narragansett Bay near end of cruise
+2018-07-25 09:39:54,ADCP75,stop,,,41.470217,-71.409267,In Narragansett Bay near end of cruise
+2018-07-25 09:40:33,UHDAS for both ADCPs,stop,,,41.471717,-71.4092,In Narragansett Bay near end of cruise
+2018-07-25 10:10:00,Echosounder12,stop,,,41.50425,-71.41291700000001,Docked at GSO
+2018-07-25 12:15:00,Ship,endCruise,,,41.492233,-71.41875,
