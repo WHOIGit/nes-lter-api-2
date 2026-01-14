@@ -46,41 +46,58 @@ async function getData() {
         }
     }
 
-try {
-    const response = await fetch(`${url}/api/nut/all`);
-    if (!response.ok) {
-        throw new Error('HTTP error ' + response.status);
-    }
+    try {
+        const response = await fetch(`${url}/api/nut/all`);
+        if (!response.ok) {
+            throw new Error('HTTP error ' + response.status);
+        }
 
-    const data = await response.text();
+        const data = await response.text();
 
-    const lines = data
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0);
+        const lines = data
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0);
 
-    if (process.env.GITHUB_ACTIONS === 'true') {
-        if (lines.length == 581) {  // only 5 test cruises
-            console.log('Nut Get All test successful.');
+        if (process.env.GITHUB_ACTIONS === 'true') {
+            if (lines.length == 581) {  // only 5 test cruises
+                console.log('Nut Get All test successful.');
+            }
+            else {
+                console.log('Nut Get All values are missing.');
+                console.log('Nut Get All test failed.');
+            }
         }
         else {
-            console.log('Nut Get All values are missing.');
-            console.log('Nut Get All test failed.');
+            if (lines.length == 4434) {
+                console.log('Nut Get All test successful.');
+            }
+            else {
+                console.log('Nut Get All values are missing.');
+                console.log('Nut Get All test failed.');
+            }
         }
+    } catch (err) {
+        console.log('Nut Get All test failed.');
+        console.error('Error:', err);
     }
-    else {
-        if (lines.length == 4434) {
-            console.log('Nut Get All test successful.');
+
+    try {
+        const response = await fetch(`${url}/api/nut/readme`);
+        if (!response.ok) {
+            throw new Error('HTTP error ' + response.status);
         }
-        else {
-            console.log('Nut Get All values are missing.');
-            console.log('Nut Get All test failed.');
+        const data = await response.text();
+
+        if (data.includes('README for ims_data_root subfolder raw > all > nut')) {
+            console.log(`Nut Get README test successful.`);
+        } else {
+            console.log(`Nut Get README test failed.`);
         }
+    } catch (err) {
+        console.log(`Nut Get README test failed.`);
+        console.error('Error:', err);
     }
-  } catch (err) {
-    console.log('Nut Get All test failed.');
-    console.error('Error:', err);
-  }
 }
 
 getData();

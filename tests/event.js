@@ -10,6 +10,10 @@ const r2rEvent = {
     ar77: '20231011.1311.001', en617: 'en617-SE-20180720.1404.001', hrs2303: '20230502.1302.001',
     ae2426: '20241106.1442.001', at46: 'at46-SE-20220216.1627.001'
 };
+const readme = {
+    ar77: '2023-11-29 Taylor', en617: 'README EN617', hrs2303: ' hrs2303 > elog',
+    ae2426: 'Not Found', 'at46': '2025-10-29 Kate'
+};
 
 var myArgs = process.argv.slice(2);
 
@@ -128,6 +132,25 @@ try {
 } catch (err) {
     console.log(`${cruise} Events History test failed.`);
     console.error('Error:', err);
+    }
+
+    try {
+        const response = await fetch(`${url}/api/events/readme/${cruise}`);
+        if (!response.ok) {
+            if (cruise !== 'ae2426') {
+                throw new Error('HTTP error ' + response.status);
+            }
+        }
+        const data = await response.text();
+
+        if (data.includes(readme[cruise])) {
+            console.log(`${cruise} Events Get README test successful.`);
+        } else {
+            console.log(`${cruise} Events Get README test failed.`);
+        }
+    } catch (err) {
+        console.log(`${cruise} Events Get README test failed.`);
+        console.error('Error:', err);
     }
 
     const r2r = r2rEvent[cruise];

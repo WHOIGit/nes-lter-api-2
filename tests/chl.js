@@ -84,6 +84,23 @@ async function getData() {
         console.log('Chl Get All test failed.');
         console.error('Error:', err);
     }
+
+    try {
+        const response = await fetch(`${url}/api/chl/readme`);
+        if (!response.ok) {
+            throw new Error('HTTP error ' + response.status);
+        }
+        const data = await response.text();
+
+        if (data.includes('README for ims_data_root subfolder raw > all > chl')) {
+            console.log(`Chl Get README test successful.`);
+        } else {
+            console.log(`Chl Get README test failed.`);
+        }
+    } catch (err) {
+        console.log(`Chl Get README test failed.`);
+        console.error('Error:', err);
+    }
 }
 
 getData();
