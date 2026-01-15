@@ -193,34 +193,6 @@ try {
         console.log(`${cruise} Edit Event test failed.`);
         console.error('Error:', err);
     }
-
-    // Delete events in github actions only, otherwise need to rerun import events to recreate
-    if (process.env.GITHUB_ACTIONS === 'true') {
-        try {
-            const response = await fetch(`${url}/api/events/delete/${cruise}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            if (!response.ok) {
-                throw new Error('HTTP error ' + response.status);
-            }
-            const data = await response.json();
-
-            if (data.message == `Events on cruise ${cruise} deleted.`) {
-                console.log(`${cruise} Delete Event test successful.`);
-            } else {
-                console.log(`${cruise} Delete Event test failed.`);
-            }
-
-        }
-        catch (err) {
-            console.log(`${cruise} Delete Event test failed.`);
-            console.error('Error:', err);
-        }
-    } 
 }
 
 async function runAll() {
