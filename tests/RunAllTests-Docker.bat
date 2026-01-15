@@ -91,6 +91,13 @@ if [[ "$val" == *"failed."* ]]; then
   exit 1
 fi
 
+val=$(node landing.js headless local)
+echo $val
+if [[ "$val" == *"failed."* ]]; then
+  exit 1
+fi
+
+
 val=$(node upload.js headless local)
 echo $val
 if [[ "$val" == *"failed."* ]]; then

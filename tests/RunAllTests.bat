@@ -26,7 +26,9 @@ cmd /c node chl.js >> API2Testing.log
 >> API2Testing.log echo.
 cmd /c node cruise_track.js >> API2Testing.log 
 >> API2Testing.log echo.
-cmd /c node upload.js >> API2Testing.log 
+cmd /c node landing.js >> API2Testing.log 
+rem >> API2Testing.log echo.
+rem cmd /c node upload.js >> API2Testing.log 
 
 
 
