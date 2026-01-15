@@ -127,7 +127,7 @@ var files;
         }
 
         await driver.findElement(By.css('a[href="/api/events/get/ar77"]')).click();
-        await new Promise(r => setTimeout(r, 2000));
+        await new Promise(r => setTimeout(r, 4000));
         files = fs.readdirSync(dir);
         if (!files.some(f => f.includes("ar77_elog") && f.endsWith(".csv"))) {
             console.log("Events link broken.");
