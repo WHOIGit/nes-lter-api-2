@@ -76,7 +76,8 @@ const expectedYears = [
     try {
 
         // Verify all cruise years are displayed
-        await new Promise(r => setTimeout(r, 6000));
+        await new Promise(r => setTimeout(r, 4000));
+        await driver.wait(until.elementLocated(By.css('a.card[aria-label="2025"]')), 20000);
         var bodyText = await driver.findElement(By.css("body")).getText();
         for (const year of expectedYears) {
             assert(
