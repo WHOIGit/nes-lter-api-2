@@ -78,7 +78,7 @@ var files;
         await new Promise(r => setTimeout(r, 4000));
         bodyText = await driver.findElement(By.css("body")).getText();
         assert(bodyText.includes("Cruises in 2023"));
-       
+
         // Verify each type of cruise detail links are working
         await driver.findElement(By.css('a[href="/api/ctd/cruises/get/ar77"]')).click();
         await new Promise(r => setTimeout(r, 2000));
@@ -98,7 +98,12 @@ var files;
         await driver.switchTo().window(handles[0]);
         await driver.findElement(By.css('a[href="/api/ctd/bottles/ar77"]')).click();
         await new Promise(r => setTimeout(r, 2000));
-        var dir = path.join(process.env.USERPROFILE, "\\Downloads")
+        if (process.env.GITHUB_ACTIONS === 'true') {
+            var dir = "/root/Downloads";
+        }
+        else {
+            var dir = path.join(process.env.USERPROFILE, "\\Downloads");
+        }
         files = fs.readdirSync(dir);
         if (!files.some(f => f.includes("ar77_ctd_bottles") && f.endsWith(".csv"))) {
             console.log("Bottles link broken.");
