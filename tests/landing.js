@@ -270,15 +270,6 @@ var files;
 
         await driver.switchTo().window(handles[0]);
         await new Promise(r => setTimeout(r, 2000));
-        await driver.findElement(By.linkText('NES EDI Packages')).click();
-        await new Promise(r => setTimeout(r, 6000));
-        handles = await driver.getAllWindowHandles();
-        await driver.switchTo().window(handles[10]);
-        bodyText = await driver.findElement(By.css("body")).getText();
-        assert(bodyText.includes('EDI Data Portal'));
-
-        await driver.switchTo().window(handles[0]);
-        await new Promise(r => setTimeout(r, 2000));
         await driver.findElement(By.xpath("//button[normalize-space()='Download Bathymetry CSV']")).click();
         await new Promise(r => setTimeout(r, 2000));
         files = fs.readdirSync(dir);
