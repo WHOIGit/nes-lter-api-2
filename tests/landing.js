@@ -262,14 +262,30 @@ var files;
         await driver.switchTo().window(handles[0]);
         await new Promise(r => setTimeout(r, 2000));
         await driver.findElement(By.linkText('Colab Notebook')).click();
-        await new Promise(r => setTimeout(r, 2000));
+        await new Promise(r => setTimeout(r, 6000));
         handles = await driver.getAllWindowHandles();
         await driver.switchTo().window(handles[9]);
         bodyText = await driver.findElement(By.css("body")).getText();
         assert(bodyText.includes('The NES-LTER API is designed to provide data'));
 
+        await driver.switchTo().window(handles[0]);
+        await new Promise(r => setTimeout(r, 2000));
+        await driver.findElement(By.linkText('NES EDI Packages')).click();
+        await new Promise(r => setTimeout(r, 6000));
+        handles = await driver.getAllWindowHandles();
+        await driver.switchTo().window(handles[10]);
+        bodyText = await driver.findElement(By.css("body")).getText();
+        assert(bodyText.includes('EDI Data Portal'));
 
-
+        await driver.switchTo().window(handles[0]);
+        await new Promise(r => setTimeout(r, 2000));
+        await driver.findElement(By.xpath("//button[normalize-space()='Download Bathymetry CSV']")).click();
+        await new Promise(r => setTimeout(r, 2000));
+        files = fs.readdirSync(dir);
+        if (!files.some(f => f.includes("bathymetry") && f.endsWith(".csv"))) {
+            console.log("Bathymetry File link broken.");
+            console.log("Land Page Test Failed.");
+        }
 
         // Close browser window
         driver.quit();
