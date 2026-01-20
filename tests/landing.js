@@ -208,6 +208,68 @@ var files;
         bodyText = await driver.findElement(By.css("body")).getText();
         assert(bodyText.includes('Cruises by Ship'));
 
+        await driver.findElement(By.xpath('//div[normalize-space()="AR Cruises"]')).click();
+        await driver.findElement(By.css('a[href="/cruises/year/"]')).click();
+        await new Promise(r => setTimeout(r, 2000));
+        bodyText = await driver.findElement(By.css("body")).getText();
+        assert(bodyText.includes('Cruises by Year'));
+
+        await driver.findElement(By.xpath('//div[normalize-space()="2023"]')).click();
+        await driver.findElement(By.css('a[href="/cruises/season/"]')).click();
+        await new Promise(r => setTimeout(r, 2000));
+        bodyText = await driver.findElement(By.css("body")).getText();
+        assert(bodyText.includes('Cruises by Season'));
+
+        await driver.findElement(By.xpath('//div[normalize-space()="Fall"]')).click();
+        await driver.findElement(By.css('a[href="/"]')).click();
+        await new Promise(r => setTimeout(r, 2000));
+        bodyText = await driver.findElement(By.css("body")).getText();
+        assert(bodyText.includes('NES-LTER API 2'));
+
+        // Test the remaining links on the landing page
+        console.log("Testing remaining landing page links.");
+        var dropdown = await driver.findElement(By.id("cruise-nav"));
+        await dropdown.findElement(By.xpath("//option[. = 'by Ship']")).click();
+        await new Promise(r => setTimeout(r, 2000));
+        bodyText = await driver.findElement(By.css("body")).getText();
+        assert(bodyText.includes('Cruises by Ship'));
+
+        await driver.navigate().back();
+        await new Promise(r => setTimeout(r, 2000));
+        dropdown = await driver.findElement(By.id("cruise-nav"));
+        await dropdown.findElement(By.xpath("//option[. = 'by Season']")).click();
+        await new Promise(r => setTimeout(r, 2000));
+        bodyText = await driver.findElement(By.css("body")).getText();
+        assert(bodyText.includes('Cruises by Season'));
+
+        await driver.navigate().back()
+        await driver.findElement(By.linkText('NES-LTER API 2 Wiki')).click();
+        await new Promise(r => setTimeout(r, 2000));
+        handles = await driver.getAllWindowHandles();
+        await driver.switchTo().window(handles[7]);
+        bodyText = await driver.findElement(By.css("body")).getText();
+        assert(bodyText.includes('REST API'));
+
+        await driver.switchTo().window(handles[0]);
+        await new Promise(r => setTimeout(r, 2000));
+        await driver.findElement(By.linkText('Interactive Docs')).click();
+        await new Promise(r => setTimeout(r, 2000));
+        handles = await driver.getAllWindowHandles();
+        await driver.switchTo().window(handles[8]);
+        bodyText = await driver.findElement(By.css("body")).getText();
+        assert(bodyText.includes('Access cruise, CTD, and underway datasets for NES-LTER.'));
+
+        await driver.switchTo().window(handles[0]);
+        await new Promise(r => setTimeout(r, 2000));
+        await driver.findElement(By.linkText('Colab Notebook')).click();
+        await new Promise(r => setTimeout(r, 2000));
+        handles = await driver.getAllWindowHandles();
+        await driver.switchTo().window(handles[9]);
+        bodyText = await driver.findElement(By.css("body")).getText();
+        assert(bodyText.includes('The NES-LTER API is designed to provide data'));
+
+
+
 
         // Close browser window
         driver.quit();
