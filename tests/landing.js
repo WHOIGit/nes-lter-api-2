@@ -85,7 +85,7 @@ var files;
         handles = await driver.getAllWindowHandles();
         await driver.switchTo().window(handles[1]);
         bodyText = await driver.findElement(By.css("body")).getText();
-        assert(bodyText.includes('"name": "ar77"'));
+        assert(bodyText.includes('"name": "AR77"'));
 
         await driver.switchTo().window(handles[0]);
         await driver.findElement(By.css('a[href="/api/ctd/casts/get/ar77"]')).click();
@@ -93,7 +93,7 @@ var files;
         handles = await driver.getAllWindowHandles();
         await driver.switchTo().window(handles[2]);
         bodyText = await driver.findElement(By.css("body")).getText();
-        assert(bodyText.includes('"cruise_name": "ar77", "number": "1"'));
+        assert(bodyText.includes('"cruise_name": "AR77", "number": "1"'));
 
         await driver.switchTo().window(handles[0]);
         await driver.findElement(By.css('a[href="/api/ctd/bottles/ar77"]')).click();
