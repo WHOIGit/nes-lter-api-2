@@ -41,13 +41,29 @@ async function getData(cruise) {
   } catch (err) {
     console.log(`${cruise} HPLC Get test failed.`);
     console.error('Error:', err);
-  }
+    }
 
 }
 
 async function runAll() {
     for (const cruise of cruises) {
         await getData(cruise);
+    }
+    try {
+        const response = await fetch(`${url}/api/hplc/readme`);
+        if (!response.ok) {
+            throw new Error('HTTP error ' + response.status);
+        }
+        const data = await response.text();
+
+        if (data.includes('2024-12-10 Taylor - no readme prior to this date. ')) {
+            console.log(`HPLC Get README test successful.`);
+        } else {
+            console.log(`HPLC Get README test failed.`);
+        }
+    } catch (err) {
+        console.log(`HPLC Get README test failed.`);
+        console.error('Error:', err);
     }
 }
 

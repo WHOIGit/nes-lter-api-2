@@ -9,6 +9,10 @@ const times = {
     hrs2303: '2023-04-29/2023-05-06', ae2426: '2024-11-03/2024-11-03',
     at46: '2022-02-21/2022-02-21'
 }
+const readme = {
+    ar77: '2023-11', en617: 'EN617 underway', hrs2303: ' HRS2303 raw underway',
+    ae2426: 'Not Found', 'at46': 'Not Found'
+};
 
 var myArgs = process.argv.slice(2);
 
@@ -89,6 +93,48 @@ try {
      console.log('Error:', err);
     }
 
+    if (cruise === 'en617') {
+        try {
+            const response = await fetch(`${url}/api/underway/endeavor_column_definition/en617`);
+            if (!response.ok) {
+                throw new Error('HTTP error ' + response.status);
+            }
+            const data = await response.text();
+
+            const lines = data
+                .split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0); 
+
+            if (lines.length === 129) {
+                console.log(`${cruise} Underway Get EN Column Definition test successful.`);
+            } else {
+                console.log(`${cruise} Underway Get EN Column Definition test failed.`);
+            }
+        } catch (err) {
+            console.log(`${cruise} Underway Get EN Column Definition test failed.`);
+            console.error('Error:', err);
+        }
+    }
+
+    try {
+        const response = await fetch(`${url}/api/underway/readme/${cruise}`);
+        if (!response.ok) {
+            if (cruise !== 'ae2426' && cruise !== 'at46') {
+                throw new Error('HTTP error ' + response.status);
+            }
+        }
+        const data = await response.text();
+
+        if (data.includes(readme[cruise])) { 
+            console.log(`${cruise} Underway Get README test successful.`);
+        } else {
+            console.log(`${cruise} Underway Get README test failed.`);
+        }
+    } catch (err) {
+        console.log(`${cruise} Underway Get README test failed.`);
+        console.error('Error:', err);
+    }
 
 }
 

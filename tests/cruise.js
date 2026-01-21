@@ -11,15 +11,20 @@ if (__dirname === "/tests") {
 }
 else {
     expectedCruiseNames = [
+        "ae2426", "ar16", "ar22", "ar24a", "ar24b", "ar24c", "ar28a", "ar28b", "ar31a","ar31b",
         "ar31c", "ar32", "ar34a", "ar34b", "ar38", "ar39a", "ar39b", "ar44", "ar48a", "ar48b",
         "ar52a", "ar52b", "ar61a", "ar61b", "ar62", "ar63", "ar66a", "ar66b", "ar70b", "ar75",
-        "ar77", "ar78", "ar79", "ar80", "ar82a", "ar82b", "ar87a", "ar87b", "ar88", "at46",
+        "ar77", "ar78", "ar79", "ar80", "ar82a", "ar82b", "ar87a", "ar87b", "ar88", "ar91",
+        "ar92", "ar95", "ar96", "ar98a", "ar98b", "at46",
         "en608", "en617", "en627", "en644", "en649", "en655", "en657", "en661", "en668",
-        "en685", "en687", "en688", "en695", "en706", "ae2426", "ar16",
-        "ar22", "ar24a", "ar24b", "ar24c", "ar28a", "en712", "en715", "en720", "ar28b", "ar31a",
-        "ar31b", "en727", "hrs2303", "ar91"
+        "en685", "en687", "en688", "en695", "en706", "ae2426",  "en712", "en715", "en720", "en727", "hrs2303"
     ];
 }
+
+const readme = {
+    ar77: '08-08-2025 Taylor', en617: 'README EN617', hrs2303: ' hrs2303_###.as',
+    ae2426: '5/9/2025 - Taylor', 'at46': 'README for cruise AT46'
+};
 
 var myArgs = process.argv.slice(2);
 
@@ -43,7 +48,7 @@ async function getData() {
         const missing = [];
 
         for (const cruiseName of expectedCruiseNames) {
-            if (!data.includes(cruiseName)) {
+            if (!data.includes(cruiseName.toUpperCase())) {
                 missing.push(cruiseName);
             }
         }
@@ -71,7 +76,7 @@ async function getData() {
 
             const data = await response.json();
 
-            if (data.name && data.name.includes(cruise)) {
+            if (data.name && data.name.includes(cruise.toUpperCase())) {
                 console.log(`Cruise Get test for "${cruise}" successful.`);
             } else {
                 error = true;
@@ -87,6 +92,42 @@ async function getData() {
         console.log(`Cruise Get test for all cruises failed.`);
     } else {
         console.log(`Cruise Get test for all cruises successful.`);
+    }
+
+    for (const cruise of Object.keys(readme)) {
+        try {
+            const response = await fetch(`${url}/api/ctd/cruises/readme/${cruise}`);
+            if (!response.ok) {  
+                throw new Error('HTTP error ' + response.status);
+            }
+            const data = await response.text();
+
+            if (data.includes(readme[cruise])) {
+                console.log(`${cruise} Cruise Get README test successful.`);
+            } else {
+                console.log(`${cruise} Cruise Get README test failed.`);
+            }
+        } catch (err) {
+            console.log(`${cruise} Cruise Get README test failed.`);
+            console.error('Error:', err);
+        }
+    }
+
+    try {
+        const response = await fetch(`${url}/api/ctd/cruises/readme`);
+        if (!response.ok) {
+            throw new Error('HTTP error ' + response.status);
+        }
+        const data = await response.text();
+
+        if (data.includes('README raw subfolder in ims_data_root folder in nes-lter shared storage')) {
+            console.log(`Cruise Get All README test successful.`);
+        } else {
+            console.log(`Cruise Get All README test failed.`);
+        }
+    } catch (err) {
+        console.log(`Cruise Get All README test failed.`);
+        console.error('Error:', err);
     }
 
     var token;

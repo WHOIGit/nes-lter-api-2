@@ -13,6 +13,8 @@ cmd /c node hplc.js public >> API2TestingonMullen.log
 cmd /c node nut.js public >> API2TestingonMullen.log 
 cmd /c node chl.js public >> API2TestingonMullen.log 
 cmd /c node cruise_track.js headful public >> API2TestingonMullen.log
+cmd /c node landing.js headful public >> API2TestingonMullen.log
+
 
 rem cmd /c node upload.js headful public >> API2TestingonMullen.log 
 

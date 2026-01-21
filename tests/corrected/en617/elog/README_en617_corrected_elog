@@ -1,0 +1,12 @@
+README EN617 corrected elog
+2019-06-05
+Started with elog generated 2019-01-09 which was the result of cruise-specific processing to add the underway TOI discrete samples.
+
+New edits to csv (from Taylor email 2019-01-10):
+- removed initial 4 test entries
+- copied thermosal start for fluorom start
+- copied IFCB continuous start for Attune Flow Cytometer start
+- EIMS start time from Rachel's email 2018-12-18 and added lat lon from underway 1-min
+- EIMS switch time from Rachel's email 2018-12-18 and added lat lon from underway 1-min
+
+

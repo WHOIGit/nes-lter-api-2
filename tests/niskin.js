@@ -46,7 +46,7 @@ async function getData(cruise) {
     }
     const data = await response.json();
    
-      if (data.cruise_name === `${cruise}` && data.cast_number === '10' && data.number === 1) { 
+      if (data.cruise_name === `${cruise.toUpperCase() }` && data.cast_number === '10' && data.number === 1) { 
           console.log(`${cruise} Niskin Get Single test successful.`);
       } else {
           console.log(`${cruise} Niskin Get Single test failed.`);

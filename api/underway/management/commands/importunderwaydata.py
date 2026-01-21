@@ -1,4 +1,4 @@
-import os
+﻿import os
 import glob
 import logging
 from django.core.management.base import BaseCommand, CommandError
@@ -22,6 +22,7 @@ class Command(BaseCommand):
         self.logger = logging.getLogger('management')
 
     FILE_SUFFIX = '_underway.csv'
+    HEADER_SUFFIX = '_underway_column_def.csv'
     DATETIME = 'date'
 
     def add_arguments(self, parser):
@@ -31,6 +32,46 @@ class Command(BaseCommand):
         if dt is not None and dt.tzinfo is None:
             return timezone.make_aware(dt)
         return dt
+
+    def read_comment_block(self, file_path):
+        in_block = False
+        kept_lines = []
+
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            for raw in f:
+                line = raw.rstrip("\n")
+
+                if line.startswith("#COLUMNDEFINITIONSTART#"):
+                    in_block = True
+                    continue
+
+                if in_block and line.startswith("#COLUMNDEFINITIONEND#"):
+                    break
+
+                if in_block:
+                    # Strip leading '#' but preserve tabs
+                    if line.startswith("#"):
+                        line = line[1:]
+                    kept_lines.append(line)
+
+        # Nothing found → return empty DataFrame
+        if not kept_lines:
+            return pd.DataFrame()
+
+        text = "\n".join(kept_lines)
+
+        df = pd.read_csv(
+            StringIO(text),
+            sep=",",
+            engine="python",
+            dtype=str,
+            keep_default_na=False,
+        )
+
+        # Clean column names
+        #df.columns = [c.strip() for c in df.columns]
+
+        return df
 
     def handle(self, *args, **options):
         cruise_name = options['cruise_name']
@@ -52,7 +93,6 @@ class Command(BaseCommand):
         for cruise_name in cruises:
             try:
                 cruise = Cruise.objects.get(name__iexact=cruise_name)
-                #temporary local mount until can access vast nfs mount on a vm
                 directory = f'/vast/raw/{cruise_name}/underway/'
                 file_pattern = os.path.join(directory, '*')
                 files = glob.glob(file_pattern)
@@ -68,8 +108,14 @@ class Command(BaseCommand):
                 cruise_prefix = next((key for key in underway_metadata if cruise.name.startswith(key)), None)
                 if cruise_prefix:
                     metadata = underway_metadata[cruise_prefix]
+                    definition_df = None
                     data_frames = []
                     for file in underway_files:
+                        # read in the column definitions for endeavor cruises
+                        if cruise_prefix == "en" and definition_df is None:
+                            definition_df = self.read_comment_block(file)
+
+                        # read in underway data for all cruises
                         df = pd.read_csv(file, **metadata['read_csv_args'])
                         data_frames.append(df)
 
@@ -135,10 +181,10 @@ class Command(BaseCommand):
                         end_datetime=end_datetime,
                         )       
                 
+                # Store the Underway data in the vast media store
                 csv_buffer = StringIO()
                 df_data.to_csv(csv_buffer, index=False)
                 csv_binary = csv_buffer.getvalue().encode('utf-8')
-                # Use the put method to store the CSV in the vast media store
                 object_key = f"{cruise_name}{self.FILE_SUFFIX}"
                 with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
                     try:
@@ -147,6 +193,20 @@ class Command(BaseCommand):
                         print(e, flush=True)
                         self.logger.error(f'An error occurred: {str(e)}')
                         raise
+ 
+                # Store the Underway column definition in the vast media store
+                if definition_df is not None:
+                    csv_buffer = StringIO()
+                    definition_df.to_csv(csv_buffer, index=False)
+                    csv_binary = csv_buffer.getvalue().encode('utf-8')
+                    object_key = f"{cruise_name}{self.HEADER_SUFFIX}"
+                    with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
+                        try:
+                            store.put(object_key, csv_binary)
+                        except Exception as e:
+                            print(e, flush=True)
+                            self.logger.error(f'An error occurred: {str(e)}')
+                            raise
                 self.stdout.write(self.style.SUCCESS(f'Underway Data for {cruise.name} successfully imported.'))
                 self.logger.error((f'Underway Data for {cruise.name} successfully imported.'))
             except Cruise.DoesNotExist:

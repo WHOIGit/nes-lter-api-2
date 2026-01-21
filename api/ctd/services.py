@@ -192,7 +192,7 @@ class CtdService:
     @staticmethod
     def serialize_cruise(cruise: Cruise) -> CruiseOutput:
         return CruiseOutput(
-            name=cruise.name,
+            name=cruise.name.upper(),
             vessel_name=cruise.vessel.name,
             start_time=cruise.start_time,
             end_time=cruise.end_time,
@@ -210,7 +210,7 @@ class CtdService:
 
         for cruise in cruises:
             writer.writerow([
-                cruise.name,
+                cruise.name.upper(),
                 cruise.vessel.name,
                 cruise.start_time,
                 cruise.end_time
@@ -293,7 +293,7 @@ class CtdService:
     @staticmethod
     def serialize_cast(cast: Cast) -> CastOutput:
         return CastOutput(
-                cruise_name=cast.cruise.name,
+                cruise_name=cast.cruise.name.upper(),
                 number=cast.number,
                 depth=cast.depth,
                 geolocation=cast.geolocation,
@@ -322,6 +322,7 @@ class CtdService:
 
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
+            cruise_name = cruise.name.lower()
             cast_number = cast_number.lstrip("0")
             cast = Cast.objects.get(cruise=cruise, number__iexact=cast_number)
             object_key = f"{cruise_name}_ctd_cast_{cast.number}.csv"
@@ -399,7 +400,7 @@ class CtdService:
     @staticmethod
     def serialize_niskin(niskin: Niskin) -> NiskinOutput:
         return NiskinOutput(
-                cruise_name=niskin.cast.cruise.name,
+                cruise_name=niskin.cast.cruise.name.upper(),
                 cast_number=niskin.cast.number,
                 number=niskin.number,
                 depth=niskin.depth,

@@ -84,7 +84,6 @@ class Command(BaseCommand):
             sample_ids.cast = sample_ids.cast.astype(str)
             btl_sum.niskin = btl_sum.niskin.astype(int)
             sample_ids.niskin = sample_ids.niskin.astype(int)
-            sample_ids['cruise'] = sample_ids['cruise'].str.lower()  # bottle files have lc cruise
             # include sample_ids cast rows when cast missing from btl_sum
             merged = btl_sum.merge(sample_ids, on=['cruise','cast','niskin'], how='right')
 
@@ -349,7 +348,7 @@ class Command(BaseCommand):
                 if not merged.empty:
 
                     # filter for just this cruise
-                    filtered = merged[merged["cruise"] == cruise_name]
+                    filtered = merged[merged["cruise"] == cruise_name.upper()]
 
                     # read and merge nutrient data
                     nut_profile = self.read_nut_data(cruise_name, filtered)

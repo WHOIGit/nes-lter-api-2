@@ -73,7 +73,6 @@ var myArgs = process.argv.slice(2);
             await new Promise(r => setTimeout(r, 2000));
             let encodedString = await driver.takeScreenshot();
             await fs.writeFileSync('screen.png', encodedString, 'base64');
-            //await driver.findElement(By.xpath('//*[@id="map"]/div[1]/div[4]/img[3]')).click();
             await driver.findElement(By.xpath('//*[@id="map"]/div[1]/div[4]/img[4]')).click();  // cast 35 also on map now
         }
 

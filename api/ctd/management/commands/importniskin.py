@@ -258,6 +258,7 @@ class Command(BaseCommand):
                     compiled_df = compiled_df.sort_values([CAST_COL,NISKIN_COL])
                     compiled_df.reset_index()
                     compiled_df[CAST_COL] = compiled_df[CAST_COL].str.lstrip('0')
+                    compiled_df[CRUISE_COL] = compiled_df[CRUISE_COL].str.upper()
 
                     # write bottle file to media store
                     csv_buffer = io.StringIO()

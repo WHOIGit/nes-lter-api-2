@@ -45,7 +45,7 @@ class Command(BaseCommand):
                 return pd.DataFrame()
 
             btl_sum = pd.read_csv(io.BytesIO(data))
-            chl.cruise = chl.cruise.str.lower()
+            chl.cruise = chl.cruise.str.upper()
             chl.cast = chl.cast.astype(str)
             chl.niskin = chl.niskin.astype(int)
             btl_sum.cast = btl_sum.cast.astype(str).str.lstrip("0")  #remove leading 0s for merge
