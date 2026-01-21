@@ -76,7 +76,7 @@ async function getData() {
 
             const data = await response.json();
 
-            if (data.name && data.name.includes(cruise)) {
+            if (data.name && data.name.includes(cruise.toUpperCase())) {
                 console.log(`Cruise Get test for "${cruise}" successful.`);
             } else {
                 error = true;
