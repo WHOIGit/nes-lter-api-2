@@ -48,7 +48,7 @@ async function getData() {
         const missing = [];
 
         for (const cruiseName of expectedCruiseNames) {
-            if (!data.includes(cruiseName)) {
+            if (!data.includes(cruiseName.toUpperCase())) {
                 missing.push(cruiseName);
             }
         }
