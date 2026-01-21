@@ -69,6 +69,7 @@ class Command(BaseCommand):
         if not ascfile:
             self.stdout.write(self.style.ERROR(f'No .asc file found for cruise {cruise} cast {cast}.'))
             self.logger.error((f'No .asc file found for cruise {cruise} cast {cast}.'))
+            return
         
         #read .asc file
         try:
@@ -83,7 +84,7 @@ class Command(BaseCommand):
                 df = self.parse_asc_fixed_width(ascfile)
             df = clean_column_names(df)
 
-            df[CRUISE_COL] = cruise
+            df[CRUISE_COL] = cruise.upper()
             df[CAST_COL] = cast
             # move to front
             cols = df.columns.tolist()
@@ -196,7 +197,7 @@ class Command(BaseCommand):
                         timestamp=cast.start_time)
 
                     data.append({
-                        "cruise": cruise.name,
+                        "cruise": cruise.name.upper(),
                         "cast": cast.number,
                         "date": cast.start_time,
                         "latitude": cast.geolocation.y,
