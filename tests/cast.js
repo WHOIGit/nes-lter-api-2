@@ -44,12 +44,7 @@ async function getData(cruise) {
     const response = await fetch(`${url}/api/ctd/cast/get/${cruise}/10`);
 
     if (!response.ok) {
-        if (cruise === 'ae2426') {
-            console.log(`${cruise} Cast Get Single test unsuccessful. This is the expected result for ae2426.`);
-        }
-        else { 
-            throw new Error(`HTTP error ` + response.status);
-        }
+        throw new Error(`HTTP error ` + response.status);
     }
     const data = await response.text();
    
