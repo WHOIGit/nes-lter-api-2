@@ -3,6 +3,7 @@ import io
 import glob
 import re
 import pandas as pd
+import numpy as np
 from django.core.management.base import BaseCommand, CommandError
 from core.models import Cruise, Cast, Station
 from core.utils import get_store
@@ -206,6 +207,13 @@ class Command(BaseCommand):
                         "distance_km": station_location.distance.km
                     })
                 df = pd.DataFrame(data, columns=COLUMNS)
+                # sort by cast number 
+                s = df["cast"].astype(str).str.strip().str.lower()
+                num = pd.to_numeric(s.str.extract(r"^(\d+)")[0], errors="coerce").fillna(10**9).to_numpy()
+                suf = s.str.extract(r"([a-z]+)$", expand=False).fillna("").to_numpy()
+                order = np.lexsort((suf, num))   # primary: num, tie-break: suf
+                df = df.iloc[order]
+
                 csv_buffer = io.StringIO()
                 df.to_csv(csv_buffer, index=False, na_rep="NaN")
                 csv_binary = csv_buffer.getvalue().encode("utf-8")

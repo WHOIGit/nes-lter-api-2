@@ -197,7 +197,7 @@ def cruises_for_year(request, year):
     ) | Cruise.objects.filter(
         end_time__year=year
     )
-    cruises = cruises.order_by('name')
+    cruises = cruises.order_by('start_time')
 
     label = f"Cruises in {year}"
     emoji = "🗓️"
@@ -226,7 +226,7 @@ def cruises_by_season(request):
         Cruise.objects
         .filter(Q(start_time__isnull=False) | Q(end_time__isnull=False))
         .annotate(month=Coalesce(ExtractMonth("start_time"), ExtractMonth("end_time")))
-        .order_by("name")
+        .order_by("start_time")
     )
 
     # Bucket cruises into seasons
@@ -256,7 +256,7 @@ def cruises_for_season(request, season: str):
         .filter(Q(start_time__isnull=False) | Q(end_time__isnull=False))
         .annotate(month=Coalesce(ExtractMonth("start_time"), ExtractMonth("end_time")))
         .filter(month__in=SEASON_META[season]["months"])
-        .order_by("name")
+        .order_by("start_time")
     )
 
     return render(request, "cruise_list.html", {
@@ -270,10 +270,13 @@ def cruise_list(request, prefix: str):
     # Filter cruises by prefix
     qs = Cruise.objects.filter(name__istartswith=prefix)
 
+    # sort cruises by number and suffix letter for By Ship pages
     cruises = sorted(
         qs,
-        key=lambda c: int(re.search(r'\d+', c.name).group())
-        if re.search(r'\d+', c.name) else 0
+        key=lambda c: (
+            int(re.search(r'\d+', c.name).group()),
+            re.search(r'[a-z]$', c.name.lower()).group() if re.search(r'[a-z]$', c.name.lower()) else ""
+        )
     )
 
     label = next((lbl for p, lbl, _ in PREFIXES if p == prefix), prefix.upper())
