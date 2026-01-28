@@ -374,7 +374,7 @@ class Command(BaseCommand):
                             if station_location:
                                 nut_profile.at[idx, NEAREST_STATION_COL] = station_location.content_object.name
                                 nut_profile.at[idx, DISTANCE_KM_COL] = round(station_location.distance.km, 3)
-                        self.stdout.write(nut_profile.to_string())
+
                         # write nut file to media store
                         csv_buffer = io.StringIO()
                         nut_profile.to_csv(csv_buffer, index=False, na_rep="NaN")

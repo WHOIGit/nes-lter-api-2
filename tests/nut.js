@@ -61,7 +61,7 @@ async function getData() {
             .filter(line => line.length > 0);
 
         if (process.env.GITHUB_ACTIONS === 'true') {
-            if (lines.length == 587) {  // only 5 test cruises
+            if (lines.length == 719) {  // only 5 test cruises
                 console.log('Nut Get All test successful.');
             }
             else {
