@@ -2,7 +2,7 @@ django-ninja==1.5.1
 djangorestframework
 psycopg2
 django-simple-history
-pandas
+pandas==3.0
 python-dotenv
 requests
 openpyxl
