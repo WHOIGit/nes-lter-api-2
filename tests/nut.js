@@ -2,8 +2,8 @@ console.log("Running Nut Test.");
 
 const cruises = ["ar77", "en617", "hrs2303", "ae2426", "at46"];
 
-// Expected line counts - ae2426 has no data
-const lineCounts = { ar77: 143, en617: 157, hrs2303: 141, ae2426: 1, at46: 143 };
+// Expected line counts
+const lineCounts = { ar77: 143, en617: 157, hrs2303: 141, ae2426: 139, at46: 143 };
 
 var myArgs = process.argv.slice(2);
 
@@ -20,7 +20,7 @@ async function getData() {
     for (const cruise of cruises) {
         try {
             const response = await fetch(`${url}/api/nut/${cruise}`);
-            if ((!response.ok) && (cruise != 'ae2426')) {
+            if (!response.ok) {
                 throw new Error('HTTP error ' + response.status);
             }
 
@@ -38,6 +38,7 @@ async function getData() {
             }
             else {
                 console.log(`${cruise} Nut values are missing.`);
+                console.log(lines.length);
                 console.log(`${cruise} Nut Get test failed.`);
             }
         } catch (err) {
@@ -60,16 +61,17 @@ async function getData() {
             .filter(line => line.length > 0);
 
         if (process.env.GITHUB_ACTIONS === 'true') {
-            if (lines.length == 581) {  // only 5 test cruises
+            if (lines.length == 719) {  // only 5 test cruises
                 console.log('Nut Get All test successful.');
             }
             else {
                 console.log('Nut Get All values are missing.');
+                console.log(lines.length);
                 console.log('Nut Get All test failed.');
             }
         }
         else {
-            if (lines.length == 4434) {
+            if (lines.length == 5284) {
                 console.log('Nut Get All test successful.');
             }
             else {

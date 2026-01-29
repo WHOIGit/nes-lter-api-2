@@ -1,5 +1,6 @@
 import io, os, glob
 import csv
+import re
 from typing import Optional, List, Tuple
 from datetime import datetime
 
@@ -306,7 +307,15 @@ class CtdService:
     def get_casts(cruise_name: str) -> List[CastOutput]:
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
-            casts = Cast.objects.filter(cruise=cruise)
+            casts = list(Cast.objects.filter(cruise=cruise))
+            casts.sort(
+                key=lambda c: (
+                    int(re.match(r"^(\d+)", c.number).group(1))
+                    if re.match(r"^(\d+)", c.number) else 10**9,
+                    re.search(r"[a-z]$", c.number.lower()).group()
+                    if re.search(r"[a-z]$", c.number.lower()) else ""
+                )
+            )
             return [CtdService.serialize_cast(cast) for cast in casts]
         except Cruise.DoesNotExist:
             raise Http404(f"Cruise {cruise_name} not found.")
@@ -437,7 +446,7 @@ class CtdService:
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
             cast = Cast.objects.get(cruise=cruise, number__iexact=cast_number)
-            niskins = Niskin.objects.filter(cast=cast)
+            niskins = Niskin.objects.filter(cast=cast).order_by("number")
             return [CtdService.serialize_niskin(niskin) for niskin in niskins]
         except Cruise.DoesNotExist:
             raise Http404(f"Cruise {cruise_name} not found.")
