@@ -262,7 +262,7 @@ var files;
         await driver.switchTo().window(handles[0]);
         await new Promise(r => setTimeout(r, 2000));
         await driver.findElement(By.linkText('Colab Notebook')).click();
-        await new Promise(r => setTimeout(r, 6000));
+        await new Promise(r => setTimeout(r, 9000));
         handles = await driver.getAllWindowHandles();
         await driver.switchTo().window(handles[9]);
         bodyText = await driver.findElement(By.css("body")).getText();
