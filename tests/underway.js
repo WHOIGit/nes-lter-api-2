@@ -27,7 +27,7 @@ async function getData(cruise) {
   }
 
   try {
-    const response = await fetch(`${url}/api/underway/get/${cruise}`);
+    const response = await fetch(`${url}/api/underway/${cruise}`);
     if (!response.ok) {
       throw new Error('HTTP error ' + response.status);
       }

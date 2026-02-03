@@ -80,7 +80,7 @@ var files;
         assert(bodyText.includes("Cruises in 2023"));
 
         // Verify each type of cruise detail links are working
-        await driver.findElement(By.css('a[href="/api/ctd/cruises/get/ar77"]')).click();
+        await driver.findElement(By.css('a[href="/api/ctd/cruises/ar77"]')).click();
         await new Promise(r => setTimeout(r, 2000));
         handles = await driver.getAllWindowHandles();
         await driver.switchTo().window(handles[1]);
@@ -88,7 +88,7 @@ var files;
         assert(bodyText.includes('"name": "AR77"'));
 
         await driver.switchTo().window(handles[0]);
-        await driver.findElement(By.css('a[href="/api/ctd/casts/get/ar77"]')).click();
+        await driver.findElement(By.css('a[href="/api/ctd/casts/ar77"]')).click();
         await new Promise(r => setTimeout(r, 2000));
         handles = await driver.getAllWindowHandles();
         await driver.switchTo().window(handles[2]);
@@ -126,7 +126,7 @@ var files;
             console.log("Land Page Test Failed.");
         }
 
-        await driver.findElement(By.css('a[href="/api/events/get/ar77"]')).click();
+        await driver.findElement(By.css('a[href="/api/events/ar77"]')).click();
         await new Promise(r => setTimeout(r, 4000));
         files = fs.readdirSync(dir);
         if (!files.some(f => f.includes("ar77_elog") && f.endsWith(".csv"))) {
@@ -150,7 +150,7 @@ var files;
         assert(bodyText.includes(''));
 
         await driver.switchTo().window(handles[0]);
-        await driver.findElement(By.css('a[href="/api/underway/get/ar77"]')).click();
+        await driver.findElement(By.css('a[href="/api/underway/ar77"]')).click();
         await new Promise(r => setTimeout(r, 4000));
         files = fs.readdirSync(dir);
         if (!files.some(f => f.includes("ar77_underway") && f.endsWith(".csv"))) {

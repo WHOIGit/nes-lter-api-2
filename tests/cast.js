@@ -17,7 +17,7 @@ async function getData(cruise) {
           url = `http://localhost:8000`;
       }
 
-    const response = await fetch(`${url}/api/ctd/casts/get/${cruise}`);
+    const response = await fetch(`${url}/api/ctd/casts/${cruise}`);
 
     if (!response.ok) {
       throw new Error(`HTTP error ` + response.status);
@@ -41,7 +41,7 @@ async function getData(cruise) {
 
 
   try {
-    const response = await fetch(`${url}/api/ctd/cast/get/${cruise}/10`);
+    const response = await fetch(`${url}/api/ctd/cast/${cruise}/10`);
 
     if (!response.ok) {
         throw new Error(`HTTP error ` + response.status);

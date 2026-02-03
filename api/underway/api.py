@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, validator
 
 router = Router()
 
-@router.get("/get/{cruise_name}", tags=["Users"])
+@router.get("/{cruise_name}", tags=["Users"])
 def get_underway_data(request, cruise_name: str):
     return UnderwayService.get_data(cruise_name)
 

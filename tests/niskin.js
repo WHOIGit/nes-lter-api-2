@@ -19,7 +19,7 @@ async function getData(cruise) {
     }
 
     try {
-        const response = await fetch(`${url}/api/ctd/niskins/get/all/${cruise}/10`);
+        const response = await fetch(`${url}/api/ctd/niskins/all/${cruise}/10`);
         if (!response.ok) {
             throw new Error('HTTP error ' + response.status);
         }
@@ -40,7 +40,7 @@ async function getData(cruise) {
     }
 
   try {
-      const response = await fetch(`${url}/api/ctd/niskins/get/${cruise}/10/1`);
+      const response = await fetch(`${url}/api/ctd/niskins/${cruise}/10/1`);
     if (!response.ok) {
         throw new Error('HTTP error ' + response.status);
     }
