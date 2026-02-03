@@ -83,10 +83,6 @@ def get_cruise(request, cruise_name: str):
 def get_cruise_readme(request, cruise_name: str):
     return CtdService.get_cruise_readme(cruise_name)
 
-@router.get("/cast/{cruise_name}/{cast_number}", tags=["Users"])
-def get_cast(request, cruise_name: str, cast_number: str):
-    return CtdService.get_cast(cruise_name, cast_number)
-
 @router.post('/casts/create', tags=["Admin"], auth=TokenAuthenticator())
 def create_cast(request, input: CastInput):
     try:
@@ -116,6 +112,9 @@ def delete_cast(request, cruise_name: str, cast_number: str):
 def get_casts(request, cruise_name: str):
     return CtdService.get_casts(cruise_name)
   
+@router.get("/cast/{cruise_name}/{cast_number}", tags=["Users"])
+def get_cast(request, cruise_name: str, cast_number: str):
+    return CtdService.get_cast(cruise_name, cast_number)
     
 @router.post('/niskins/create', tags=["Admin"], auth=TokenAuthenticator())
 def create_niskin(request, input: NiskinInput):
