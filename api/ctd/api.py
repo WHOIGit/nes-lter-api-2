@@ -83,6 +83,7 @@ def get_cruise(request, cruise_name: str):
 def get_cruise_readme(request, cruise_name: str):
     return CtdService.get_cruise_readme(cruise_name)
 
+
 @router.post('/casts/create', tags=["Admin"], auth=TokenAuthenticator())
 def create_cast(request, input: CastInput):
     try:
@@ -99,7 +100,6 @@ def update_cast(request, cruise_name: str, cast_number: str, input: UpdateCastIn
     except ValueError as e:
         return {"status": "error", "message": str(e)}
 
-
 @router.delete('/casts/delete/{cruise_name}/{cast_number}', tags=["Admin"], auth=TokenAuthenticator())
 def delete_cast(request, cruise_name: str, cast_number: str):
     try:
@@ -115,6 +115,7 @@ def get_casts(request, cruise_name: str):
 @router.get("/cast/{cruise_name}/{cast_number}", tags=["Users"])
 def get_cast(request, cruise_name: str, cast_number: str):
     return CtdService.get_cast(cruise_name, cast_number)
+
     
 @router.post('/niskins/create', tags=["Admin"], auth=TokenAuthenticator())
 def create_niskin(request, input: NiskinInput):
@@ -124,17 +125,13 @@ def create_niskin(request, input: NiskinInput):
     except ValueError as e:
         return {"status": "error", "message": str(e)}
     
-
-
 @router.get("/niskins/all/{cruise_name}/{cast_number}", response=List[NiskinOutput], tags=["Users"])
 def get_niskins(request, cruise_name: str, cast_number: str):
     return CtdService.get_niskins(cruise_name, cast_number)
 
-
 @router.get("/niskins/{cruise_name}/{cast_number}/{niskin_number}", response=NiskinOutput, tags=["Users"])
 def get_niskin(request, cruise_name: str, cast_number: str, niskin_number: int):
     return CtdService.get_niskin(cruise_name, cast_number, niskin_number)
-
 
 @router.post('/niskins/update/{cruise_name}/{cast_number}/{niskin_number}', tags=["Admin"], auth=TokenAuthenticator())
 def update_niskin(request, cruise_name: str, cast_number: str, niskin_number: str, input: UpdateNiskinInput):
@@ -151,6 +148,7 @@ def delete_niskin(request, cruise_name: str, cast_number: str, niskin_number: in
         return result
     except ValueError as e:
         return {"status": "error", "message": str(e)}
+
 
 @router.get("/bottles/{cruise_name}", tags=["Users"])
 def get_bottles(request, cruise_name: str):
