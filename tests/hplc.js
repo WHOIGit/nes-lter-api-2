@@ -3,7 +3,7 @@ console.log("Running HPLC Test.");
 const cruises = ["ar77", "en617", "hrs2303", "ae2426", "at46"];
 
 // Expected line counts
-const lineCounts = { ar77: 34, en617: 30, hrs2303: 32, ae2426: 1, at46: 30 };
+const lineCounts = { ar77: 34, en617: 30, hrs2303: 32, ae2426: 33, at46: 30 };
 
 var myArgs = process.argv.slice(2);
 
