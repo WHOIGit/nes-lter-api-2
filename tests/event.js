@@ -26,7 +26,7 @@ async function getData(cruise) {
       url = `http://localhost:8000`;
   }
   try {
-    const response = await fetch(`${url}/api/events/get/${cruise}`);
+    const response = await fetch(`${url}/api/events/${cruise}`);
     if (!response.ok) {
       throw new Error('HTTP error ' + response.status);
       }

@@ -9,15 +9,9 @@ from .services import CtdService, NiskinInput, VesselOutput, AddVesselInput, \
 
 router = Router()
 
-@router.get("/vessels/get/all", response=List[VesselOutput], tags=["Users"])
+@router.get("/vessels/all", response=List[VesselOutput], tags=["Users"])
 def get_vessels(request):
     return CtdService.get_vessels()
-
-
-@router.get("/vessels/get/{vessel_name}", response=VesselOutput, tags=["Users"])
-def get_vessel(request, vessel_name: str):
-    return CtdService.get_vessel(vessel_name)
-
 
 @router.post('/vessels/create', tags=["Admin"], auth=TokenAuthenticator())
 def create_vessel(request, input: AddVesselInput):
@@ -43,15 +37,19 @@ def delete_vessel(request, vessel_name: str):
     except ValueError as e:
         return {"status": "error", "message": str(e)}
 
-@router.get("/cruises/get/all", response=List[CruiseOutput], tags=["Users"])
+@router.get("/vessels/{vessel_name}", response=VesselOutput, tags=["Users"])
+def get_vessel(request, vessel_name: str):
+    return CtdService.get_vessel(vessel_name)
+
+
+@router.get("/cruises/all", response=List[CruiseOutput], tags=["Users"])
 def get_cruises(request):
     return CtdService.get_cruises()
 
-
-@router.get("/cruises/get/{cruise_name}", response=CruiseOutput, tags=["Users"])
-def get_cruise(request, cruise_name: str):
-    return CtdService.get_cruise(cruise_name)
-
+@router.get("/cruises/readme", response=str, tags=["Users"])
+def get_cruise_readme_all(request):
+    return CtdService.get_cruise_readme_all()
+        
 @router.post('/cruises/create', tags=["Admin"], auth=TokenAuthenticator())
 def create_cruise(request, input: AddCruiseInput):
     try:
@@ -59,7 +57,6 @@ def create_cruise(request, input: AddCruiseInput):
         return {"status": "success", "cruise": new_cruise}
     except ValueError as e:
         return {"status": "error", "message": str(e)}
-
 
 @router.post('/cruises/update/{cruise_name}', tags=["Admin"], auth=TokenAuthenticator())
 def update_cruise(request, cruise_name: str, input: UpdateCruiseInput):
@@ -78,22 +75,14 @@ def delete_cruise(request, cruise_name: str):
     except ValueError as e:
         return {"status": "error", "message": str(e)}
 
+@router.get("/cruises/{cruise_name}", response=CruiseOutput, tags=["Users"])
+def get_cruise(request, cruise_name: str):
+    return CtdService.get_cruise(cruise_name)
+
 @router.get("/cruises/readme/{cruise_name}", response=str, tags=["Users"])
 def get_cruise_readme(request, cruise_name: str):
     return CtdService.get_cruise_readme(cruise_name)
 
-@router.get("/cruises/readme", response=str, tags=["Users"])
-def get_cruise_readme_all(request):
-    return CtdService.get_cruise_readme_all()
-        
-@router.get("/casts/get/{cruise_name}", response=List[CastOutput], tags=["Users"])
-def get_casts(request, cruise_name: str):
-    return CtdService.get_casts(cruise_name)
-
-
-@router.get("/cast/get/{cruise_name}/{cast_number}", tags=["Users"])
-def get_cast(request, cruise_name: str, cast_number: str):
-    return CtdService.get_cast(cruise_name, cast_number)
 
 @router.post('/casts/create', tags=["Admin"], auth=TokenAuthenticator())
 def create_cast(request, input: CastInput):
@@ -111,7 +100,6 @@ def update_cast(request, cruise_name: str, cast_number: str, input: UpdateCastIn
     except ValueError as e:
         return {"status": "error", "message": str(e)}
 
-
 @router.delete('/casts/delete/{cruise_name}/{cast_number}', tags=["Admin"], auth=TokenAuthenticator())
 def delete_cast(request, cruise_name: str, cast_number: str):
     try:
@@ -119,7 +107,15 @@ def delete_cast(request, cruise_name: str, cast_number: str):
         return result
     except ValueError as e:
         return {"status": "error", "message": str(e)}
+
+@router.get("/casts/{cruise_name}", response=List[CastOutput], tags=["Users"])
+def get_casts(request, cruise_name: str):
+    return CtdService.get_casts(cruise_name)
   
+@router.get("/cast/{cruise_name}/{cast_number}", tags=["Users"])
+def get_cast(request, cruise_name: str, cast_number: str):
+    return CtdService.get_cast(cruise_name, cast_number)
+
     
 @router.post('/niskins/create', tags=["Admin"], auth=TokenAuthenticator())
 def create_niskin(request, input: NiskinInput):
@@ -129,17 +125,13 @@ def create_niskin(request, input: NiskinInput):
     except ValueError as e:
         return {"status": "error", "message": str(e)}
     
-
-
-@router.get("/niskins/get/all/{cruise_name}/{cast_number}", response=List[NiskinOutput], tags=["Users"])
+@router.get("/niskins/all/{cruise_name}/{cast_number}", response=List[NiskinOutput], tags=["Users"])
 def get_niskins(request, cruise_name: str, cast_number: str):
     return CtdService.get_niskins(cruise_name, cast_number)
 
-
-@router.get("/niskins/get/{cruise_name}/{cast_number}/{niskin_number}", response=NiskinOutput, tags=["Users"])
+@router.get("/niskins/{cruise_name}/{cast_number}/{niskin_number}", response=NiskinOutput, tags=["Users"])
 def get_niskin(request, cruise_name: str, cast_number: str, niskin_number: int):
     return CtdService.get_niskin(cruise_name, cast_number, niskin_number)
-
 
 @router.post('/niskins/update/{cruise_name}/{cast_number}/{niskin_number}', tags=["Admin"], auth=TokenAuthenticator())
 def update_niskin(request, cruise_name: str, cast_number: str, niskin_number: str, input: UpdateNiskinInput):
@@ -156,6 +148,7 @@ def delete_niskin(request, cruise_name: str, cast_number: str, niskin_number: in
         return result
     except ValueError as e:
         return {"status": "error", "message": str(e)}
+
 
 @router.get("/bottles/{cruise_name}", tags=["Users"])
 def get_bottles(request, cruise_name: str):

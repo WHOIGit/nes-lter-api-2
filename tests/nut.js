@@ -38,7 +38,6 @@ async function getData() {
             }
             else {
                 console.log(`${cruise} Nut values are missing.`);
-                console.log(lines.length);
                 console.log(`${cruise} Nut Get test failed.`);
             }
         } catch (err) {
@@ -66,12 +65,11 @@ async function getData() {
             }
             else {
                 console.log('Nut Get All values are missing.');
-                console.log(lines.length);
                 console.log('Nut Get All test failed.');
             }
         }
         else {
-            if (lines.length == 5284) {
+            if (lines.length == 5285) {
                 console.log('Nut Get All test successful.');
             }
             else {

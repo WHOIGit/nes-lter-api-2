@@ -2,6 +2,7 @@ import io
 import os
 import csv
 import glob
+import pandas as pd
 from django.http import FileResponse, HttpResponse, Http404
 from core.utils import get_store
 from core.models import Cruise
@@ -74,3 +75,15 @@ class NutService:
         with open(path, 'r') as fin:
             content = fin.read()
         return HttpResponse(content, content_type="text/plain")
+
+    @classmethod
+    def ar52_samplelog(cls) -> FileResponse:
+        path = "/vast/raw/all/LTER_sample_log.xlsx"
+        df = pd.read_excel(path, dtype=str)
+        cruises = {"AR52A", "AR52B"}
+        filtered = df[df["Cruise"].isin(cruises)]
+
+        # Convert to CSV
+        csv_content = filtered.to_csv(index=False)
+
+        return HttpResponse(csv_content,content_type="text/csv")

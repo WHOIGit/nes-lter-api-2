@@ -38,7 +38,7 @@ async function getData() {
             url = `http://localhost:8000`;
         }
 
-        const response = await fetch(`${url}/api/ctd/cruises/get/all`);
+        const response = await fetch(`${url}/api/ctd/cruises/all`);
         if (!response.ok) {
             throw new Error(`HTTP error ${response.status}`);
         }
@@ -69,7 +69,7 @@ async function getData() {
     for (const cruise of expectedCruiseNames) {
         error = false;
         try {
-            const response = await fetch(`${url}/api/ctd/cruises/get/${encodeURIComponent(cruise)}`);
+            const response = await fetch(`${url}/api/ctd/cruises/${encodeURIComponent(cruise)}`);
             if (!response.ok) {
                 throw new Error('HTTP error ' + response.status);
             }

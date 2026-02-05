@@ -15,7 +15,7 @@ async function getData() {
   }
 
   try {
-    const response = await fetch(`${url}/api/ctd/vessels/get/all`);
+    const response = await fetch(`${url}/api/ctd/vessels/all`);
     if (!response.ok) {
       throw new Error('HTTP error ' + response.status);
     }
@@ -39,7 +39,7 @@ async function getData() {
 
 
   try {
-      const response = await fetch(`${url}/api/ctd/vessels/get/neil armstrong`);
+      const response = await fetch(`${url}/api/ctd/vessels/neil armstrong`);
     if (!response.ok) {
         throw new Error('HTTP error ' + response.status);
     }

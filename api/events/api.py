@@ -7,7 +7,7 @@ from .services import EventService, EventOutput, FilterEventInput, EditEventInpu
 
 router = Router()
 
-@router.get("/get/{cruise_name}", tags=["Users"])
+@router.get("/{cruise_name}", tags=["Users"])
 def get_events(request, cruise_name: str):
     return EventService.get_events(cruise_name)
 
