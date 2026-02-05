@@ -233,7 +233,7 @@ class Command(BaseCommand):
             for param in DL_dict.keys():
                 if not close_rows.empty:
                     mean_value = (close_rows[param].mean() + row[param]) / 2
-                    ratio = 100 * (row[param] - mean_value) / mean_value           
+                    ratio = 100 * (row[param] - mean_value) / mean_value
                     if len(close_rows) >= 2: 
                        # Compare sample value against mean of the other rows
                        if abs(close_rows[param].mean() - row[param]) > diff_dict[param]:
@@ -246,6 +246,9 @@ class Command(BaseCommand):
                                elif abs(ratio) > 20:
                                    df.at[idx, flag_dict[param]] = 3
                            else:
+                               #if param == "silicate":
+                                   #print(len(close_rows), mean_value, flush=True)
+                                   #print(ratio,row, flush=True)
                                if abs(ratio) > 40:
                                    df.at[idx, flag_dict[param]] = 4
                                elif abs(ratio) > 15:
