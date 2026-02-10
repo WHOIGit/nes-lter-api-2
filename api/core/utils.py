@@ -4,12 +4,16 @@ import re
 import pandas as pd
 import os
 import glob
+import numpy as np
+import logging
 from contextlib import contextmanager
 from storage.mediastore import MediaStore
 from storage.utils import PrefixStore
 from storage.object import DictStore
 from storage.fs import FilesystemStore
 from django.http import Http404
+
+logger = logging.getLogger(__name__)
 
 def path_to_cast(cruise_name, filename):
 
@@ -193,3 +197,122 @@ def find_readme(cruise_name, data_type):
         return fn
     raise Http404(f"{data_type} README file for {cruise_name} not found.")
 
+def read_sample_log():
+    sample_log_path = f'/vast/raw/all/LTER_sample_log.xlsx'
+    raw = pd.read_excel(sample_log_path, na_values='-', dtype={
+            'Nut a': str,
+            'Nut b': str,
+            'Niskin #': str
+        })
+    df = clean_column_names(raw, {
+        'Date \n(UTC)': 'date',
+        'Start Time (UTC)': 'time',
+        'Niskin #': 'niskin',
+        'Niskin\nTarget\nDepth': 'depth',
+    })
+
+    # for ar24 some niskin numbers are given as a list in the sample log (e.g., "4,5,6")
+    # so pick the first one for now, proposed solution is to average the CTD bottle data
+    df['niskin'] = df['niskin'].fillna('0').str.replace(',.*','',regex=True).astype(int)
+    df['Comments'] = df.comments.fillna('')
+    # drop rows without an a replicate
+
+    df = df[['cruise','cast','niskin','nut_a','nut_b', 'ooi_nut_id']].dropna(subset=['nut_a'])        
+    df['cruise'] = df['cruise'].astype(str).str.upper()
+
+    # check for duplicate sample ids across nut_a and nut_b columns
+    combined = pd.concat([df['nut_a'], df['nut_b']]).dropna()
+    duplicate_ids = combined[combined.duplicated(keep=False)].unique()
+    dup_rows = df[df['nut_a'].isin(duplicate_ids) | df['nut_b'].isin(duplicate_ids)]
+    dup_rows = dup_rows[(dup_rows['nut_a'] != ' -') & (dup_rows['nut_b'] != ' -')]
+    if not dup_rows.empty:
+        print("Warning: Duplicate sample IDs found across nut_a and nut_b in LTER_sample_log.xlsx:")
+        print(dup_rows[['cruise', 'cast', 'niskin', 'nut_a', 'nut_b']].to_string())
+
+    # make replicates long instead of wide
+    sample_ids = wide_to_long(df, [['nut_a'],['nut_b']], ['sample_id'], 'replicate', ['a','b'])
+    return(sample_ids)
+
+def read_nut_data(cruise, merged):
+    RAW_COLS = ['Nutrient \nNumber', 'Cruise', 'Cast', 'LTER \nSample ID', 'Nitrate + Nitrite', 'Ammonium',
+    'Phosphate', 'Silicate', 'Comments']
+
+    NUT_COLS = ['nitrate_nitrite', 'ammonium', 'phosphate', 'silicate']
+
+    file = f'/vast/raw/all/nut/LTERnut.xlsx'
+    df = pd.read_excel(file, skiprows=[0,1])
+
+    if set(df.columns) != set(RAW_COLS):
+        raise ValueError('Nut spreadsheet does not contain expected columns')
+    df = clean_column_names(df)
+
+    # mismatches can lead to unexpected results
+    nut = df['nutrient_number'].astype(str).str.replace('NL_', '', regex=False)\
+        .str.replace('NL', '', regex=False).str.strip()
+    nut = pd.to_numeric(nut).astype(int)
+    lter = df['lter_sample_id']
+    lter = pd.to_numeric(lter).astype(int)
+    mismatch_mask = (nut != lter) & ((nut - lter).abs() != 3000) # ignore diffs of 3000
+    num_mismatches = mismatch_mask.sum()
+    if num_mismatches > 0:
+        mismatches = pd.DataFrame({
+            'nutrient_number': nut[mismatch_mask],
+            'lter_sample_id': lter[mismatch_mask]
+        })
+        print(mismatches.to_string(index=False), flush=True)
+        logger.error(f'Nutrient Number and LTER Sample ID: {num_mismatches} column values do not match in LTERnut.xlsx')
+        raise ValueError(f'Nutrient Number and LTER Sample ID: {num_mismatches} column values do not match in LTERnut.xlsx')
+
+    df['comments'] = df['comments'].fillna('')
+    # deal with below-detection-limit values
+    # for the nut cols, add {}_bdl col with the
+    # detection limit value, for all below-detection-limit
+    # values. in the value column put a zero
+    for col in NUT_COLS:
+        bdl = []
+        new_values = []
+        for v in df[col].values:
+            if str(v).startswith('<'): # below detection limit
+                detection_limit = float(str(v)[1:])
+                bdl.append(detection_limit)
+                new_values.append(0)
+            else:
+                bdl.append(np.nan)
+                new_values.append(v)
+        bdl_col = '{}_bdl'.format(col)
+        df[bdl_col] = bdl
+        df[col] = new_values
+
+    # nutrient_number is used instead of lter_sample_id
+    df['lter_sample_id'] = df['nutrient_number'].str.replace('NL_','')
+    df = df[['lter_sample_id','nitrate_nitrite','ammonium','phosphate','silicate']]
+    df['sample_id'] = df.pop('lter_sample_id').astype(str)
+
+    nut_profile = merged.merge(df, on='sample_id')
+    nut_profile['date'] = pd.to_datetime(nut_profile['date'], utc=True)
+    # sort alphanumeric casts in numeric order (not alpha order) such that 2 preceeds 12
+    nut_profile['cast'] = pd.to_numeric(nut_profile['cast'])
+    nut_profile = nut_profile.sort_values(['cast','niskin','replicate'])
+    nut_profile['cast'] = nut_profile['cast'].astype(str)
+    nut_profile['alternate_sample_id'] = nut_profile.pop('ooi_nut_id')
+
+    # set date, lat, lon, depth to NaN when there is no bottle file for the cast
+    btl_dir = f'/vast/raw/{cruise}/ctd/'
+    for file in sorted(
+        f for f in glob.glob(os.path.join(btl_dir, '*.asc'))
+        if not f.endswith('_original.asc')
+    ):
+        if cruise == 'en627':
+            file = file.replace("_u", "")
+        btl_file = file[:-3] + 'btl'
+        if not os.path.exists(btl_file):
+            cast = path_to_cast(cruise, btl_file)
+            if cast is None:
+                    continue
+            cast = cast.lstrip('0')
+            nut_profile.loc[nut_profile['cast'] == cast, 'date'] = ''
+            nut_profile.loc[nut_profile['cast'] == cast, 'latitude'] = np.nan
+            nut_profile.loc[nut_profile['cast'] == cast, 'longitude'] = np.nan
+            nut_profile.loc[nut_profile['cast'] == cast, 'depth'] = np.nan
+
+    return nut_profile
