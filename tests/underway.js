@@ -4,6 +4,7 @@ const cruises = ["ar77", "en617", "hrs2303", "ae2426", "at46"];
 
 const getCounts = { ar77: 8192, en617: 8228, hrs2303: 9896, ae2426: 8341, at46: 8410 };
 const colCounts = { ar77: 39, en617: 128, hrs2303: 23, ae2426: 44, at46: 37 };
+const coldefCounts = { ar77: 40, en617: 129, hrs2303: 24, ae2426: 1, at46: 38 }; // no coldefs for ae2426
 const times = {
     ar77: '2023-10-11/2023-10-13', en617: '2018-07-22/2018-07-23',
     hrs2303: '2023-04-29/2023-05-06', ae2426: '2024-11-03/2024-11-03',
@@ -74,7 +75,7 @@ async function getData(cruise) {
       console.error('Error:', err);
   }
 
-try {
+  try {
     const search = times[cruise];
     const response = await fetch(`${url}/api/underway/find/${search}`);
     if (!response.ok) {
@@ -88,53 +89,55 @@ try {
         console.log(`${ cruise } Underway Find test failed.`);
     }
 
-  } catch (err) {
-     console.log(`${cruise} Underway Find test failed.`);
-     console.log('Error:', err);
-    }
-
-    if (cruise === 'en617') {
-        try {
-            const response = await fetch(`${url}/api/underway/endeavor_column_definition/en617`);
-            if (!response.ok) {
-                throw new Error('HTTP error ' + response.status);
-            }
-            const data = await response.text();
-
-            const lines = data
-                .split('\n')
-                .map(line => line.trim())
-                .filter(line => line.length > 0); 
-
-            if (lines.length === 129) {
-                console.log(`${cruise} Underway Get EN Column Definition test successful.`);
-            } else {
-                console.log(`${cruise} Underway Get EN Column Definition test failed.`);
-            }
-        } catch (err) {
-            console.log(`${cruise} Underway Get EN Column Definition test failed.`);
-            console.error('Error:', err);
-        }
-    }
-
-    try {
-        const response = await fetch(`${url}/api/underway/readme/${cruise}`);
-        if (!response.ok) {
-            if (cruise !== 'ae2426' && cruise !== 'at46') {
-                throw new Error('HTTP error ' + response.status);
-            }
-        }
-        const data = await response.text();
-
-        if (data.includes(readme[cruise])) { 
-            console.log(`${cruise} Underway Get README test successful.`);
-        } else {
-            console.log(`${cruise} Underway Get README test failed.`);
-        }
     } catch (err) {
-        console.log(`${cruise} Underway Get README test failed.`);
-        console.error('Error:', err);
+        console.log(`${cruise} Underway Find test failed.`);
+        console.log('Error:', err);
     }
+
+
+  try {
+    const response = await fetch(`${url}/api/underway/column_definition/${cruise}`);
+    if (!response.ok && cruise != 'ae2426') {
+        throw new Error('HTTP error ' + response.status);
+    }
+    const data = await response.text();
+
+    const lines = data
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0); 
+
+    const expected = coldefCounts[cruise];
+
+    if (lines.length === expected) {
+        console.log(`${cruise} Underway Get Column Definition test successful.`);
+    } else {
+        console.log(`${cruise} Underway Get Column Definition test failed.`);
+    }
+  } catch (err) {
+      console.log(`${cruise} Underway Get EN Column Definition test failed.`);
+      console.error('Error:', err);
+  }
+
+
+  try {
+    const response = await fetch(`${url}/api/underway/readme/${cruise}`);
+    if (!response.ok) {
+        if (cruise !== 'ae2426' && cruise !== 'at46') {
+            throw new Error('HTTP error ' + response.status);
+        }
+    }
+    const data = await response.text();
+
+    if (data.includes(readme[cruise])) { 
+        console.log(`${cruise} Underway Get README test successful.`);
+    } else {
+        console.log(`${cruise} Underway Get README test failed.`);
+    }
+  } catch (err) {
+    console.log(`${cruise} Underway Get README test failed.`);
+    console.error('Error:', err);
+  }
 
 }
 
