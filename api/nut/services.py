@@ -88,8 +88,8 @@ class NutService:
         filtered["date"] = pd.NaT
 
         # read and merge nutrient data
-        nut_profile_a = read_nut_data("AR52A", filtered)
-        nut_profile_b = read_nut_data("AR52B", filtered)
+        nut_profile_a = read_nut_data("ar52a", filtered)
+        nut_profile_b = read_nut_data("ar52b", filtered)
 
         nut_profile = pd.concat([nut_profile_a, nut_profile_b], ignore_index=True)
 
