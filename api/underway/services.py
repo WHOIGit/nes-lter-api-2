@@ -1,13 +1,15 @@
+from asyncio.constants import DEBUG_STACK_DEPTH
 import csv
 import os
-import glob
+import json
 
+from io import StringIO
 from io import BytesIO
-
 from datetime import datetime, time, timedelta, timezone as dt_tz
 from django.http import JsonResponse
 from django.http import HttpResponse
 
+from pandas._libs import missing
 from pydantic import BaseModel
 from django.db.models import Q
 import pandas as pd
@@ -19,6 +21,92 @@ from django.http import FileResponse, Http404
 from ninja.errors import HttpError
 
 from core.utils import get_store, find_readme
+
+AR_COLUMN_DEF = [
+    ("DATE", "GMT date time", "YYYY-MM-DD HH:MM:SS.SSS"),
+    ("Dec_LAT", "Decimal Latitude", ""),
+    ("Dec_LON", "Decimal Longitude", ""),
+    ("SPD", "Ship Speed", ""),
+    ("HDT", "Heading - Gyro", "degrees"),
+    ("COG", "Course Over Ground - from GPS", "degrees"),
+    ("DPS_COG", "Course Over Ground - from GPS", "degrees"),
+    ("CNAV_COG", "Course Over Ground - from GPS", "degrees"),
+    ("SOG", "Speed Over Ground - from GPS", ""),
+    ("WXTP_Ta", "Port Vaisala air temp", "degrees C"),
+    ("WXTS_Ta", "Starboard Vaisala air temp", "degrees C"),
+    ("WXTP_Pa", "Port Vaisala air pressure", "hPa"),
+    ("WXTS_Pa", "Starboard Vaisala air pressure", "hPa"),
+    ("WXTP_Ri", "Port Vaisala rain intensity", "mm/h"),
+    ("WXTS_Ri", "Starboard Vaisala rain intensity", "mm/h"),
+    ("WXTP_Rc", "Port Vaisala rain accumulation", "mm"),
+    ("WXTS_Rc", "Starboard Vaisala rain accumulation", "mm"),
+    ("WXTP_Dm", "Port Vaisala relative wind direction average", "degrees"),
+    ("WXTS_Dm", "Starboard Vaisala relative wind direction average", "degrees"),
+    ("WXTP_Sm", "Port Vaisala relative wind speed average", "m/s"),
+    ("WXTS_Sm", "Starboard Vaisala relative wind speed average", "m/s"),
+    ("WXTP_Ua", "Port Vaisala relative humidity", "percent"),
+    ("WXTS_Ua", "Starboard Vaisala relative humidity", "percent"),
+    ("WXTP_TS", "Port Vaisala True Wind Speed", "m/s"),
+    ("WXTS_TS", "Starboard Vaisala True Wind Speed", "m/s"),
+    ("WXTP_TD", "Port Vaisala True Wind Direction", "degrees"),
+    ("WXTS_TD", "Starboard Vaisala True Wind Direction", "degrees"),
+    ("RAD_SW", "Shortwave Radiation", "watts/square meter"),
+    ("RAD_LW", "Longwave Radiation flux", "watts/square meter"),
+    ("PAR", "Photosynthetically active radiation", "uE/m2/sec"),
+    ("SBE45S", "Sea surface salinity (5m)", "psu"),
+    ("SBE48T", "Sea surface temperature (5m)", "degrees C"),
+    ("AML_SST", "temperature", "degress celsius ITS-90"),
+    ("EST_NITRATE", "", ""),
+    ("EST_PHOSPHATE", "", ""),
+    ("BAROM_P", "Port Barometric pressure", "hPa"),
+    ("BAROM_S", "Starboard Barometric pressure", "hPa"),
+    ("FLR", "Fluorometer", "millivolts"),
+    ("FLOW", "flow", "ml/s"),
+    ("TRANS25_REF", "CSTAR 25 CM Transmissometer reference", ""),
+    ("TRANS25_SIG", "CSTAR 25 CM Transmissometer signal", ""),
+    ("TRANS25_SIGCOR", "CSTAR 25 CM Transmissometer signal corrected", ""),
+    ("TRANS25_CALC", "CSTAR 25 CM Transmissometer calculated beam c", ""),
+    ("TRANS25_THERM", "CSTAR 25 CM Transmissometer m-1 and thermistor", ""),
+    ("TRANS10_REF", "CSTAR 10 CM Transmissometer reference", ""),
+    ("TRANS10_SIG", "CSTAR 10 CM Transmissometer signal", ""),
+    ("TRANS10_SIGCOR", "CSTAR 10 CM Transmissometer signal corrected", ""),
+    ("TRANS10_CALC", "CSTAR 10 CM Transmissometer calculated beam c", ""),
+    ("TRANS10_THERM", "CSTAR 10 CM Transmissometer m-1 and thermistor", ""),
+    ("SSV", "Sea surface sound velocity", "m/s"),
+    ("SSVDSLOG", "Sea surface sound velocity", "m/s"),
+    ("Depth12", "12kHz water depth", "m"),
+    ("Depth35", "3.5kHz water depth", "m"),
+    ("EM122", "12kHz multibeam centre depth", "m"),
+    ("EM124", "12kHz multibeam centre depth", "m"),
+    ("EM710", "12kHz multibeam centre depth", "m"),
+    ("EM712", "12kHz multibeam centre depth", "m")
+]
+
+HR_COLUMN_DEF = [
+    ("DATE", "GMT date time", "YYYY-MM-DD HH:MM:SS.SSS"),
+    ("Latitude_Deg", "GPS Lat Decimal Degrees", ""),
+    ("Longitude_Deg", "GPS Long Dec Degrees", ""),
+    ("COG_Deg", "GPS Course Over Ground", "degrees"),
+    ("SOG_Knots", "GPS Speed Over Ground", "knots" ),
+    ("COG_deg.1", "POSmv Course Over Ground", "degrees"),
+    ("SOG_kts", "POSmv Speed Over Ground", "knots"),
+    ("Depth_Meters", "Depth in Meters", "m"),
+    ("Relative_Wind_Speed_1_Knots", "Relative Wind Speed #1", "knots"),
+    ("Relative_Wind_Direction_1_Deg", "Relative Wind Direction #1", "degrees"),
+    ("Relative_Wind_Speed_2_Knots", "Relative Wind Speed #2", "knots"),
+    ("Relative_Wind_Direction_2_Deg", "Relative Wind Direction #2", "degrees"),
+    ("True_Wind_Speed__Knots","True Wind Speed", "knots"),
+    ("True_Wind_Direction_Deg", "True Wind Direction", "degrees"),
+    ("Air_Temperature_C", "Air Temperature", "c"),
+    ("Humidity_", "Humidity", "%"),
+    ("Barometer_Decibars", "Pressure", "decibars"),
+    ("Water_Temperature_Degree_C", "Surface Water Temp", "degree c"),
+    ("Salinity_Psu", "Surface Water Salinity", "psu"),
+    ("Fluorometer_Turner_Raw", "Fluorometer", "turner raw"),
+    ("Keel_Depth_Meters", "Keel Depth", "m"),
+    ("Science_Log_Text", "Comment", ""),
+    ("Qsr_S_N_10367", "CSTAR 25 CM Transmissometer reference", "")
+]
 
 class UnderwayOutput(BaseModel):
     file_name: str
@@ -130,7 +218,47 @@ class UnderwayService:
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
             if Underway.objects.filter(cruise=cruise).exists():
-                if cruise_name.lower().startswith("en"):
+                if cruise_name.lower().startswith(("ar", "at", "hrs")):
+                    header_response = cls.get_column_headers(cruise_name)
+
+                    # Extract JSON data from JsonResponse
+                    payload = json.loads(header_response.content)
+                    actual_columns = [col.upper() for col in payload["metadata"]["columns"]]
+
+                    if cruise_name.lower().startswith(("ar", "at")):
+                        expected_columns = [col[0].upper() for col in AR_COLUMN_DEF]
+                    else:
+                        expected_columns = [col[0].upper() for col in HR_COLUMN_DEF]    
+
+                    extra_columns = [col for col in actual_columns if col not in expected_columns]
+                    #print(extra_columns, flush=True)  # for debugging
+
+                    # Select expected columns for the cruise 
+                    common_columns = [col for col in expected_columns if col in actual_columns]
+
+                    if cruise_name.lower().startswith(("ar", "at")):
+                        rows = [
+                            (name, desc, units)
+                            for name, desc, units in AR_COLUMN_DEF
+                            if name.strip().upper() in common_columns
+                        ]
+                    else:
+                        rows = [
+                            (name, desc, units)
+                            for name, desc, units in HR_COLUMN_DEF
+                            if name.strip().upper() in common_columns
+                        ]
+
+                    buffer = StringIO()
+                    writer = csv.writer(buffer)
+                    writer.writerow(["Name", "Description", "Units"])
+                    writer.writerows(rows)
+                    buffer.seek(0)
+
+                    response = HttpResponse(buffer, content_type="text/csv")
+                    response["Content-Disposition"] = f'attachment; filename="{cruise_name}_underway_column_definition.csv"'
+                    return response
+                elif cruise_name.lower().startswith("en"):
                     object_key = f"{cruise_name.lower()}{cls.HEADER_SUFFIX}"
                     with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
                        try:
@@ -143,8 +271,8 @@ class UnderwayService:
                     response['Content-Disposition'] = f'attachment; filename="{object_key}"'
                     return response
                 else:
-                    raise Http404(f"Cruise {cruise_name} is not an Endeavor cruise.")   
+                    raise Http404(f"Column definitions not available for {cruise_name}.")   
             else:
                 raise Http404(f"Underway data not imported. Import using manage.py importunderwaydata")    
         except Cruise.DoesNotExist:
-           raise Http404(f"Cruise {cruise_name} not found.")   
+           raise Http404(f"Cruise {cruise_name} not found.")  

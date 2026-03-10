@@ -100,7 +100,7 @@ class Command(BaseCommand):
         # phosphate = 0.009
         # silicate = 0.030
 
-        # Set all OOI ammonium flags to 3, all other OOI flags to 2
+        # Set all OOI ammonium flags to 2, all other OOI flags to 2
 
         DL_dict = {
             'nitrate_nitrite': 0.04,
@@ -182,7 +182,7 @@ class Command(BaseCommand):
                 else:
                     # set single row value to not reviewed
                     if (param == 'ammonium') & (df.at[idx, 'project_id'] == 'OOI'):
-                        df.at[idx, flag_dict[param]] = 3
+                        df.at[idx, flag_dict[param]] = 2
                     else:
                         df.at[idx, flag_dict[param]] = 2
 
