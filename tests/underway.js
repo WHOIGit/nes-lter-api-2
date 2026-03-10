@@ -119,7 +119,6 @@ async function getData(cruise) {
       console.error('Error:', err);
   }
 
-
   try {
     const response = await fetch(`${url}/api/underway/readme/${cruise}`);
     if (!response.ok) {
