@@ -4,7 +4,7 @@ const cruises = ["ar77", "en617", "hrs2303", "ae2426", "at46"];
 
 const getCounts = { ar77: 8192, en617: 8228, hrs2303: 9896, ae2426: 8341, at46: 8410 };
 const colCounts = { ar77: 39, en617: 128, hrs2303: 23, ae2426: 44, at46: 37 };
-const coldefCounts = { ar77: 40, en617: 129, hrs2303: 24, ae2426: 1, at46: 38 }; // no coldefs for ae2426
+const coldefCounts = { ar77: 40, en617: 129, hrs2303: 24, ae2426: 1, at46: 38 }; //no coldefs for ae2426
 const times = {
     ar77: '2023-10-11/2023-10-13', en617: '2018-07-22/2018-07-23',
     hrs2303: '2023-04-29/2023-05-06', ae2426: '2024-11-03/2024-11-03',
