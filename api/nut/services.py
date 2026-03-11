@@ -4,7 +4,7 @@ import csv
 import glob
 import pandas as pd
 from django.http import FileResponse, HttpResponse, Http404
-from core.utils import get_store
+from core.utils import get_store, read_sample_log, read_nut_data
 from core.models import Cruise
 
 class NutService:
@@ -77,13 +77,29 @@ class NutService:
         return HttpResponse(content, content_type="text/plain")
 
     @classmethod
-    def ar52_samplelog(cls) -> FileResponse:
-        path = "/vast/raw/all/LTER_sample_log.xlsx"
-        df = pd.read_excel(path, dtype=str)
+    def ar52_nutrient_samplelog(cls) -> FileResponse:
+
+        # read and parse the LTER sample log
+        sample_ids = read_sample_log()
+
         cruises = {"AR52A", "AR52B"}
-        filtered = df[df["Cruise"].isin(cruises)]
+        filtered = sample_ids[sample_ids["cruise"].isin(cruises)]
+
+        filtered["date"] = pd.NaT
+
+        # read and merge nutrient data
+        nut_profile_a = read_nut_data("ar52a", filtered)
+        nut_profile_b = read_nut_data("ar52b", filtered)
+
+        nut_profile = pd.concat([nut_profile_a, nut_profile_b], ignore_index=True)
+
+        nut_profile = nut_profile.drop(columns=["date"])
+        nut_profile["cast"] = nut_profile["cast"].astype(int)
+        nut_profile["niskin"] = nut_profile["niskin"].astype(int)
+
+        nut_profile = nut_profile.sort_values(["cruise", "cast", "niskin"]).reset_index(drop=True)
 
         # Convert to CSV
-        csv_content = filtered.to_csv(index=False)
+        csv_content = nut_profile.to_csv(index=False)
 
         return HttpResponse(csv_content,content_type="text/csv")

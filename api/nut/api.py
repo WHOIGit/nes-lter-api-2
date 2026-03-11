@@ -11,9 +11,9 @@ def getall(request):
 def get_readme(request):
     return NutService.get_readme()
 
-@router.get("/ar52_samplelog", tags=["Users"])
-def get_ar52_samplelog(request):
-    return NutService.ar52_samplelog()
+@router.get("/ar52_nutrient_samplelog", tags=["Users"])
+def get_ar52_nutrient_samplelog(request):
+    return NutService.ar52_nutrient_samplelog()
 
 @router.get("/{cruise_name}", tags=["Users"])
 def get(request, cruise_name: str):
