@@ -11,6 +11,7 @@ var driver;
 var myArgs = process.argv.slice(2);
 var handles;
 var files;
+var handle_count;
 
 (async function testLandingPage() {
 
@@ -83,20 +84,13 @@ var files;
         await driver.findElement(By.css('a[href="/api/ctd/cruises/ar77"]')).click();
         await new Promise(r => setTimeout(r, 2000));
         handles = await driver.getAllWindowHandles();
-        await driver.switchTo().window(handles[1]);
+        handle_count = 1;
+        await driver.switchTo().window(handles[handle_count]);
         bodyText = await driver.findElement(By.css("body")).getText();
         assert(bodyText.includes('"name": "AR77"'));
 
         await driver.switchTo().window(handles[0]);
-        await driver.findElement(By.css('a[href="/api/ctd/casts/ar77"]')).click();
-        await new Promise(r => setTimeout(r, 2000));
-        handles = await driver.getAllWindowHandles();
-        await driver.switchTo().window(handles[2]);
-        bodyText = await driver.findElement(By.css("body")).getText();
-        assert(bodyText.includes('"cruise_name": "AR77", "number": "1"'));
-
-        await driver.switchTo().window(handles[0]);
-        await driver.findElement(By.css('a[href="/api/ctd/bottles/ar77"]')).click();
+        await driver.findElement(By.css('a[href="/api/ctd/casts/ar77.csv"]')).click();
         await new Promise(r => setTimeout(r, 2000));
         if (process.env.GITHUB_ACTIONS === 'true') {
             var dir = "/root/Downloads";
@@ -105,12 +99,20 @@ var files;
             var dir = path.join(process.env.USERPROFILE, "\\Downloads");
         }
         files = fs.readdirSync(dir);
+        if (!files.some(f => f.includes("ar77_ctd_casts") && f.endsWith(".csv"))) {
+            console.log("Casts link broken.");
+            console.log("Land Page Test Failed.");
+        }
+
+        await driver.findElement(By.css('a[href="/api/ctd/bottles/ar77.csv"]')).click();
+        await new Promise(r => setTimeout(r, 2000));
+        files = fs.readdirSync(dir);
         if (!files.some(f => f.includes("ar77_ctd_bottles") && f.endsWith(".csv"))) {
             console.log("Bottles link broken.");
             console.log("Land Page Test Failed.");
         }
 
-        await driver.findElement(By.css('a[href="/api/ctd/bottle_summary/ar77"]')).click();
+        await driver.findElement(By.css('a[href="/api/ctd/bottle_summary/ar77.csv"]')).click();
         await new Promise(r => setTimeout(r, 2000));
         files = fs.readdirSync(dir);
         if (!files.some(f => f.includes("ar77_ctd_bottle_summary") && f.endsWith(".csv"))) {
@@ -118,7 +120,7 @@ var files;
             console.log("Land Page Test Failed.");
         }
 
-        await driver.findElement(By.css('a[href="/api/ctd/metadata/ar77"]')).click();
+        await driver.findElement(By.css('a[href="/api/ctd/metadata/ar77.csv"]')).click();
         await new Promise(r => setTimeout(r, 2000));
         files = fs.readdirSync(dir);
         if (!files.some(f => f.includes("ar77_ctd_metadata") && f.endsWith(".csv"))) {
@@ -126,7 +128,7 @@ var files;
             console.log("Land Page Test Failed.");
         }
 
-        await driver.findElement(By.css('a[href="/api/events/ar77"]')).click();
+        await driver.findElement(By.css('a[href="/api/events/ar77.csv"]')).click();
         await new Promise(r => setTimeout(r, 4000));
         files = fs.readdirSync(dir);
         if (!files.some(f => f.includes("ar77_elog") && f.endsWith(".csv"))) {
@@ -137,7 +139,8 @@ var files;
         await driver.findElement(By.css('a[href="/api/events/instruments/ar77"]')).click();
         await new Promise(r => setTimeout(r, 2000));
         handles = await driver.getAllWindowHandles();
-        await driver.switchTo().window(handles[3]);
+        handle_count++;
+        await driver.switchTo().window(handles[handle_count]);
         bodyText = await driver.findElement(By.css("body")).getText();
         assert(bodyText.includes('Attune Flow Cytometer'));
 
@@ -145,12 +148,13 @@ var files;
         await driver.findElement(By.css('a[href="/api/events/history/ar77"]')).click();
         await new Promise(r => setTimeout(r, 2000));
         handles = await driver.getAllWindowHandles();
-        await driver.switchTo().window(handles[4]);
+        handle_count++;
+        await driver.switchTo().window(handles[handle_count]);
         bodyText = await driver.findElement(By.css("body")).getText();
         assert(bodyText.includes(''));
 
         await driver.switchTo().window(handles[0]);
-        await driver.findElement(By.css('a[href="/api/underway/ar77"]')).click();
+        await driver.findElement(By.css('a[href="/api/underway/ar77.csv"]')).click();
         await new Promise(r => setTimeout(r, 4000));
         files = fs.readdirSync(dir);
         if (!files.some(f => f.includes("ar77_underway") && f.endsWith(".csv"))) {
@@ -161,12 +165,13 @@ var files;
         await driver.findElement(By.css('a[href="/api/underway/get_column_headers/ar77"]')).click();
         await new Promise(r => setTimeout(r, 2000));
         handles = await driver.getAllWindowHandles();
-        await driver.switchTo().window(handles[5]);
+        handle_count++;
+        await driver.switchTo().window(handles[handle_count]);
         bodyText = await driver.findElement(By.css("body")).getText();
         assert(bodyText.includes('"date", "dec_lat"'));
 
         await driver.switchTo().window(handles[0]);
-        await driver.findElement(By.css('a[href="/api/hplc/ar77"]')).click();
+        await driver.findElement(By.css('a[href="/api/hplc/ar77.csv"]')).click();
         await new Promise(r => setTimeout(r, 4000));
         files = fs.readdirSync(dir);
         if (!files.some(f => f.includes("ar77_hplc") && f.endsWith(".csv"))) {
@@ -175,7 +180,7 @@ var files;
         }
 
         await driver.switchTo().window(handles[0]);
-        await driver.findElement(By.css('a[href="/api/nut/ar77"]')).click();
+        await driver.findElement(By.css('a[href="/api/nut/ar77.csv"]')).click();
         await new Promise(r => setTimeout(r, 4000));
         files = fs.readdirSync(dir);
         if (!files.some(f => f.includes("ar77_nut") && f.endsWith(".csv"))) {
@@ -184,7 +189,7 @@ var files;
         }
 
         await driver.switchTo().window(handles[0]);
-        await driver.findElement(By.css('a[href="/api/chl/ar77"]')).click();
+        await driver.findElement(By.css('a[href="/api/chl/ar77.csv"]')).click();
         await new Promise(r => setTimeout(r, 4000));
         files = fs.readdirSync(dir);
         if (!files.some(f => f.includes("ar77_chl") && f.endsWith(".csv"))) {
@@ -196,7 +201,8 @@ var files;
         await driver.findElement(By.xpath("//div[contains(@onclick, \"cruise_name=ar77\")]")).click();
         await new Promise(r => setTimeout(r, 2000));
         handles = await driver.getAllWindowHandles();
-        await driver.switchTo().window(handles[6]);
+        handle_count++;
+        await driver.switchTo().window(handles[handle_count]);
         bodyText = await driver.findElement(By.css("body")).getText();
         assert(bodyText.includes('READMEs for Cruise AR77'));
 
@@ -246,7 +252,8 @@ var files;
         await driver.findElement(By.linkText('NES-LTER API 2 Wiki')).click();
         await new Promise(r => setTimeout(r, 2000));
         handles = await driver.getAllWindowHandles();
-        await driver.switchTo().window(handles[7]);
+        handle_count++;
+        await driver.switchTo().window(handles[handle_count]);
         bodyText = await driver.findElement(By.css("body")).getText();
         assert(bodyText.includes('REST API'));
 
@@ -255,7 +262,8 @@ var files;
         await driver.findElement(By.linkText('Interactive Docs')).click();
         await new Promise(r => setTimeout(r, 2000));
         handles = await driver.getAllWindowHandles();
-        await driver.switchTo().window(handles[8]);
+        handle_count++;
+        await driver.switchTo().window(handles[handle_count]);
         bodyText = await driver.findElement(By.css("body")).getText();
         assert(bodyText.includes('Access cruise, CTD, and underway datasets for NES-LTER.'));
 
@@ -264,7 +272,8 @@ var files;
         await driver.findElement(By.linkText('Colab Notebook')).click();
         await new Promise(r => setTimeout(r, 9000));
         handles = await driver.getAllWindowHandles();
-        await driver.switchTo().window(handles[9]);
+        handle_count++;
+        await driver.switchTo().window(handles[handle_count]);
         bodyText = await driver.findElement(By.css("body")).getText();
         assert(bodyText.includes('The NES-LTER API is designed to provide data'));
 
