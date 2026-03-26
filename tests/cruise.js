@@ -15,7 +15,7 @@ else {
         "ar31c", "ar32", "ar34a", "ar34b", "ar38", "ar39a", "ar39b", "ar44", "ar48a", "ar48b",
         "ar52a", "ar52b", "ar61a", "ar61b", "ar62", "ar63", "ar66a", "ar66b", "ar70b", "ar75",
         "ar77", "ar78", "ar79", "ar80", "ar82a", "ar82b", "ar87a", "ar87b", "ar88", "ar91",
-        "ar92", "ar95", "ar96", "ar98a", "ar98b", "at46",
+        "ar92", "ar95", "ar96", "ar98a", "ar98b", "ar99", "at46",
         "en608", "en617", "en627", "en644", "en649", "en655", "en657", "en661", "en668",
         "en685", "en687", "en688", "en695", "en706", "ae2426",  "en712", "en715", "en720", "en727", "hrs2303"
     ];
@@ -38,7 +38,7 @@ async function getData() {
             url = `http://localhost:8000`;
         }
 
-        const response = await fetch(`${url}/api/ctd/cruises/all`);
+        const response = await fetch(`${url}/api/ctd/cruises/all.csv`);
         if (!response.ok) {
             throw new Error(`HTTP error ${response.status}`);
         }
@@ -62,8 +62,37 @@ async function getData() {
         }
 
     } catch (error) {
-        console.error("Error fetching cruise data:", error);
+        console.error("Error fetching all cruise file:", error);
     }
+
+    try { 
+        const response = await fetch(`${url}/api/ctd/cruises/all`);
+        if (!response.ok) {
+            throw new Error(`HTTP error ${response.status}`);
+        }
+
+        const data = await response.json();
+        const cruiseNames = data.map(v => v.name);
+
+        const missing = [];
+
+        for (const cruiseName of expectedCruiseNames) {
+            if (!cruiseNames.includes(cruiseName.toUpperCase())) {
+                missing.push(cruiseName);
+            }
+        }
+
+        if (missing.length === 0) {
+            console.log("All expected cruise names were found.");
+            console.log("Cruise Get All test successful.");
+        } else {
+            console.log("Missing cruise names:", missing);
+            console.log("Cruise Get All test failed.");
+        }
+    } catch (error) {
+        console.error("Error fetching all cruise file:", error);
+    }
+
 
 
     for (const cruise of expectedCruiseNames) {

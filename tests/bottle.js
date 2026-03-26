@@ -16,7 +16,7 @@ async function getData(cruise) {
           url = `http://localhost:8000`;
       }
 
-    const response = await fetch(`${url}/api/ctd/bottles/${cruise}`);
+    const response = await fetch(`${url}/api/ctd/bottles/${cruise}.csv`);
 
     if (!response.ok) {
       throw new Error('HTTP error ' + response.status);
@@ -47,7 +47,7 @@ async function getData(cruise) {
 
   try {
 
-    response = await fetch(`${url}/api/ctd/bottle_summary/${cruise}`);
+    response = await fetch(`${url}/api/ctd/bottle_summary/${cruise}.csv`);
 
     if (!response.ok) {
         throw new Error('HTTP error ' + response.status);

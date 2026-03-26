@@ -19,6 +19,29 @@ async function getData(cruise) {
     }
 
     try {
+        const response = await fetch(`${url}/api/ctd/niskins/all/${cruise}/10.csv`);
+        if (!response.ok) {
+            throw new Error('HTTP error ' + response.status);
+        }
+        const data = await response.text();
+        const lines = data.trim().split("\n");
+        const rowCount = lines.length - 1;
+
+        const expected = lineCounts[cruise];
+
+        if (rowCount === expected) {
+            console.log(`${cruise} Niskins Get All file test successful.`);
+        }
+        else {
+            console.log(`${cruise} Niskins for All file are missing.`);
+            console.log(`${cruise} Niskins Get All file test failed.`);
+        }
+    } catch (err) {
+        console.log(`${cruise} Niskins Get All file file test failed.`);
+        console.error('Error:', err);
+    }
+
+    try {
         const response = await fetch(`${url}/api/ctd/niskins/all/${cruise}/10`);
         if (!response.ok) {
             throw new Error('HTTP error ' + response.status);
@@ -46,7 +69,7 @@ async function getData(cruise) {
     }
     const data = await response.json();
    
-      if (data.cruise_name === `${cruise.toUpperCase() }` && data.cast_number === '10' && data.number === 1) { 
+      if (data.cruise_name === `${cruise.toUpperCase() }` && data.cast_number === '10' && data.niskin_number === 1) { 
           console.log(`${cruise} Niskin Get Single test successful.`);
       } else {
           console.log(`${cruise} Niskin Get Single test failed.`);

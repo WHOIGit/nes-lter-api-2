@@ -37,6 +37,26 @@ async function getData() {
     console.error('Error:', err);
   }
 
+try {
+    const response = await fetch(`${url}/api/ctd/vessels/all.csv`);
+    if (!response.ok) {
+        throw new Error('HTTP error ' + response.status);
+    }
+    const data = await response.text();
+
+    if (data.includes("Armstrong") && data.includes("Atlantis") &&
+        data.includes("Endeavor") && data.includes("Sharp") &&
+        data.includes("Explorer")) {
+        console.log('Vessel Get All test successful.');
+    }
+    else {
+        console.log('Vessels are missing.');
+        console.log('Vessel Get All test failed.');
+    }
+} catch (err) {
+    console.log('Vessel Get All test failed.');
+    console.error('Error:', err);
+}
 
   try {
       const response = await fetch(`${url}/api/ctd/vessels/neil armstrong`);

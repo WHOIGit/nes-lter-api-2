@@ -19,7 +19,7 @@ async function getData() {
 
     for (const cruise of cruises) {
         try {
-            const response = await fetch(`${url}/api/nut/${cruise}`);
+            const response = await fetch(`${url}/api/nut/${cruise}.csv`);
             if (!response.ok) {
                 throw new Error('HTTP error ' + response.status);
             }
@@ -47,7 +47,7 @@ async function getData() {
     }
 
     try {
-        const response = await fetch(`${url}/api/nut/all`);
+        const response = await fetch(`${url}/api/nut/all.csv`);
         if (!response.ok) {
             throw new Error('HTTP error ' + response.status);
         }
@@ -69,7 +69,7 @@ async function getData() {
             }
         }
         else {
-            if (lines.length == 5285) {
+            if (lines.length == 5308) {
                 console.log('Nut Get All test successful.');
             }
             else {
@@ -96,6 +96,31 @@ async function getData() {
         }
     } catch (err) {
         console.log(`Nut Get README test failed.`);
+        console.error('Error:', err);
+    }
+
+    try {
+        const response = await fetch(`${url}/api/nut/ar52_nutrient_samplelog.csv`);
+        if (!response.ok) {
+            throw new Error('HTTP error ' + response.status);
+        }
+
+        const data = await response.text();
+
+        const lines = data
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0);
+
+        if (lines.length === 95) {
+            console.log(`AR52 Nut Samplelog test successful.`);
+        }
+        else {
+            console.log(`AR52 Nut Samplelog values are missing.`);
+            console.log(`AR52 Nut Samplelog test failed.`);
+        }
+    } catch (err) {
+        console.log(`AR52 Nut Samplelog test failed.`);
         console.error('Error:', err);
     }
 }

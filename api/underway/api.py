@@ -4,11 +4,16 @@ from .services import UnderwayService, UnderwayOutput
 
 router = Router()
 
+@router.get("/column_definition/{cruise_name}.csv", tags=["Users"])
+def get_column_definition_csv(request, cruise_name: str):
+    return UnderwayService.get_column_definition_csv(cruise_name)
+
 @router.get("/column_definition/{cruise_name}", response=str, tags=["Users"])
 def get_column_definition(request, cruise_name: str):
     return UnderwayService.get_column_definition(cruise_name)
 
-@router.get("/{cruise_name}", tags=["Users"])
+
+@router.get("/{cruise_name}.csv", tags=["Users"])
 def get_underway_data(request, cruise_name: str):
     return UnderwayService.get_data(cruise_name)
 

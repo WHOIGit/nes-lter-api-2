@@ -18,7 +18,7 @@ async function getData() {
 
     for (const cruise of cruises) {
         try {
-            const response = await fetch(`${url}/api/chl/${cruise}`);
+            const response = await fetch(`${url}/api/chl/${cruise}.csv`);
             if ((response.status === 404) && (cruise === 'hrs2303' || cruise === 'ae2426')) {
                 console.log(`${cruise} Chl Get test successful.`);
                 continue;
@@ -50,7 +50,7 @@ async function getData() {
     }
 
     try {
-        const response = await fetch(`${url}/api/chl/all`);
+        const response = await fetch(`${url}/api/chl/all.csv`);
         if (!response.ok) {
             throw new Error('HTTP error ' + response.status);
         }

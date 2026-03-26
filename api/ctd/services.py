@@ -1,4 +1,5 @@
 import io, os, glob
+from io import StringIO
 import csv
 import re
 from typing import Optional, List, Tuple
@@ -15,6 +16,7 @@ from django.http import Http404
 from ninja.errors import HttpError
 from django.http import HttpResponse
 from django.http import FileResponse
+from django.http import JsonResponse
 from core.utils import get_store, find_readme
 
 class VesselOutput(BaseModel):
@@ -96,7 +98,7 @@ class NiskinInput(BaseModel):
 class NiskinOutput(BaseModel):
     cruise_name: str
     cast_number: str
-    number: int
+    niskin_number: int
     geolocation: Tuple[float, float]
     depth: float
     
@@ -120,9 +122,29 @@ class CtdService:
 
 
     @classmethod
-    def get_vessels(cls) -> list[VesselOutput]:
+    def get_vessels(cls) -> HttpResponse:
         vessels = Vessel.objects.all()
-        return [cls.serialize_vessel(vessel) for vessel in vessels]
+        serialized_vessels = [cls.serialize_vessel(vessel) for vessel in vessels]
+        headers = list(VesselOutput.model_fields.keys())
+        data = [
+            {header: getattr(vessel, header, "") for header in headers}
+            for vessel in serialized_vessels
+        ]
+        return JsonResponse(data, safe=False)
+ 
+    @classmethod
+    def get_vessels_csv(cls) -> HttpResponse:
+        vessels = Vessel.objects.all()
+        serialized_vessels = [cls.serialize_vessel(vessel) for vessel in vessels]
+        headers = list(VesselOutput.model_fields.keys())
+        buffer = StringIO()
+        writer = csv.writer(buffer)
+        writer.writerow(headers)
+        for vessel in serialized_vessels:
+            writer.writerow([getattr(vessel, header, "") for header in headers])
+        response = HttpResponse(buffer.getvalue(), content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="vessels.csv"'
+        return response
  
     
     @classmethod
@@ -200,7 +222,7 @@ class CtdService:
         )
 
     @classmethod
-    def get_cruises(cls) -> HttpResponse:
+    def get_cruises_csv(cls) -> HttpResponse:
         cruises = Cruise.objects.all()
 
         buffer = io.StringIO()
@@ -221,6 +243,18 @@ class CtdService:
         response = HttpResponse(buffer.getvalue(), content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="cruises.csv"'
         return response
+
+    @classmethod
+    def get_cruises(cls) -> HttpResponse:
+        cruises = Cruise.objects.all()
+        serialized_cruises = [cls.serialize_cruise(cruise) for cruise in cruises]
+        headers = list(CruiseOutput.model_fields.keys())
+        data = [
+            {header: getattr(cruise, header, "") for header in headers}
+            for cruise in serialized_cruises
+        ]
+        return JsonResponse(data, safe=False)
+
     
     @classmethod
     def get_cruise(cls, cruise_name: str) -> CruiseOutput:
@@ -322,9 +356,37 @@ class CtdService:
         except Cast.DoesNotExist:
             raise Http404(f"Cast not found for {cruise_name} .")
 
+    @staticmethod
+    def get_casts_csv(cruise_name: str) -> FileResponse:
+        try:
+            cruise = Cruise.objects.get(name__iexact=cruise_name)
+            casts = list(Cast.objects.filter(cruise=cruise))
+            casts.sort(
+                key=lambda c: (
+                    int(re.match(r"^(\d+)", c.number).group(1))
+                    if re.match(r"^(\d+)", c.number) else 10**9,
+                    re.search(r"[a-z]$", c.number.lower()).group()
+                    if re.search(r"[a-z]$", c.number.lower()) else ""
+                )
+            )
+            serialized_casts = [CtdService.serialize_cast(cast) for cast in casts]
+            headers = list(CastOutput.model_fields.keys())
+            buffer = StringIO()
+            writer = csv.writer(buffer)
+            writer.writerow(headers)
+            for cast in serialized_casts:
+                writer.writerow([getattr(cast, header, "") for header in headers])
+            response = HttpResponse(buffer.getvalue(), content_type="text/csv")
+            response["Content-Disposition"] = f'attachment; filename="{cruise_name}_casts.csv"'
+            return response
+        except Cruise.DoesNotExist:
+            raise Http404(f"Cruise {cruise_name} not found.")
+        except Cast.DoesNotExist:
+            raise Http404(f"Cast not found for {cruise_name} .")
+
         
     @classmethod
-    def get_cast(cls, cruise_name: str, cast_number: str) -> FileResponse:
+    def get_cast_csv(cls, cruise_name: str, cast_number: str) -> FileResponse:
         URL = os.getenv("URL")
         TOKEN = os.getenv("TOKEN")
         MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
@@ -349,7 +411,6 @@ class CtdService:
             raise Http404(f"Cruise {cruise_name} not found.")
         except Cast.DoesNotExist:
             raise Http404(f"Cast not found for {cruise_name} .")
-        
 
     @classmethod
     def create_cast(cls, cast_input: CastInput) -> CastOutput:
@@ -411,7 +472,7 @@ class CtdService:
         return NiskinOutput(
                 cruise_name=niskin.cast.cruise.name.upper(),
                 cast_number=niskin.cast.number,
-                number=niskin.number,
+                niskin_number=niskin.number,
                 depth=niskin.depth,
                 geolocation=niskin.geolocation
         )
@@ -440,6 +501,27 @@ class CtdService:
         except Cast.DoesNotExist:
             raise Http404(f"Cast not found for {niskin_input.cruise_name} .")
     
+    @staticmethod
+    def get_niskins_csv(cruise_name: str, cast_number: str ) -> FileResponse:
+        try:
+            cruise = Cruise.objects.get(name__iexact=cruise_name)
+            cast = Cast.objects.get(cruise=cruise, number__iexact=cast_number)
+            niskins = Niskin.objects.filter(cast=cast).order_by("number")
+            serialized_niskins = [CtdService.serialize_niskin(niskin) for niskin in niskins]
+            headers = list(NiskinOutput.model_fields.keys())
+            buffer = StringIO()
+            writer = csv.writer(buffer)
+            writer.writerow(headers)
+            for niskin in serialized_niskins:
+                writer.writerow([getattr(niskin, header, "") for header in headers])
+            response = HttpResponse(buffer.getvalue(), content_type="text/csv")
+            response["Content-Disposition"] = f'attachment; filename="{cruise_name}_ctd_cast_{cast_number}_niskins.csv"'
+            return response
+
+        except Cruise.DoesNotExist:
+            raise Http404(f"Cruise {cruise_name} not found.")
+        except Cast.DoesNotExist:
+            raise Http404(f"Cast not found for cruise {cruise_name} .")
 
     @staticmethod
     def get_niskins(cruise_name: str, cast_number: str ) -> List[NiskinOutput]:

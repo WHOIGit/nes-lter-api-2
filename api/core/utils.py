@@ -305,7 +305,7 @@ def read_nut_data(cruise, merged):
         if cruise == 'en627':
             file = file.replace("_u", "")
         btl_file = file[:-3] + 'btl'
-        if not os.path.exists(btl_file):
+        if (not os.path.exists(btl_file)) and (cruise != 'ar28b'):
             cast = path_to_cast(cruise, btl_file)
             if cast is None:
                     continue

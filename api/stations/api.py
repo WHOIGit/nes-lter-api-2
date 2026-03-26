@@ -20,7 +20,7 @@ router = Router()
 #def get_stations(request, timestamp: datetime):
 #    return StationService.get_stations(timestamp)
 
-@router.get("/file", tags=["Users"])
+@router.get("/file.csv", tags=["Users"])
 def get_stations_file(request):
     return StationService.get_station_file()
 
