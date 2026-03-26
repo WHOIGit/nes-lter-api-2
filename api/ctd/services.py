@@ -377,7 +377,7 @@ class CtdService:
             for cast in serialized_casts:
                 writer.writerow([getattr(cast, header, "") for header in headers])
             response = HttpResponse(buffer.getvalue(), content_type="text/csv")
-            response["Content-Disposition"] = f'attachment; filename="{cruise_name}_casts.csv"'
+            response["Content-Disposition"] = f'attachment; filename="{cruise_name}_ctd_casts.csv"'
             return response
         except Cruise.DoesNotExist:
             raise Http404(f"Cruise {cruise_name} not found.")
