@@ -260,8 +260,8 @@ class Command(BaseCommand):
                     compiled_df[CAST_COL] = compiled_df[CAST_COL].str.lstrip('0')
                     compiled_df[CRUISE_COL] = compiled_df[CRUISE_COL].str.upper()
 
-                    # special case for ar28b missing btl file for cast 1
-                    if cruise_name.lower() == "ar28b":
+                    # special cases for cruises missing btl file for cast and niskin
+                    if cruise_name.lower() in ["ar28b", "ar24a", "ar39a"]:
                         sample_file = os.path.join(directory, "samples_lacking_bottle_metadata-v3.csv")
                         samples_df = pd.read_csv(sample_file)
                         for col in ["cruise", "cast", "niskin"]:
@@ -276,9 +276,8 @@ class Command(BaseCommand):
                             .dt.tz_localize("UTC")
                         )
                         samples_df = samples_df.rename(columns={"depth": "depsm"})
-                        ar28b_samples = samples_df[samples_df["cruise"].astype(str).str.lower() == "ar28b"].copy()
-                        ar28b_for_bottles = ar28b_samples.reindex(columns=compiled_df.columns)
-                        compiled_df = pd.concat([compiled_df, ar28b_for_bottles], ignore_index=True)
+                        col_for_bottles = samples_df.reindex(columns=compiled_df.columns)
+                        compiled_df = pd.concat([compiled_df, col_for_bottles], ignore_index=True)
                         compiled_df['cast'] = pd.to_numeric(compiled_df['cast'])
                         compiled_df['niskin'] = pd.to_numeric(compiled_df['niskin'])
                         compiled_df = compiled_df.sort_values(['cast','niskin'])

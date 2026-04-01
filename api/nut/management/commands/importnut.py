@@ -242,7 +242,7 @@ class Command(BaseCommand):
                     # read and merge temperature and salinity from bottle data
                     nut_profile = self.read_bottle_data(cruise_name, nut_profile)
                    
-                    if not nut_profile.empty:
+                    if not nut_profile.empty and cruise_name != 'ar78':
                         # calculate and apply quality flags
                         nut_profile = self.apply_flags(nut_profile)
 
