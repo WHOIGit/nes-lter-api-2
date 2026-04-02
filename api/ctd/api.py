@@ -135,7 +135,7 @@ def create_niskin(request, input: NiskinInput):
     except ValueError as e:
         return {"status": "error", "message": str(e)}
 
-@router.get("/niskins/all/{cruise_name}/{cast_number}.csv", response=List[NiskinOutput], tags=["Users"])
+@router.get("/niskins/all/{cruise_name}/{cast_number}.csv", tags=["Users"])
 def get_niskins_csv(request, cruise_name: str, cast_number: str):
     return CtdService.get_niskins_csv(cruise_name, cast_number)
     
