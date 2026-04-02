@@ -8,7 +8,7 @@ router = Router()
 def get_column_definition_csv(request, cruise_name: str):
     return UnderwayService.get_column_definition_csv(cruise_name)
 
-@router.get("/column_definition/{cruise_name}", response=str, tags=["Users"])
+@router.get("/column_definition/{cruise_name}", tags=["Users"])
 def get_column_definition(request, cruise_name: str):
     return UnderwayService.get_column_definition(cruise_name)
 
