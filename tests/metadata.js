@@ -65,7 +65,7 @@ async function runAll() {
             console.log(`Bathymetry test successful.`);
         } else {
             console.log(`Bathymetry test missing data.`);
-            console.log(`Bathymetry test failed. (Expected ${expected}, got ${lines.length})`);
+            console.log(`Bathymetry test failed. (Expected 801, got ${lines.length})`);
         }
     } catch (err) {
         console.log(`Bathymetry test failed.`);

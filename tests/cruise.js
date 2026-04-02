@@ -57,7 +57,7 @@ async function getData() {
             console.log("All expected cruise names were found.");
             console.log("Cruise Get All test successful.");
         } else {
-            console.log("Missing cruise names:", missingCruises);
+            console.log("Missing cruise names:", missing);
             console.log("Cruise Get All test failed.");
         }
 
