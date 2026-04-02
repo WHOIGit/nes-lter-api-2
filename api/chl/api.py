@@ -3,7 +3,7 @@ from .services import ChlService
 
 router = Router()
 
-@router.get("/all", tags=["Users"])    # must be before get/cruise_name
+@router.get("/all.csv", tags=["Users"])    # must be before get/cruise_name
 def getall(request):
     return ChlService.getall()
 
@@ -11,7 +11,7 @@ def getall(request):
 def get_readme(request):
     return ChlService.get_readme()
 
-@router.get("/{cruise_name}", tags=["Users"])
+@router.get("/{cruise_name}.csv", tags=["Users"])
 def get(request, cruise_name: str):
     return ChlService.get(cruise_name)
 

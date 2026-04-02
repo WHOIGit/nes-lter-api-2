@@ -15,7 +15,7 @@ async function getData() {
   }
 
   try {
-    const response = await fetch(`${url}/api/stations/file`);
+    const response = await fetch(`${url}/api/stations/file.csv`);
     if (!response.ok) {
       throw new Error('HTTP error ' + response.status);
       }

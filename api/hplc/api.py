@@ -7,7 +7,7 @@ router = Router()
 def get_readme(request):
     return HplcService.get_readme()
 
-@router.get("/{cruise_name}", tags=["Users"])
+@router.get("/{cruise_name}.csv", tags=["Users"])
 def get(request, cruise_name: str):
     return HplcService.get(cruise_name)
 

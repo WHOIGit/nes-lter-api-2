@@ -260,6 +260,31 @@ class Command(BaseCommand):
                     compiled_df[CAST_COL] = compiled_df[CAST_COL].str.lstrip('0')
                     compiled_df[CRUISE_COL] = compiled_df[CRUISE_COL].str.upper()
 
+                    # special cases for cruises missing btl file for cast and niskin
+                    if cruise_name.lower() in ["ar28b", "ar24a", "ar39a"]:
+                        sample_file = os.path.join(directory, "samples_lacking_bottle_metadata-v3.csv")
+                        samples_df = pd.read_csv(sample_file)
+                        for col in ["cruise", "cast", "niskin"]:
+                            compiled_df[col] = compiled_df[col].astype(str).str.strip()
+                            samples_df[col] = samples_df[col].astype(str).str.strip()
+                        samples_df["date"] = (
+                            pd.to_datetime(
+                                samples_df["date"],
+                                format="%m/%d/%Y %H:%M",
+                                errors="coerce"
+                            )
+                            .dt.tz_localize("UTC")
+                        )
+                        samples_df = samples_df.rename(columns={"depth": "depsm"})
+                        col_for_bottles = samples_df.reindex(columns=compiled_df.columns)
+                        compiled_df = pd.concat([compiled_df, col_for_bottles], ignore_index=True)
+                        compiled_df['cast'] = pd.to_numeric(compiled_df['cast'])
+                        compiled_df['niskin'] = pd.to_numeric(compiled_df['niskin'])
+                        compiled_df = compiled_df.sort_values(['cast','niskin'])
+                        compiled_df['cast'] = compiled_df['cast'].astype(str)
+                        compiled_df['niskin'] = compiled_df['niskin'].astype(str)
+                        compiled_df = compiled_df.drop_duplicates().reset_index(drop=True)
+
                     # write bottle file to media store
                     csv_buffer = io.StringIO()
                     compiled_df.to_csv(csv_buffer, index=False, na_rep="NaN")

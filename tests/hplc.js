@@ -17,7 +17,7 @@ async function getData(cruise) {
     }
 
   try {
-    const response = await fetch(`${url}/api/hplc/${cruise}`);
+    const response = await fetch(`${url}/api/hplc/${cruise}.csv`);
     if (!response.ok) {
       throw new Error('HTTP error ' + response.status);
       }

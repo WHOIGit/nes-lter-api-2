@@ -1,15 +1,14 @@
-from asyncio.constants import DEBUG_STACK_DEPTH
 import csv
 import os
 import json
 
+import io
 from io import StringIO
 from io import BytesIO
 from datetime import datetime, time, timedelta, timezone as dt_tz
 from django.http import JsonResponse
 from django.http import HttpResponse
 
-from pandas._libs import missing
 from pydantic import BaseModel
 from django.db.models import Q
 import pandas as pd
@@ -106,6 +105,54 @@ HR_COLUMN_DEF = [
     ("Keel_Depth_Meters", "Keel Depth", "m"),
     ("Science_Log_Text", "Comment", ""),
     ("Qsr_S_N_10367", "CSTAR 25 CM Transmissometer reference", "")
+]
+
+AE_COLUMN_DEF = [
+    ("File", "", ""),
+    ("Call_Sign", "", "Sign"),
+    ("YMD", "", ""),
+    ("HMS", "", ""),
+    ("Latitude", "", ""),
+    ("Longitude", "", ""),
+    ("GPS_HDT_deg", "", "deg"),
+    ("COG_deg", "", "deg"),
+    ("SOG_kts", "", "kts"),
+    ("RMY_AirTemp_C", "", "C"),
+    ("AirTemp_C", "", "C"),
+    ("BP_Corr_mBar", "", "mBar"),
+    ("RMY_BP_mBar", "", "mBar"),
+    ("RMY_RH_percent", "", "percent"),
+    ("RH_Percent", "", "Percent"),
+    ("RMY_PriWD_deg", "", "deg"),
+    ("RMY_SecWD_deg", "", "deg"),
+    ("Gill_WD_deg", "", "deg"),
+    ("RMY_PriWS_kts", "", "kts"),
+    ("RMY_SecWS_kts", "", "kts"),
+    ("Gill_WS_kts", "", "kts"),
+    ("TWindDirPri_deg", "", "deg"),
+    ("TWindDirSec_deg", "", "deg"),
+    ("TWindDirTer_deg", "", "deg"),
+    ("TWindSpdPri_kts", "", "kts"),
+    ("TWindSpdSec_kts", "", "kts"),
+    ("TWindSpdTer_kts", "", "kts"),
+    ("Flow1_L_min", "", "min"),
+    ("Flow_Flag", "", "Flag"),
+    ("PriCHL_ug_l", "", "l"),
+    ("SecCHL_ug_l", "", "l"),
+    ("SBE38_RemoteTemp_C", "", "C"),
+    ("SBE38Sec_RemoteTemp_C", "", "C"),
+    ("SBE45Pri_Temp_C", "", "C"),
+    ("SBE45Sec_Temp_C", "", "C"),
+    ("SBE45Pri_Cond_S_m", "", "m"),
+    ("SBE45Sec_Cond_S_m", "", "m"),
+    ("SBE45Pri_Sal_PSU", "", "PSU"),
+    ("SBE45Sec_Sal_PSU", "", "PSU"),
+    ("PriLightTrans_percentage", "", "percentage"),
+    ("SecLightTrans_percentage", "", "percentage"),
+    ("PAR_uE_m2Sec", "", "m2Sec"),
+    ("SPP_W_m2", "", "m2"),
+    ("PIR_Corr_W_m2", "", "m2"),
+    ("PrecipRaw_mm", "", "mm"),
 ]
 
 class UnderwayOutput(BaseModel):
@@ -211,43 +258,58 @@ class UnderwayService:
             raise Http404(f"Cruise {cruise_name} not found.")
 
     @classmethod
-    def get_column_definition(cls, cruise_name: str) -> FileResponse:
+    def get_column_data(cls, cruise_name):
+        header_response = cls.get_column_headers(cruise_name)
+
+        # Extract JSON data from JsonResponse
+        payload = json.loads(header_response.content)
+        actual_columns = [col.upper() for col in payload["metadata"]["columns"]]
+
+        if cruise_name.lower().startswith(("ar", "at")):
+            expected_columns = [col[0].upper() for col in AR_COLUMN_DEF]
+        elif cruise_name.lower().startswith("hr"):
+            expected_columns = [col[0].upper() for col in HR_COLUMN_DEF]  
+        else:
+            expected_columns = [col[0].upper() for col in AE_COLUMN_DEF]
+
+        extra_columns = [col for col in actual_columns if col not in expected_columns]
+        #print(extra_columns, flush=True)  # for debugging
+
+        # Select expected columns for the cruise 
+        common_columns = [col for col in expected_columns if col in actual_columns]
+
+        if cruise_name.lower().startswith(("ar", "at")):
+            rows = [
+                (name, desc, units)
+                for name, desc, units in AR_COLUMN_DEF
+                if name.strip().upper() in common_columns
+            ]
+        elif cruise_name.lower().startswith("hr"):
+            rows = [
+                (name, desc, units)
+                for name, desc, units in HR_COLUMN_DEF
+                if name.strip().upper() in common_columns
+            ]
+        else:
+            rows = [
+                (name, desc, units)
+                for name, desc, units in AE_COLUMN_DEF
+                if name.strip().upper() in common_columns
+            ]
+        return rows
+
+    @classmethod
+    def get_column_definition_csv(cls, cruise_name: str) -> FileResponse:
         URL = os.getenv("URL")
         TOKEN = os.getenv("TOKEN")
         MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
             if Underway.objects.filter(cruise=cruise).exists():
-                if cruise_name.lower().startswith(("ar", "at", "hrs")):
-                    header_response = cls.get_column_headers(cruise_name)
+                cruise_name = cruise_name.lower()
+                if cruise_name.startswith(("ar", "at", "hrs", "ae")):
 
-                    # Extract JSON data from JsonResponse
-                    payload = json.loads(header_response.content)
-                    actual_columns = [col.upper() for col in payload["metadata"]["columns"]]
-
-                    if cruise_name.lower().startswith(("ar", "at")):
-                        expected_columns = [col[0].upper() for col in AR_COLUMN_DEF]
-                    else:
-                        expected_columns = [col[0].upper() for col in HR_COLUMN_DEF]    
-
-                    extra_columns = [col for col in actual_columns if col not in expected_columns]
-                    #print(extra_columns, flush=True)  # for debugging
-
-                    # Select expected columns for the cruise 
-                    common_columns = [col for col in expected_columns if col in actual_columns]
-
-                    if cruise_name.lower().startswith(("ar", "at")):
-                        rows = [
-                            (name, desc, units)
-                            for name, desc, units in AR_COLUMN_DEF
-                            if name.strip().upper() in common_columns
-                        ]
-                    else:
-                        rows = [
-                            (name, desc, units)
-                            for name, desc, units in HR_COLUMN_DEF
-                            if name.strip().upper() in common_columns
-                        ]
+                    rows = cls.get_column_data(cruise_name)
 
                     buffer = StringIO()
                     writer = csv.writer(buffer)
@@ -270,6 +332,44 @@ class UnderwayService:
                     response = HttpResponse(csv_buffer, content_type='text/csv')
                     response['Content-Disposition'] = f'attachment; filename="{object_key}"'
                     return response
+                else:
+                    raise Http404(f"Column definitions not available for {cruise_name}.")   
+            else:
+                raise Http404(f"Underway data not imported. Import using manage.py importunderwaydata")    
+        except Cruise.DoesNotExist:
+           raise Http404(f"Cruise {cruise_name} not found.")
+
+    @classmethod
+    def get_column_definition(cls, cruise_name: str) -> JsonResponse:
+        URL = os.getenv("URL")
+        TOKEN = os.getenv("TOKEN")
+        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+        try:
+            cruise = Cruise.objects.get(name__iexact=cruise_name)
+            if Underway.objects.filter(cruise=cruise).exists():
+                cruise_name = cruise_name.lower()
+                if cruise_name.startswith(("ar", "at", "hrs", "ae")):
+
+                    rows = cls.get_column_data(cruise_name)
+                    data = [
+                            {"name": name, "description": desc, "units": units}
+                            for name, desc, units in rows
+                        ]
+                    return JsonResponse(data, safe=False)
+
+                elif cruise_name.lower().startswith("en"):
+                    object_key = f"{cruise_name.lower()}{cls.HEADER_SUFFIX}"
+                    with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
+                       try:
+                           data = store.get(object_key)
+                       except Exception as e:
+                           print(e, flush=True)
+                           raise
+
+                    text = data.decode("utf-8")
+                    reader = csv.DictReader(io.StringIO(text))
+                    rows = list(reader)
+                    return JsonResponse(rows, safe=False)
                 else:
                     raise Http404(f"Column definitions not available for {cruise_name}.")   
             else:

@@ -17,7 +17,7 @@ async function getData(cruise) {
     }
 
     try {
-        const response = await fetch(`${url}/api/ctd/metadata/${cruise}`);
+        const response = await fetch(`${url}/api/ctd/metadata/${cruise}.csv`);
         if (!response.ok) {
             throw new Error(`HTTP error ${response.status}`);
         }
@@ -47,6 +47,31 @@ async function runAll() {
     for (const cruise of cruises) {
         await getData(cruise);
     }
+
+    try {
+        const response = await fetch(`${url}/api/ctd/bathymetry_file.csv`);
+        if (!response.ok) {
+            throw new Error(`HTTP error ${response.status}`);
+        }
+
+        const data = await response.text();
+
+        const lines = data
+            .split("\n")
+            .map(line => line.trim())
+            .filter(line => line.length > 0);
+
+        if (lines.length === 801) {
+            console.log(`Bathymetry test successful.`);
+        } else {
+            console.log(`Bathymetry test missing data.`);
+            console.log(`Bathymetry test failed. (Expected 801, got ${lines.length})`);
+        }
+    } catch (err) {
+        console.log(`Bathymetry test failed.`);
+        console.error("Error:", err);
+    }
+
 }
 
 runAll();

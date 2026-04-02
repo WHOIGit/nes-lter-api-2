@@ -9,6 +9,10 @@ from .services import CtdService, NiskinInput, VesselOutput, AddVesselInput, \
 
 router = Router()
 
+@router.get("/vessels/all.csv", tags=["Users"])
+def get_vessels_csv(request):
+    return CtdService.get_vessels_csv()
+
 @router.get("/vessels/all", response=List[VesselOutput], tags=["Users"])
 def get_vessels(request):
     return CtdService.get_vessels()
@@ -41,6 +45,9 @@ def delete_vessel(request, vessel_name: str):
 def get_vessel(request, vessel_name: str):
     return CtdService.get_vessel(vessel_name)
 
+@router.get("/cruises/all.csv", tags=["Users"])
+def get_cruises_csv(request):
+    return CtdService.get_cruises_csv()
 
 @router.get("/cruises/all", response=List[CruiseOutput], tags=["Users"])
 def get_cruises(request):
@@ -108,15 +115,18 @@ def delete_cast(request, cruise_name: str, cast_number: str):
     except ValueError as e:
         return {"status": "error", "message": str(e)}
 
+@router.get("/casts/{cruise_name}.csv", tags=["Users"])
+def get_casts_csv(request, cruise_name: str):
+    return CtdService.get_casts_csv(cruise_name)
+
 @router.get("/casts/{cruise_name}", response=List[CastOutput], tags=["Users"])
 def get_casts(request, cruise_name: str):
     return CtdService.get_casts(cruise_name)
   
-@router.get("/cast/{cruise_name}/{cast_number}", tags=["Users"])
-def get_cast(request, cruise_name: str, cast_number: str):
-    return CtdService.get_cast(cruise_name, cast_number)
+@router.get("/cast/{cruise_name}/{cast_number}.csv", tags=["Users"])
+def get_cast_csv(request, cruise_name: str, cast_number: str):
+    return CtdService.get_cast_csv(cruise_name, cast_number)
 
-    
 @router.post('/niskins/create', tags=["Admin"], auth=TokenAuthenticator())
 def create_niskin(request, input: NiskinInput):
     try:
@@ -124,6 +134,10 @@ def create_niskin(request, input: NiskinInput):
         return {"status": "success", "niskin": niskin}
     except ValueError as e:
         return {"status": "error", "message": str(e)}
+
+@router.get("/niskins/all/{cruise_name}/{cast_number}.csv", tags=["Users"])
+def get_niskins_csv(request, cruise_name: str, cast_number: str):
+    return CtdService.get_niskins_csv(cruise_name, cast_number)
     
 @router.get("/niskins/all/{cruise_name}/{cast_number}", response=List[NiskinOutput], tags=["Users"])
 def get_niskins(request, cruise_name: str, cast_number: str):
@@ -150,19 +164,19 @@ def delete_niskin(request, cruise_name: str, cast_number: str, niskin_number: in
         return {"status": "error", "message": str(e)}
 
 
-@router.get("/bottles/{cruise_name}", tags=["Users"])
+@router.get("/bottles/{cruise_name}.csv", tags=["Users"])
 def get_bottles(request, cruise_name: str):
     return CtdService.get_bottles(cruise_name)
 
-@router.get("/bottle_summary/{cruise_name}", tags=["Users"])
+@router.get("/bottle_summary/{cruise_name}.csv", tags=["Users"])
 def get_bottle_summary(request, cruise_name: str):
     return CtdService.get_bottle_summary(cruise_name)
 
-@router.get("/metadata/{cruise_name}", tags=["Users"])
+@router.get("/metadata/{cruise_name}.csv", tags=["Users"])
 def get_metadata(request, cruise_name: str):
     return CtdService.get_metadata(cruise_name)
 
-@router.get("/bathymetry_file", tags=["Users"])
+@router.get("/bathymetry_file.csv", tags=["Users"])
 def get_bathymetry(request):
     return CtdService.get_bathymetry()
 

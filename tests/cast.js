@@ -39,9 +39,33 @@ async function getData(cruise) {
       console.error(`Error:`, err);
   }
 
+  try {
+    const response = await fetch(`${url}/api/ctd/casts/${cruise}.csv`);
+
+    if (!response.ok) {
+        throw new Error(`HTTP error ` + response.status);
+    }
+    const data = await response.text();
+
+    const expected = lineCounts[cruise];
+    const lines = data.trim().split("\n");
+    const rowCount = lines.length - 1;
+
+    if (rowCount === expected) {
+        console.log(`${cruise} Casts Get All file test successful.`);
+    }
+    else {
+        console.log(`${cruise} Casts Get All file are missing.`);
+        console.log(`${cruise} Casts Get All file test failed.`);
+    }
+} catch (err) {
+    console.log(`${cruise} Casts Get All file test failed.`);
+    console.error(`Error:`, err);
+}
+
 
   try {
-    const response = await fetch(`${url}/api/ctd/cast/${cruise}/10`);
+    const response = await fetch(`${url}/api/ctd/cast/${cruise}/10.csv`);
 
     if (!response.ok) {
         throw new Error(`HTTP error ` + response.status);
