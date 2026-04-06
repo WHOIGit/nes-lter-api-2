@@ -7,9 +7,6 @@ from core.utils import get_store
 from core.models import Cruise
 
 class ChlService:
-    URL = os.getenv("URL")
-    TOKEN = os.getenv("TOKEN")
-    MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
     FILE_SUFFIX = '_chl.csv'
 
     @classmethod
@@ -18,7 +15,7 @@ class ChlService:
         try:
             Cruise.objects.get(name__iexact=cruise_name) 
             object_key = f"{cruise_name.lower()}{cls.FILE_SUFFIX}"
-            with get_store(cls.URL, cls.TOKEN, cls.MEDIASTORE_PREFIX) as store:
+            with get_store() as store:
                 try:
                     data = store.get(object_key)
                 except Exception as e:
@@ -41,7 +38,7 @@ class ChlService:
 
         for cruise in cruises:
             object_key = f"{cruise.name}{cls.FILE_SUFFIX}"
-            with get_store(cls.URL, cls.TOKEN, cls.MEDIASTORE_PREFIX) as store:
+            with get_store() as store:
                 try:
                     data = store.get(object_key)
                 except Exception as e:

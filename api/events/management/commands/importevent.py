@@ -52,9 +52,6 @@ class Command(BaseCommand):
 
     def __init__(self):
         super().__init__()
-        self.URL = os.getenv("URL")
-        self.TOKEN = os.getenv("TOKEN")
-        self.MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
         self.logger = logging.getLogger('management')
 
     def add_arguments(self, parser):
@@ -69,7 +66,7 @@ class Command(BaseCommand):
         csv_binary = csv_buffer.getvalue().encode("utf-8")
         # Use the put method to store the CSV in the vast media store
         object_key = f"{cruise_name}{FILE_SUFFIX}"
-        with get_store(self.URL, self.TOKEN, self.MEDIASTORE_PREFIX) as store:
+        with get_store() as store:
             try:
                 store.put(object_key, csv_binary)
             except Exception as e:

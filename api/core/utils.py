@@ -7,7 +7,8 @@ import glob
 import numpy as np
 import logging
 from contextlib import contextmanager
-from storage.mediastore import MediaStore
+import boto3
+from storage.s3 import BucketStore
 from storage.utils import PrefixStore
 from storage.object import DictStore
 from storage.fs import FilesystemStore
@@ -167,20 +168,28 @@ def _use_dictstore() -> bool:
     return os.getenv("USE_DICTSTORE", "FALSE").upper() == "TRUE"
 
 @contextmanager
-def get_store( url, token, prefix):
+def get_store():
+
+    prefix = os.getenv("S3_PREFIX", "")
 
     if _use_dictstore():
         # In-memory store for CI/tests; no network
         root = "/data/.store"
         os.makedirs(root, exist_ok=True)
         base_store = FilesystemStore(root)
-        prefixed = PrefixStore(base_store, prefix or "")
+        prefixed = PrefixStore(base_store, prefix)
         yield prefixed
     else:
-        # Real vast store
-        with MediaStore(url, token=token) as base_store:
-            prefixed = PrefixStore(base_store, prefix or "")
-            yield prefixed
+        # VAST S3 store
+        s3_client = boto3.client(
+            "s3",
+            endpoint_url=os.getenv("S3_ENDPOINT_URL"),
+            aws_access_key_id=os.getenv("S3_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.getenv("S3_SECRET_ACCESS_KEY"),
+        )
+        base_store = BucketStore(os.getenv("S3_BUCKET_NAME"), s3_client)
+        prefixed = PrefixStore(base_store, prefix)
+        yield prefixed
 
 def date_time_to_datetime(date, time):
     try:

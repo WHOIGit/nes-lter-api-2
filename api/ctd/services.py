@@ -387,9 +387,7 @@ class CtdService:
         
     @classmethod
     def get_cast_csv(cls, cruise_name: str, cast_number: str) -> FileResponse:
-        URL = os.getenv("URL")
-        TOKEN = os.getenv("TOKEN")
-        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+
 
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
@@ -397,7 +395,7 @@ class CtdService:
             cast_number = cast_number.lstrip("0")
             cast = Cast.objects.get(cruise=cruise, number__iexact=cast_number)
             object_key = f"{cruise_name}_ctd_cast_{cast.number}.csv"
-            with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
+            with get_store() as store:
                 try:
                     data = store.get(object_key)
                 except Exception as e:
@@ -588,14 +586,12 @@ class CtdService:
 
     @classmethod
     def get_bottles(cls, cruise_name: str) -> FileResponse:
-        URL = os.getenv("URL")
-        TOKEN = os.getenv("TOKEN")
-        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+
         FILE_SUFFIX = '_ctd_bottles.csv'
         try:
             Cruise.objects.get(name__iexact=cruise_name) 
             object_key = f"{cruise_name.lower()}{FILE_SUFFIX}"
-            with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
+            with get_store() as store:
                 try:
                     data = store.get(object_key)
                 except Exception as e:
@@ -610,14 +606,12 @@ class CtdService:
 
     @classmethod
     def get_bottle_summary(cls, cruise_name: str) -> FileResponse:
-        URL = os.getenv("URL")
-        TOKEN = os.getenv("TOKEN")
-        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+
         FILE_SUFFIX = '_ctd_bottle_summary.csv'
         try:
             Cruise.objects.get(name__iexact=cruise_name) 
             object_key = f"{cruise_name.lower()}{FILE_SUFFIX}"
-            with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
+            with get_store() as store:
                 try:
                     data = store.get(object_key)
                 except Exception as e:
@@ -632,14 +626,12 @@ class CtdService:
 
     @classmethod
     def get_metadata(cls, cruise_name: str) -> FileResponse:
-        URL = os.getenv("URL")
-        TOKEN = os.getenv("TOKEN")
-        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+
         FILE_SUFFIX = '_ctd_metadata.csv'
         try:
             Cruise.objects.get(name__iexact=cruise_name) 
             object_key = f"{cruise_name.lower()}{FILE_SUFFIX}"
-            with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
+            with get_store() as store:
                 try:
                     data = store.get(object_key)
                 except Exception as e:

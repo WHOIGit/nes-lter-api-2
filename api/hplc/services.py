@@ -10,16 +10,13 @@ class HplcService:
 
     @classmethod
     def get(cls, cruise_name: str) -> FileResponse:
-        URL = os.getenv("URL")
-        TOKEN = os.getenv("TOKEN")
-        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
         FILE_SUFFIX = '_hplc.csv'
 
         try:
             if cruise_name.lower() != "mvco":
                 Cruise.objects.get(name__iexact=cruise_name) 
             object_key = f"{cruise_name.lower()}{FILE_SUFFIX}"
-            with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
+            with get_store() as store:
                 try:
                     data = store.get(object_key)
                 except Exception as e:
