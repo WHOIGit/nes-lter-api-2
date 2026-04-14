@@ -275,7 +275,7 @@ var handle_count;
         handle_count++;
         await driver.switchTo().window(handles[handle_count]);
         bodyText = await driver.findElement(By.css("body")).getText();
-        assert(bodyText.includes('The NES-LTER API is designed to provide data'));
+        assert(bodyText.includes('https://nes-lter-api.whoi.edu/api'));
 
         await driver.switchTo().window(handles[0]);
         await new Promise(r => setTimeout(r, 2000));
