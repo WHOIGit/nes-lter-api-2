@@ -1,5 +1,4 @@
 import csv
-import os
 import json
 
 import io
@@ -164,14 +163,12 @@ class UnderwayService:
     
     @classmethod
     def get_data(cls, cruise_name: str) -> FileResponse:
-        URL = os.getenv("URL")
-        TOKEN = os.getenv("TOKEN")
-        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
             if Underway.objects.filter(cruise=cruise).exists():
                 object_key = f"{cruise_name.lower()}{cls.FILE_SUFFIX}"
-                with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
+                with get_store() as store:
                    try:
                        data = store.get(object_key)
                    except Exception as e:
@@ -188,14 +185,12 @@ class UnderwayService:
        
     @classmethod
     def get_column_headers(cls, cruise_name: str) -> JsonResponse:
-        URL = os.getenv("URL")
-        TOKEN = os.getenv("TOKEN")
-        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
             if Underway.objects.filter(cruise=cruise).exists(): 
                 object_key = f"{cruise_name.lower()}{cls.FILE_SUFFIX}"
-                with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
+                with get_store() as store:
                     try:
                         data = store.get(object_key)
                     except Exception as e:
@@ -300,9 +295,7 @@ class UnderwayService:
 
     @classmethod
     def get_column_definition_csv(cls, cruise_name: str) -> FileResponse:
-        URL = os.getenv("URL")
-        TOKEN = os.getenv("TOKEN")
-        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
             if Underway.objects.filter(cruise=cruise).exists():
@@ -322,7 +315,7 @@ class UnderwayService:
                     return response
                 elif cruise_name.lower().startswith("en"):
                     object_key = f"{cruise_name.lower()}{cls.HEADER_SUFFIX}"
-                    with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
+                    with get_store() as store:
                        try:
                            data = store.get(object_key)
                        except Exception as e:
@@ -341,9 +334,7 @@ class UnderwayService:
 
     @classmethod
     def get_column_definition(cls, cruise_name: str) -> JsonResponse:
-        URL = os.getenv("URL")
-        TOKEN = os.getenv("TOKEN")
-        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
             if Underway.objects.filter(cruise=cruise).exists():
@@ -359,7 +350,7 @@ class UnderwayService:
 
                 elif cruise_name.lower().startswith("en"):
                     object_key = f"{cruise_name.lower()}{cls.HEADER_SUFFIX}"
-                    with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
+                    with get_store() as store:
                        try:
                            data = store.get(object_key)
                        except Exception as e:

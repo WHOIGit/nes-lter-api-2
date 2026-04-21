@@ -8,9 +8,6 @@ from core.utils import get_store, read_sample_log, read_nut_data
 from core.models import Cruise
 
 class NutService:
-    URL = os.getenv("URL")
-    TOKEN = os.getenv("TOKEN")
-    MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
     FILE_SUFFIX = '_nut.csv'
 
     @classmethod
@@ -19,7 +16,7 @@ class NutService:
         try:
             Cruise.objects.get(name__iexact=cruise_name) 
             object_key = f"{cruise_name.lower()}{cls.FILE_SUFFIX}"
-            with get_store(cls.URL, cls.TOKEN, cls.MEDIASTORE_PREFIX) as store:
+            with get_store() as store:
                 try:
                     data = store.get(object_key)
                 except Exception as e:
@@ -42,7 +39,7 @@ class NutService:
 
         for cruise in cruises:
             object_key = f"{cruise.name}{cls.FILE_SUFFIX}"
-            with get_store(cls.URL, cls.TOKEN, cls.MEDIASTORE_PREFIX) as store:
+            with get_store() as store:
                 try:
                     data = store.get(object_key)
                 except Exception as e:

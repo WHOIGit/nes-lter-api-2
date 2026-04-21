@@ -10,4 +10,4 @@ streamlit
 matplotlib
 gunicorn
 whitenoise
-git+https://github.com/WHOIGit/amplify-storage-utils
+amplify-storage-utils[s3] @ git+https://github.com/WHOIGit/amplify-storage-utils

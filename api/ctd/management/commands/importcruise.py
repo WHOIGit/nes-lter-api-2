@@ -10,8 +10,6 @@ import logging
 class Command(BaseCommand):
     help = 'Create Cruise Model. If Cruise Name is not supplied, all Cruises will be created.'
 
-    URL = os.getenv("URL")
-    TOKEN = os.getenv("TOKEN")
     logger = logging.getLogger('management')
 
     def add_arguments(self, parser):

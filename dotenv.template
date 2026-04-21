@@ -4,9 +4,11 @@ VAST_DATA_DIR=/path-to-your-local-vast-mount
 
 LOCAL_SETTINGS=./local_settings.py
 
-URL=http://calm.whoi.edu:33300/
-TOKEN=your token here
+S3_ENDPOINT_URL=https://your-vast-s3-endpoint
+S3_ACCESS_KEY_ID=your access key here
+S3_SECRET_ACCESS_KEY=your secret key here
+S3_BUCKET_NAME=your-bucket-name
 
-MEDIASTORE_PREFIX=NES-LTER-
+S3_PREFIX=NES-LTER-
 
 USE_DICTSTORE=FALSE

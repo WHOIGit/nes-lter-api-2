@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - "main"
-      - "geolocation-fix"
+      - "remove-mediastore-client"
 
 env:
   IMAGE_NAME: nes-lter-api-2

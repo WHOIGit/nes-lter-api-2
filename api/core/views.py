@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse, Http404, FileResponse
-import os
 import io
 import json
 import pandas as pd
@@ -308,12 +307,8 @@ def cruise_track_view(request, cruise_name):
             for cast in casts
         ]
 
-        URL = os.getenv("URL")
-        TOKEN = os.getenv("TOKEN")
-        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
-
         object_key = f"{cruise_name}{UNDERWAY_SUFFIX}"
-        with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
+        with get_store() as store:
             try:
                 data = store.get(object_key)
             except Exception as e:
@@ -391,13 +386,9 @@ def ctd_plot_view(request, cruise_name, cast_number):
         "sbeox0ml_l": "Oxygen (mL/L)"
     }
 
-    URL = os.getenv("URL")
-    TOKEN = os.getenv("TOKEN")
-    MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
-
     object_key = f"{cruise_name}_ctd_cast_{cast_number}.csv"
 
-    with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
+    with get_store() as store:
             try:
                 data = store.get(object_key)
             except Exception as e:

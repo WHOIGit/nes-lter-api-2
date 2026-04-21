@@ -1,5 +1,4 @@
 import io
-import os
 from typing import Optional, List
 from datetime import datetime
 from django.http import FileResponse, HttpResponse
@@ -122,13 +121,11 @@ class StationService:
     
     @classmethod
     def get_station_file(cls) -> FileResponse:
-        URL = os.getenv("URL")
-        TOKEN = os.getenv("TOKEN")
-        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+
         FILE_SUFFIX = 'stations.csv'
 
         object_key = f"{FILE_SUFFIX}"
-        with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
+        with get_store() as store:
             try:
                 data = store.get(object_key)
             except Exception as e:

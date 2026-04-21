@@ -1,4 +1,3 @@
-import os
 import io
 import pandas as pd
 import numpy as np
@@ -74,9 +73,7 @@ class EventService:
         )
 
     def store_csv_file(self, cruise_name, csv_data):
-        URL = os.getenv("URL")
-        TOKEN = os.getenv("TOKEN")
-        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+
 
         df = pd.DataFrame(csv_data)
         df[DATETIME] = pd.to_datetime(df[DATETIME])
@@ -88,7 +85,7 @@ class EventService:
         csv_binary = csv_buffer.getvalue().encode("utf-8")
         # Use the put method to store the CSV in the vast media store
         object_key = f"{cruise_name}{FILE_SUFFIX}"
-        with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
+        with get_store() as store:
             try:
                 store.put(object_key, csv_binary)
             except Exception as e:
@@ -114,15 +111,13 @@ class EventService:
     
     @classmethod
     def get_events(cls, cruise_name: str) -> FileResponse:
-        URL = os.getenv("URL")
-        TOKEN = os.getenv("TOKEN")
-        MEDIASTORE_PREFIX = os.getenv("MEDIASTORE_PREFIX")
+
 
         try:
             cruise = Cruise.objects.get(name__iexact=cruise_name) 
             if Event.objects.filter(cruise=cruise).exists():
                 object_key = f"{cruise_name.lower()}{FILE_SUFFIX}"
-                with get_store(URL, TOKEN, MEDIASTORE_PREFIX) as store:
+                with get_store() as store:
                     try:
                         data = store.get(object_key)
                     except Exception as e:
