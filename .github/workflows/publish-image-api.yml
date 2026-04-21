@@ -4,6 +4,7 @@ on:
     branches:
       - "main"
       - "csv"
+      - "remove-mediastore-client"
 
 env:
   IMAGE_NAME: nes-lter-api-2
