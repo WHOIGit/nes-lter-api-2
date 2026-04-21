@@ -72,7 +72,8 @@ class CastInput(BaseModel):
 class CastOutput(BaseModel):
     cruise_name: str
     number: str
-    geolocation: Tuple[float, float]
+    latitude: float
+    longitude: float
     depth: float
     start_time: datetime
     end_time: Optional[datetime] = None
@@ -99,7 +100,8 @@ class NiskinOutput(BaseModel):
     cruise_name: str
     cast_number: str
     niskin_number: int
-    geolocation: Tuple[float, float]
+    latitude: float
+    longitude: float
     depth: float
     
 
@@ -331,7 +333,8 @@ class CtdService:
                 cruise_name=cast.cruise.name.upper(),
                 number=cast.number,
                 depth=cast.depth,
-                geolocation=cast.geolocation,
+                latitude=cast.geolocation.y,
+                longitude=cast.geolocation.x,
                 start_time=cast.start_time,
                 end_time=cast.end_time
         )
@@ -472,7 +475,8 @@ class CtdService:
                 cast_number=niskin.cast.number,
                 niskin_number=niskin.number,
                 depth=niskin.depth,
-                geolocation=niskin.geolocation
+                latitude=niskin.geolocation.y,
+                longitude=niskin.geolocation.x
         )
 
 
