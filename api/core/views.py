@@ -130,7 +130,7 @@ def clean_float(val):
     except Exception:
         return None
 
-PREFIXES = [
+SHIP_PREFIXES = [
     ("ar",  "AR Cruises",  "🚢"),   # Ship
     ("en",  "EN Cruises",  "🛳️"),  # Passenger ship
     ("hrs", "HRS Cruises", "🛥️"),  # Motor boat
@@ -167,19 +167,19 @@ def landing(request):
         "cruise_years": cruise_years,
     })
 
-def cruises_by_type(request):
-    cruise_types = []
-    for prefix, label, emoji in PREFIXES:
+def cruises_by_ship(request):
+    cruise_ships = []
+    for prefix, label, emoji in SHIP_PREFIXES:
         count = Cruise.objects.filter(name__istartswith=prefix).count()
-        cruise_types.append({
+        cruise_ships.append({
             "prefix": prefix,
             "label": label,
             "emoji": emoji,
             "count": count,
         })
 
-    return render(request, "cruises_by_type.html", {
-        "cruise_types": cruise_types,
+    return render(request, "cruises_by_ship.html", {
+        "cruise_ships": cruise_ships,
     })
 
 def cruises_by_year(request):
@@ -264,12 +264,45 @@ def cruises_for_season(request, season: str):
         "cruises": qs,
     })
 
+TYPE_PREFIXES = [
+    (Cruise.CruiseType.NESLTER,  "NESLTER",  "🚢"),
+    (Cruise.CruiseType.JP_STUDENT,  "JP Student",  "🛳️"),
+    (Cruise.CruiseType.MAB_PIONEER, "MAB Pioneer", "🛥️"),
+]
+
+def cruises_by_type(request):
+    cruise_types = []
+    for prefix, label, emoji in TYPE_PREFIXES:
+        count = Cruise.objects.filter(type=prefix).count()
+        cruise_types.append({
+            "prefix": prefix,
+            "label": label,
+            "emoji": emoji,
+            "count": count,
+        })
+
+    return render(request, "cruises_by_type.html", {
+        "cruise_types": cruise_types,
+    })
+
+def cruises_for_type(request, cruise_type: str):
+    cruises = Cruise.objects.filter(type=cruise_type).order_by("start_time", "name")
+
+    label = next((lbl for p, lbl, _ in TYPE_PREFIXES if p == cruise_type), cruise_type)
+    emoji = next((em for p, _, em in TYPE_PREFIXES if p == cruise_type), "🚢")
+
+    return render(request, "cruise_list.html", {
+        "label": label,
+        "emoji": emoji,
+        "cruises": cruises,
+    })
+
 def cruise_list(request, prefix: str):
     prefix = prefix.lower()
     # Filter cruises by prefix
     qs = Cruise.objects.filter(name__istartswith=prefix)
 
-    # sort cruises by number and suffix letter for By Ship pages
+    # sort cruises by number and suffix letter
     cruises = sorted(
         qs,
         key=lambda c: (
@@ -278,8 +311,8 @@ def cruise_list(request, prefix: str):
         )
     )
 
-    label = next((lbl for p, lbl, _ in PREFIXES if p == prefix), prefix.upper())
-    emoji = next((em for p, _, em in PREFIXES if p == prefix), "🚢")
+    label = next((lbl for p, lbl, _ in SHIP_PREFIXES if p == prefix), prefix.upper())
+    emoji = next((em for p, _, em in SHIP_PREFIXES if p == prefix), "🚢")
 
     return render(request, "cruise_list.html", {
         "prefix": prefix,

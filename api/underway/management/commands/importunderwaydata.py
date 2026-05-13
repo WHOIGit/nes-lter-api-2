@@ -98,8 +98,9 @@ class Command(BaseCommand):
                     if os.path.isfile(f) and "README" not in os.path.basename(f)
                 ]
                 if not underway_files:
-                    self.logger.error(f'Cruise {cruise_name} underway data not found.')
-                    raise CommandError(f'Cruise {cruise_name} underway data not found.')
+                    self.stdout.write(self.style.WARNING(f'Cruise {cruise_name} underway data not found.'))
+                    self.logger.warning(f'Cruise {cruise_name} underway data not found.')
+                    return
 
                 # Concatenate the CSV files
                 cruise_prefix = next((key for key in underway_metadata if cruise.name.startswith(key)), None)

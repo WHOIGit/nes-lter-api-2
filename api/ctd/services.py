@@ -2,7 +2,7 @@ import io, os, glob
 from io import StringIO
 import csv
 import re
-from typing import Optional, List, Tuple
+from typing import Optional, List
 from datetime import datetime
 
 from django.contrib.gis.geos import Point
@@ -42,6 +42,7 @@ class UpdateVesselInput(BaseModel):
 class CruiseOutput(BaseModel):
     name: str
     vessel_name: str
+    type: Cruise.CruiseType
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
 
@@ -49,12 +50,14 @@ class CruiseOutput(BaseModel):
 class AddCruiseInput(BaseModel):
     name: str
     vessel_name: str
+    type: Cruise.CruiseType
     start_time: datetime
     end_time: datetime
 
 
 class UpdateCruiseInput(BaseModel):
     vessel_name: str
+    type: Cruise.CruiseType
     start_time: datetime
     end_time: datetime
 
@@ -219,6 +222,7 @@ class CtdService:
         return CruiseOutput(
             name=cruise.name.upper(),
             vessel_name=cruise.vessel.name,
+            type=cruise.type,
             start_time=cruise.start_time,
             end_time=cruise.end_time,
         )
@@ -231,12 +235,13 @@ class CtdService:
         writer = csv.writer(buffer)
 
         # Write header row
-        writer.writerow(["name", "vessel", "start_time", "end_time"])
+        writer.writerow(["name", "vessel", "type", "start_time", "end_time"])
 
         for cruise in cruises:
             writer.writerow([
                 cruise.name.upper(),
                 cruise.vessel.name,
+                cruise.type,
                 cruise.start_time,
                 cruise.end_time
             ])
@@ -273,6 +278,7 @@ class CtdService:
             new_cruise = Cruise.objects.create(
                 name=input.name,
                 vessel=vessel,
+                type=input.type,
                 start_time=input.start_time,
                 end_time=input.end_time
             )            
@@ -291,6 +297,7 @@ class CtdService:
                 vessel = Vessel.objects.get(name__iexact=input.vessel_name)
                 cruise.name = cruise_name
                 cruise.vessel = vessel
+                cruise.type = input.type
                 cruise.start_time = input.start_time
                 cruise.end_time = input.end_time
                 cruise.save()

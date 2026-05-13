@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Cruises by Type – NES-LTER API 2</title>
+    <title>Cruises by Ship – NES-LTER API 2</title>
     <style>
         body {
             font-family: system-ui, sans-serif;
@@ -53,11 +53,11 @@
 </head>
 <body>
     <div class="wrap">
-        <h1>🌊 Cruises by Type 🌊</h1>
+        <h1>🌊 Cruises by Ship 🌊</h1>
 
         <div class="grid">
-            {% for c in cruise_types %}
-            <a class="card" href="{% url 'cruises_for_type' c.prefix %}" aria-label="{{ c.label }}">
+            {% for c in cruise_ships %}
+            <a class="card" href="{% url 'cruise_prefix' c.prefix %}" aria-label="{{ c.label }}">
                 <span class="emoji-icon">{{ c.emoji }}</span>
                 <div class="label">{{ c.label }}</div>
                 <div class="count">{{ c.count }}</div>
