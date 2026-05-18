@@ -163,6 +163,8 @@ class Cruise(models.Model):
         NESLTER = "NESLTER"
         JP_STUDENT = "JP Student"
         MAB_PIONEER = "MAB Pioneer"
+        VIISTA_II = "VIISTA II"
+        OPPORTUNISTIC = "Opportunistic"
 
     name = models.CharField(max_length=100, unique=True) # e.g. "EN627"
     vessel = models.ForeignKey(Vessel, on_delete=models.CASCADE)

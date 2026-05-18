@@ -268,6 +268,8 @@ TYPE_PREFIXES = [
     (Cruise.CruiseType.NESLTER,  "NESLTER",  "🚢"),
     (Cruise.CruiseType.JP_STUDENT,  "JP Student",  "🛳️"),
     (Cruise.CruiseType.MAB_PIONEER, "MAB Pioneer", "🛥️"),
+    (Cruise.CruiseType.VIISTA_II, "VIISTA II", "⛴️"),
+    (Cruise.CruiseType.OPPORTUNISTIC, "Opportunistic", "⛵"),
 ]
 
 def cruises_by_type(request):

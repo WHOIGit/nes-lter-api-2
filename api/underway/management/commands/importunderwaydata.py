@@ -95,7 +95,8 @@ class Command(BaseCommand):
                 files = glob.glob(file_pattern)
                 underway_files = [
                     f for f in files
-                    if os.path.isfile(f) and "README" not in os.path.basename(f)
+                    if os.path.isfile(f) and "README" not in os.path.basename(f) and
+                        "original" not in os.path.basename(f).lower()
                 ]
                 if not underway_files:
                     self.stdout.write(self.style.WARNING(f'Cruise {cruise_name} underway data not found.'))

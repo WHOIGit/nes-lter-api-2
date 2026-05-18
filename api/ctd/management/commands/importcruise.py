@@ -26,17 +26,21 @@ cruise_types = {
     "ar63": Cruise.CruiseType.JP_STUDENT,
     "ar66": Cruise.CruiseType.MAB_PIONEER,
     "ar70": Cruise.CruiseType.MAB_PIONEER,
+    "ar75": Cruise.CruiseType.OPPORTUNISTIC,
     "ar77": Cruise.CruiseType.NESLTER,
     "ar78": Cruise.CruiseType.MAB_PIONEER,
     "ar79": Cruise.CruiseType.NESLTER,
     "ar80": Cruise.CruiseType.JP_STUDENT,
+    "ar82": Cruise.CruiseType.MAB_PIONEER,
     "ar87": Cruise.CruiseType.MAB_PIONEER,
     "ar88": Cruise.CruiseType.NESLTER,
+    "ar91": Cruise.CruiseType.VIISTA_II,
     "ar92": Cruise.CruiseType.NESLTER,
     "ar95": Cruise.CruiseType.NESLTER,
     "ar96": Cruise.CruiseType.JP_STUDENT,
     "ar98": Cruise.CruiseType.MAB_PIONEER,
-    "ar99": Cruise.CruiseType.NESLTER
+    "ar99": Cruise.CruiseType.NESLTER,
+    "ar100": Cruise.CruiseType.MAB_PIONEER,
 }
 
 class Command(BaseCommand):
