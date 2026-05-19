@@ -104,6 +104,9 @@
             paramName: "file",
             maxFilesize: 100, // MB
             dataType: 'json',
+            headers: {
+                "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
             init: function () {
                 // Get CSRF token once
                 const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
@@ -166,7 +169,10 @@
 
                                     fetch("{% url 'file-upload' %}", {
                                         method: "POST",
-                                        body: retryFormData
+                                        body: retryFormData,
+                                        headers: {
+                                            "X-CSRFToken": csrfToken
+                                        }
                                     })
                                         .then(res => res.json())
                                         .then(data => {

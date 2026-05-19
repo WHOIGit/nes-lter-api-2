@@ -229,7 +229,7 @@ class CtdService:
 
     @classmethod
     def get_cruises_csv(cls) -> HttpResponse:
-        cruises = Cruise.objects.all()
+        cruises = Cruise.objects.order_by("start_time")
 
         buffer = io.StringIO()
         writer = csv.writer(buffer)
@@ -253,7 +253,7 @@ class CtdService:
 
     @classmethod
     def get_cruises(cls) -> HttpResponse:
-        cruises = Cruise.objects.all()
+        cruises = Cruise.objects.order_by("start_time")
         serialized_cruises = [cls.serialize_cruise(cruise) for cruise in cruises]
         headers = list(CruiseOutput.model_fields.keys())
         data = [

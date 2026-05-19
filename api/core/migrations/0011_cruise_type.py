@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='cruise',
             name='type',
-            field=models.CharField(choices=[('NESLTER', 'Neslter'), ('JP Student', 'Jp Student'), ('MAB Pioneer', 'Mab Pioneer')], default='NESLTER', max_length=32),
+            field=models.CharField(choices=[('NESLTER', 'Neslter'), ('JP Student', 'Jp Student'), ('MAB Pioneer', 'MAB Pioneer')], default='NESLTER', max_length=32),
         ),
     ]

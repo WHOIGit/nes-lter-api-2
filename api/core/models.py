@@ -162,8 +162,7 @@ class Cruise(models.Model):
     class CruiseType(models.TextChoices):
         NESLTER = "NESLTER"
         JP_STUDENT = "JP Student"
-        MAB_PIONEER = "MAB Pioneer"
-        VIISTA_II = "VIISTA II"
+        OOI_PIONEER = "OOI Pioneer"
         OPPORTUNISTIC = "Opportunistic"
 
     name = models.CharField(max_length=100, unique=True) # e.g. "EN627"
