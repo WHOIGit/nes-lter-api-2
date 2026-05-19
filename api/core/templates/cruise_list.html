@@ -19,9 +19,10 @@
 <body>
     <div class="wrap">
         <h1><span class="emoji">{{ emoji }}</span>{{ label }}</h1>
-        <a href="{% url 'cruises_by_type' %}">⬅️ Back to Cruises by Ship</a><br>
+        <a href="{% url 'cruises_by_ship' %}">⬅️ Back to Cruises by Ship</a><br>
         <a href="{% url 'cruises_by_year' %}">⬅️ Back to Cruises by Year</a><br>
         <a href="{% url 'cruises_by_season' %}">⬅️ Back to Cruises by Season</a><br>
+        <a href="{% url 'cruises_by_type' %}">⬅️ Back to Cruises by Type</a><br>
         <a href="{% url 'landing' %}">⬅️ Back to landing</a>
 
         <ul>

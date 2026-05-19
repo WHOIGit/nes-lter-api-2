@@ -159,8 +159,19 @@ class Vessel(models.Model):
     
 
 class Cruise(models.Model):
+    class CruiseType(models.TextChoices):
+        NESLTER = "NESLTER"
+        JP_STUDENT = "JP Student"
+        OOI_PIONEER = "OOI Pioneer"
+        OPPORTUNISTIC = "Opportunistic"
+
     name = models.CharField(max_length=100, unique=True) # e.g. "EN627"
     vessel = models.ForeignKey(Vessel, on_delete=models.CASCADE)
+    type = models.CharField(
+        max_length=32,
+        choices=CruiseType.choices,
+        default=CruiseType.NESLTER
+    )
     start_time = models.DateTimeField(null=True, blank=True)
     end_time = models.DateTimeField(null=True, blank=True)
 

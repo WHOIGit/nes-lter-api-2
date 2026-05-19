@@ -1,11 +1,48 @@
 import os
 import glob
+import re
 from django.core.management.base import BaseCommand, CommandError
 import pandas as pd
 from core.models import Cruise
 from core.models import Vessel
 from pathlib import Path
 import logging
+
+cruise_types = {
+    "ar16": Cruise.CruiseType.OPPORTUNISTIC,
+    "ar22": Cruise.CruiseType.JP_STUDENT,
+    "ar24": Cruise.CruiseType.OOI_PIONEER,
+    "ar28": Cruise.CruiseType.OOI_PIONEER,
+    "ar31": Cruise.CruiseType.OOI_PIONEER,
+    "ar32": Cruise.CruiseType.JP_STUDENT,
+    "ar34": Cruise.CruiseType.OOI_PIONEER,
+    "ar38": Cruise.CruiseType.JP_STUDENT,
+    "ar39": Cruise.CruiseType.OOI_PIONEER,
+    "ar44": Cruise.CruiseType.OOI_PIONEER,
+    "ar45": Cruise.CruiseType.OOI_PIONEER,
+    "ar48": Cruise.CruiseType.OOI_PIONEER,
+    "ar52": Cruise.CruiseType.OOI_PIONEER,
+    "ar61": Cruise.CruiseType.OOI_PIONEER,
+    "ar62": Cruise.CruiseType.OOI_PIONEER,
+    "ar63": Cruise.CruiseType.JP_STUDENT,
+    "ar66": Cruise.CruiseType.OOI_PIONEER,
+    "ar70": Cruise.CruiseType.OOI_PIONEER,
+    "ar75": Cruise.CruiseType.OPPORTUNISTIC,
+    "ar77": Cruise.CruiseType.NESLTER,
+    "ar78": Cruise.CruiseType.OOI_PIONEER,
+    "ar79": Cruise.CruiseType.NESLTER,
+    "ar80": Cruise.CruiseType.JP_STUDENT,
+    "ar82": Cruise.CruiseType.OOI_PIONEER,
+    "ar87": Cruise.CruiseType.OOI_PIONEER,
+    "ar88": Cruise.CruiseType.NESLTER,
+    "ar91": Cruise.CruiseType.OPPORTUNISTIC,
+    "ar92": Cruise.CruiseType.NESLTER,
+    "ar95": Cruise.CruiseType.NESLTER,
+    "ar96": Cruise.CruiseType.JP_STUDENT,
+    "ar98": Cruise.CruiseType.OOI_PIONEER,
+    "ar99": Cruise.CruiseType.NESLTER,
+    "ar100": Cruise.CruiseType.OOI_PIONEER,
+}
 
 class Command(BaseCommand):
     help = 'Create Cruise Model. If Cruise Name is not supplied, all Cruises will be created.'
@@ -46,6 +83,16 @@ class Command(BaseCommand):
         for cruise_name in cruises:
             try:
                 vessel = Vessel.objects.get(code__istartswith=cruise_name[:2])
+                # assign cruise type
+                cruise_name = cruise_name.strip().lower()
+                if vessel.code == 'ar':
+                    base_name = re.sub(r"[a-z]$", "", cruise_name)  #remove trailing letter for cruises
+                    if base_name not in cruise_types:
+                        self.stdout.write(self.style.WARNING(f'Cruise {cruise_name} type not defined.'))
+                        self.logger.error((f'Cruise {cruise_name} type not defined.'))
+                    cruise_type = cruise_types.get(base_name, Cruise.CruiseType.NESLTER)
+                else:    # en, ae, hrs, at cruises are all NESLTER
+                    cruise_type = Cruise.CruiseType.NESLTER
                 # get the cruise start and end times from the elog
                 directory = f'/vast/corrected/{cruise_name}/elog/'
                 file_pattern = os.path.join(directory, '*_elog.csv')
@@ -73,10 +120,11 @@ class Command(BaseCommand):
 
                 Cruise.objects.update_or_create(
                     name=cruise_name,
-                    vessel=vessel,
                     defaults={
-                        "start_time": start_time,  
-                        "end_time": end_time
+                       "vessel": vessel,
+                       "type": cruise_type,
+                       "start_time": start_time,
+                       "end_time": end_time,
                     }
                 )
 

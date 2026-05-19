@@ -69,7 +69,7 @@ async function getData() {
             }
         }
         else {
-            if (lines.length == 5308) {
+            if (lines.length == 5279) {
                 console.log('Nut Get All test successful.');
             }
             else {

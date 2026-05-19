@@ -209,7 +209,7 @@ var handle_count;
         // Verify all Back To links are working
         console.log("Testing Back To links.");
         await driver.switchTo().window(handles[0]);
-        await driver.findElement(By.css('a[href="/cruises/type/"]')).click();
+        await driver.findElement(By.css('a[href="/cruises/ship/"]')).click();
         await new Promise(r => setTimeout(r, 2000));
         bodyText = await driver.findElement(By.css("body")).getText();
         assert(bodyText.includes('Cruises by Ship'));
@@ -247,6 +247,15 @@ var handle_count;
         await new Promise(r => setTimeout(r, 2000));
         bodyText = await driver.findElement(By.css("body")).getText();
         assert(bodyText.includes('Cruises by Season'));
+
+        await driver.navigate().back();
+        await new Promise(r => setTimeout(r, 2000));
+        dropdown = await driver.findElement(By.id("cruise-nav"));
+        await dropdown.findElement(By.xpath("//option[. = 'by Type']")).click();
+        await new Promise(r => setTimeout(r, 2000));
+        bodyText = await driver.findElement(By.css("body")).getText();
+        assert(bodyText.includes('Cruises by Type'));
+
 
         await driver.navigate().back()
         await driver.findElement(By.linkText('NES-LTER API 2 Wiki')).click();

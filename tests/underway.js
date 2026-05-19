@@ -12,7 +12,7 @@ const times = {
 }
 const readme = {
     ar77: '2023-11', en617: 'EN617 underway', hrs2303: ' HRS2303 raw underway',
-    ae2426: 'Not Found', 'at46': 'Not Found'
+    ae2426: 'Underway data include 03-Nov transit from Bermuda to WHOI.', 'at46': 'Not Found'
 };
 
 var myArgs = process.argv.slice(2);
@@ -141,7 +141,7 @@ async function getData(cruise) {
   try {
     const response = await fetch(`${url}/api/underway/readme/${cruise}`);
     if (!response.ok) {
-        if (cruise !== 'ae2426' && cruise !== 'at46') {
+        if (cruise !== 'at46') {
             throw new Error('HTTP error ' + response.status);
         }
     }

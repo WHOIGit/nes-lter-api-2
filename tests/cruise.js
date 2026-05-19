@@ -15,9 +15,10 @@ else {
         "ar31c", "ar32", "ar34a", "ar34b", "ar38", "ar39a", "ar39b", "ar44", "ar48a", "ar48b",
         "ar52a", "ar52b", "ar61a", "ar61b", "ar62", "ar63", "ar66a", "ar66b", "ar70b", "ar75",
         "ar77", "ar78", "ar79", "ar80", "ar82a", "ar82b", "ar87a", "ar87b", "ar88", "ar91",
-        "ar92", "ar95", "ar96", "ar98a", "ar98b", "ar99", "at46",
+        "ar92", "ar95", "ar96", "ar98a", "ar98b", "ar99", "ar100","at46",
         "en608", "en617", "en627", "en644", "en649", "en655", "en657", "en661", "en668",
-        "en685", "en687", "en688", "en695", "en706", "ae2426",  "en712", "en715", "en720", "en727", "hrs2303"
+        "en685", "en687", "en688", "en695", "en706", "ae2426", "en712", "en715", "en720", "en727", "hrs2303",
+        "hrs2601"
     ];
 }
 
@@ -179,6 +180,7 @@ async function getData() {
             body: JSON.stringify({
                 "name": 'test',
                 "vessel_name": 'Neil Armstrong',
+                "type": 'NESLTER', 
                 "start_time": '2021-11-03 21:20:00+00:00',
                 "end_time": '2022-11-03 21:20:00+00:00'
             })
@@ -212,6 +214,7 @@ async function getData() {
             },
             body: JSON.stringify({
                 "vessel_name": 'Endeavor',
+                "type": 'OOI Pioneer',
                 "start_time": '2021-11-03 21:20:00+00:00',
                 "end_time": '2022-11-03 21:20:00+00:00'
             })
