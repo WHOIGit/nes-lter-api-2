@@ -54,14 +54,19 @@ class Command(BaseCommand):
     
     def create_cast_file(self, file, cruise, cast, time):
         delimiter = ';'
-        base_dir = os.path.dirname(file.name)
-        base_name = os.path.splitext(os.path.basename(file.name))[0]
+        hdr_path = Path(file)
+        base_dir = hdr_path.parent
+        base_name = hdr_path.stem.lower()
 
-        # Look for matching .asc file (case-sensitive)
+        # Look for matching .asc file, regardless of filename case
         ascfile = None
-        for f in os.listdir(base_dir):
-            if f.lower() == f"{base_name.lower()}.asc":
-                ascfile = os.path.join(base_dir, f)
+        for f in base_dir.iterdir():
+            if (
+                f.is_file()
+                and f.stem.lower() == base_name
+                and f.suffix.lower() == ".asc"
+            ):
+                ascfile = f
                 break
 
         if not ascfile:
@@ -110,14 +115,13 @@ class Command(BaseCommand):
             self.logger.error((f"{ascfile} not parsable."))
 
     def handle(self, *args, **options):
-        #self.stdout = options.get('stdout', sys.stdout) # removes /n's
         cruise_name = options['cruise_name']
 
         if cruise_name is None:
             parent_dir = Path('/vast/raw')
             cruises = [f.name for f in parent_dir.iterdir() if f.is_dir() and f.name != "all"]
         else:
-            cruises = [cruise_name]
+            cruises = [cruise_name.lower()]
 
         self.stdout.write(self.style.SUCCESS(f'For each .hdr file, look for a matching .asc file.'))
         self.logger.error((f'For each .hdr file, look for a matching .asc file.'))
@@ -127,7 +131,7 @@ class Command(BaseCommand):
                 cruise = Cruise.objects.get(name__iexact=cruise_name)
                 directory = f'/vast/raw/{cruise_name}/ctd/'
                 hdr_files = sorted(glob.glob(os.path.join(directory, '*.hdr')))
-                if cruise_name.lower() == "en627":
+                if cruise_name == "en627":
                     added_dir = os.path.join(directory, "cast_1_files_used_for_corrected_cast_2")
                     hdr_files += sorted(glob.glob(os.path.join(added_dir, '*.hdr')))
 
@@ -148,12 +152,12 @@ class Command(BaseCommand):
                         cast = cast.lstrip('0')
 
                         # get lat, lon and time from .hdr file
-                        with open(file, 'r', encoding='utf-8', errors='ignore') as file:
-                            content = file.read()
+                        with open(file, "r", encoding="utf-8", errors="ignore") as fh:
+                            content = fh.read()
 
                         latitude, longitude = parse_lat_lon(content)
                         start_time = parse_time(content)
-                        
+
                         if latitude != None and longitude != None and start_time != None:
                             Cast.objects.update_or_create(
                                 cruise=cruise,

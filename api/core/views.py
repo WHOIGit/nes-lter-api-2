@@ -31,6 +31,7 @@ def file_upload_view(request):
                 'nutrient': Path('/data/raw/all/nut'),
                 'sample_log': Path('/data/raw/all'),
                 'station_list' : Path('/data/raw/all/metadata'),
+                'cruise_types' : Path('/data/raw/all/metadata'),
                 'hplc' : Path('/data/raw/all/hplc'),
                 'chlorophyll': Path('/data/raw/all/chl'),
             }
@@ -42,6 +43,7 @@ def file_upload_view(request):
                 'nutrient': Path('/vast/raw/all/nut'),
                 'sample_log': Path('/vast/raw/all'),
                 'station_list' : Path('/vast/raw/all/metadata'),
+                'cruise_types' : Path('/vast/raw/all/metadata'),
                 'hplc' : Path('/vast/raw/all/hplc'),
                 'chlorophyll': Path('/vast/raw/all/chl'),
             }    
@@ -101,6 +103,7 @@ def file_upload_view(request):
             'nutrient' : ['importnut'],
             'sample_log' : ['importnut'],
             'station_list' : ['importstations'],
+            'cruise_types' : ['importcruise'],
             'hplc' : ['importhplc'],
             'chlorophyll' : ['importchl']
         }
@@ -267,7 +270,8 @@ def cruises_for_season(request, season: str):
 TYPE_PREFIXES = [
     (Cruise.CruiseType.NESLTER,  "NESLTER",  "🚢"),
     (Cruise.CruiseType.JP_STUDENT,  "JP Student",  "🛳️"),
-    (Cruise.CruiseType.OOI_PIONEER, "OOI Pioneer", "🛥️"),
+    (Cruise.CruiseType.OOI_NES, "OOI NES", "🛥️"),
+    (Cruise.CruiseType.OOI_MAB, "OOI MAB", "⛴️"),
     (Cruise.CruiseType.OPPORTUNISTIC, "Opportunistic", "⛵"),
 ]
 

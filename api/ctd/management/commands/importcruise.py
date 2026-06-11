@@ -8,42 +8,6 @@ from core.models import Vessel
 from pathlib import Path
 import logging
 
-cruise_types = {
-    "ar16": Cruise.CruiseType.OPPORTUNISTIC,
-    "ar22": Cruise.CruiseType.JP_STUDENT,
-    "ar24": Cruise.CruiseType.OOI_PIONEER,
-    "ar28": Cruise.CruiseType.OOI_PIONEER,
-    "ar31": Cruise.CruiseType.OOI_PIONEER,
-    "ar32": Cruise.CruiseType.JP_STUDENT,
-    "ar34": Cruise.CruiseType.OOI_PIONEER,
-    "ar38": Cruise.CruiseType.JP_STUDENT,
-    "ar39": Cruise.CruiseType.OOI_PIONEER,
-    "ar44": Cruise.CruiseType.OOI_PIONEER,
-    "ar45": Cruise.CruiseType.OOI_PIONEER,
-    "ar48": Cruise.CruiseType.OOI_PIONEER,
-    "ar52": Cruise.CruiseType.OOI_PIONEER,
-    "ar61": Cruise.CruiseType.OOI_PIONEER,
-    "ar62": Cruise.CruiseType.OOI_PIONEER,
-    "ar63": Cruise.CruiseType.JP_STUDENT,
-    "ar66": Cruise.CruiseType.OOI_PIONEER,
-    "ar70": Cruise.CruiseType.OOI_PIONEER,
-    "ar75": Cruise.CruiseType.OPPORTUNISTIC,
-    "ar77": Cruise.CruiseType.NESLTER,
-    "ar78": Cruise.CruiseType.OOI_PIONEER,
-    "ar79": Cruise.CruiseType.NESLTER,
-    "ar80": Cruise.CruiseType.JP_STUDENT,
-    "ar82": Cruise.CruiseType.OOI_PIONEER,
-    "ar87": Cruise.CruiseType.OOI_PIONEER,
-    "ar88": Cruise.CruiseType.NESLTER,
-    "ar91": Cruise.CruiseType.OPPORTUNISTIC,
-    "ar92": Cruise.CruiseType.NESLTER,
-    "ar95": Cruise.CruiseType.NESLTER,
-    "ar96": Cruise.CruiseType.JP_STUDENT,
-    "ar98": Cruise.CruiseType.OOI_PIONEER,
-    "ar99": Cruise.CruiseType.NESLTER,
-    "ar100": Cruise.CruiseType.OOI_PIONEER,
-}
-
 class Command(BaseCommand):
     help = 'Create Cruise Model. If Cruise Name is not supplied, all Cruises will be created.'
 
@@ -51,6 +15,25 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--cruise_name', type=str, help='Optional name of the cruise.', default=None)
+
+    def load_cruise_types(self):
+        file = f'/vast/raw/all/metadata/NES-LTER_cruise_types.csv'
+        df = pd.read_csv(file)
+
+        valid_types = set(Cruise.CruiseType.values)
+        cruise_types = {}
+
+        for _, row in df.iterrows():
+            cruise = str(row["Cruise"]).strip().lower()
+            cruise_type = str(row["Cruise Type"]).strip()
+
+            if cruise_type not in valid_types:
+                raise ValueError(
+                    f"Invalid cruise type '{cruise_type}' for cruise '{cruise}'"
+                )
+
+            cruise_types[cruise] = cruise_type
+        return cruise_types
 
     def parse_elog(self, file_pattern):
         matching_files = glob.glob(file_pattern)
@@ -74,6 +57,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         cruise_name = options['cruise_name']
 
+        cruise_types = self.load_cruise_types()
+
         if cruise_name is None:
             parent_dir = Path('/vast/raw')
             cruises = [f.name for f in parent_dir.iterdir() if f.is_dir() and f.name != "all"]
@@ -85,12 +70,13 @@ class Command(BaseCommand):
                 vessel = Vessel.objects.get(code__istartswith=cruise_name[:2])
                 # assign cruise type
                 cruise_name = cruise_name.strip().lower()
-                if vessel.code == 'ar':
-                    base_name = re.sub(r"[a-z]$", "", cruise_name)  #remove trailing letter for cruises
-                    if base_name not in cruise_types:
+                if vessel.code == 'ar': 
+                    if cruise_name not in cruise_types:
                         self.stdout.write(self.style.WARNING(f'Cruise {cruise_name} type not defined.'))
                         self.logger.error((f'Cruise {cruise_name} type not defined.'))
-                    cruise_type = cruise_types.get(base_name, Cruise.CruiseType.NESLTER)
+                        cruise_type = Cruise.CruiseType.NESLTER
+                    else:
+                        cruise_type = cruise_types.get(cruise_name)
                 else:    # en, ae, hrs, at cruises are all NESLTER
                     cruise_type = Cruise.CruiseType.NESLTER
                 # get the cruise start and end times from the elog
