@@ -162,10 +162,7 @@ class Command(BaseCommand):
 
                 csv_buffer = None
                 if start_time is None or end_time is None:
-                    print(csv_buffer, flush=True)
-                    print(start_time, end_time, flush=True)
                     if Underway.objects.filter(cruise=cruise).exists():
-                        print("underway object filter exists", flush=True)
                         object_key = f"{cruise_name.lower()}{'_underway.csv'}"
 
                         with get_store() as store:
