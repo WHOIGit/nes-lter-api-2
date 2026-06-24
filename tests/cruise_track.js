@@ -65,7 +65,8 @@ var myArgs = process.argv.slice(2);
         // Zoom out to prevent element not interactable        
         try {
             await driver.findElement(
-                By.css('body > div:nth-child(2) > div:nth-child(1) > div:nth-child(4) > img:nth-child(11)')).click();
+            By.css('body > div:nth-child(2) > div:nth-child(1) > div:nth-child(4) > img:nth-child(11)')).click();
+            await new Promise(r => setTimeout(r, 4000));
         }
         catch {
             console.log("Cruise Track Zoom.");
@@ -80,6 +81,7 @@ var myArgs = process.argv.slice(2);
         let encodedString = await driver.takeScreenshot();
         await fs.writeFileSync('screen2.png', encodedString, 'base64');
         await driver.findElement(By.css("a[href='/cruise/ar77/cast/1/ctd_plot/']")).click();
+        await new Promise(r => setTimeout(r, 4000));
 
         let handles = await driver.getAllWindowHandles();
 
