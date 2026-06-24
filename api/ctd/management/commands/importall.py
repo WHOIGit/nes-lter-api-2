@@ -42,6 +42,10 @@ class Command(BaseCommand):
                 logger.error("Importing underway data...")
                 call_command('importunderwaydata', cruise_name=cruise_name)
 
+                self.stdout.write("Importing cruises again to set missing cruise start and end times from underway")
+                logger.error("Importing cruises again to set missing cruise start and end times from underway...")
+                call_command('importcruise', cruise_name=cruise_name)
+
                 self.stdout.write("Importing casts...")
                 logger.error("Importing casts...")
                 call_command('importcast', cruise_name=cruise_name)
