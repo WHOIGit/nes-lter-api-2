@@ -93,6 +93,7 @@ var myArgs = process.argv.slice(2);
 
         const res = await fetch('http://localhost:8000/cruise/ar77/cast/1/ctd_plot/');
         const title = res.headers.get('x-plot-title');
+        await res.arrayBuffer();
 
         console.log("Image Title:", title);
 
