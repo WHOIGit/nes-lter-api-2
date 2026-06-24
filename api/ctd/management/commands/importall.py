@@ -30,6 +30,10 @@ class Command(BaseCommand):
        
         for cruise_name in cruises:
             try:
+                self.stdout.write("Importing underway data...")
+                logger.error("Importing underway data...")
+                call_command('importunderwaydata', cruise_name=cruise_name)
+
                 self.stdout.write("Importing cruises...")
                 logger.error("Importing cruises...")
                 call_command('importcruise', cruise_name=cruise_name)
@@ -37,10 +41,6 @@ class Command(BaseCommand):
                 self.stdout.write("Importing events...")
                 logger.error("Importing events...")
                 call_command('importevent', cruise_name=cruise_name)
-
-                self.stdout.write("Importing underway data...")
-                logger.error("Importing underway data...")
-                call_command('importunderwaydata', cruise_name=cruise_name)
 
                 self.stdout.write("Importing casts...")
                 logger.error("Importing casts...")

@@ -160,10 +160,10 @@ class Vessel(models.Model):
 
 class Cruise(models.Model):
     class CruiseType(models.TextChoices):
-        NESLTER = "NESLTER"
+        NESLTER = "NES-LTER"
         JP_STUDENT = "JP Student"
-        OOI_NES = "OOI NES"   # pioneer
-        OOI_MAB = "OOI MAB"   # pioneer
+        OOI_NES = "OOI-NES"   # pioneer
+        OOI_MAB = "OOI-MAB"   # pioneer
         OPPORTUNISTIC = "Opportunistic"
 
     name = models.CharField(max_length=100, unique=True) # e.g. "EN627"
