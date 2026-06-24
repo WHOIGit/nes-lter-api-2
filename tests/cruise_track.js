@@ -70,13 +70,13 @@ var myArgs = process.argv.slice(2);
         catch {
             console.log("Cruise Track Zoom.");
             await driver.findElement(By.css('.leaflet-control-zoom-out')).click();
-            await new Promise(r => setTimeout(r, 2000));
+            await new Promise(r => setTimeout(r, 4000));
             let encodedString = await driver.takeScreenshot();
             await fs.writeFileSync('screen.png', encodedString, 'base64');
             await driver.findElement(By.xpath('//*[@id="map"]/div[1]/div[4]/img[4]')).click();  // cast 35 also on map now
         }
 
-        await new Promise(r => setTimeout(r, 2000));
+        await new Promise(r => setTimeout(r, 4000));
         let encodedString = await driver.takeScreenshot();
         await fs.writeFileSync('screen2.png', encodedString, 'base64');
         await driver.findElement(By.css("a[href='/cruise/ar77/cast/1/ctd_plot/']")).click();
