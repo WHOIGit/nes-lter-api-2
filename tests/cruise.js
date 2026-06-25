@@ -180,7 +180,7 @@ async function getData() {
             body: JSON.stringify({
                 "name": 'test',
                 "vessel_name": 'Neil Armstrong',
-                "type": 'NESLTER', 
+                "type": 'NES-LTER', 
                 "start_time": '2021-11-03 21:20:00+00:00',
                 "end_time": '2022-11-03 21:20:00+00:00'
             })
@@ -214,7 +214,7 @@ async function getData() {
             },
             body: JSON.stringify({
                 "vessel_name": 'Endeavor',
-                "type": 'OOI Pioneer',
+                "type": 'OOI-NES',
                 "start_time": '2021-11-03 21:20:00+00:00',
                 "end_time": '2022-11-03 21:20:00+00:00'
             })

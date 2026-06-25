@@ -10,7 +10,7 @@ class Command(BaseCommand):
         {"designation": "R/V", "name": "Neil Armstrong", "short_name": "Armstrong", "code": "ar"},
         {"designation": "R/V", "name": "Atlantis", "short_name": "Atlantis", "code": "at"},
         {"designation": "R/V", "name": "Endeavor", "short_name": "Endeavor", "code": "en"},
-        {"designation": "R/V", "name": "Sharp", "short_name": "Sharp", "code": "hrs"},
+        {"designation": "R/V", "name": "Hugh R. Sharp", "short_name": "Sharp", "code": "hrs"},
         {"designation": "R/V", "name": "Atlantic Explorer", "short_name": "Explorer", "code": "ae"}
     ]
 

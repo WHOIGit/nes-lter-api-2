@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - "main"
-      - "test-bucketstore"
+      - "ctd-case-sensitive-filenames"
 
 env:
   IMAGE_NAME: nes-lter-api-2

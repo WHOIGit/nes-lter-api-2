@@ -4,6 +4,7 @@ import csv
 import re
 from typing import Optional, List
 from datetime import datetime
+from pathlib import Path
 
 from django.contrib.gis.geos import Point
 
@@ -272,16 +273,44 @@ class CtdService:
             raise Http404(f"Cruise {cruise_name} not found.")
 
     @classmethod
+    def update_cruise_type_file(cls, cruise_name: str, cruise_type: str):
+        rows = []
+        found = False
+        file = Path('/vast/raw/all/metadata/NES-LTER_cruise_types.csv')
+        with file.open("r", newline="") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if row["Cruise"].lower() == cruise_name:
+                    row["Cruise Type"] = cruise_type
+                    found = True
+                rows.append(row)
+
+        if not found:
+            rows.append({
+                "Cruise": cruise_name,
+                "Cruise Type": cruise_type,
+            })
+
+        with file.open("w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=["Cruise", "Cruise Type"])
+            writer.writeheader()
+            writer.writerows(rows)
+
+    @classmethod
     def create_cruise(cls, input: AddCruiseInput) -> CruiseOutput:
         try:
             vessel = Vessel.objects.get(name__iexact=input.vessel_name)
+            cruise_name = input.name.lower()
             new_cruise = Cruise.objects.create(
-                name=input.name,
+                name=cruise_name,
                 vessel=vessel,
                 type=input.type,
                 start_time=input.start_time,
                 end_time=input.end_time
-            )            
+            )  
+            print(cruise_name, flush=True)
+            cls.update_cruise_type_file(cruise_name, input.type)
+
             return cls.serialize_cruise(new_cruise)
         except IntegrityError:
             raise HttpError(409, f"Cruise with name {input.name} already exists.")
@@ -295,12 +324,15 @@ class CtdService:
             cruise = Cruise.objects.get(name__iexact=cruise_name)
             try:
                 vessel = Vessel.objects.get(name__iexact=input.vessel_name)
-                cruise.name = cruise_name
+                cruise.name = cruise_name.lower()
                 cruise.vessel = vessel
                 cruise.type = input.type
                 cruise.start_time = input.start_time
                 cruise.end_time = input.end_time
                 cruise.save()
+
+                cls.update_cruise_type_file(cruise_name, input.type)
+
                 return cls.serialize_cruise(cruise)
             except Vessel.DoesNotExist:
                 raise Http404(f"Vessel with name {input.vessel_name} not found.")

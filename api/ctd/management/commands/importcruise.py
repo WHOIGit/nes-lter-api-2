@@ -3,54 +3,47 @@ import glob
 import re
 from django.core.management.base import BaseCommand, CommandError
 import pandas as pd
-from core.models import Cruise
+from core.models import Cruise, Vessel, Underway
+from core.utils import get_store
 from core.models import Vessel
 from pathlib import Path
 import logging
-
-cruise_types = {
-    "ar16": Cruise.CruiseType.OPPORTUNISTIC,
-    "ar22": Cruise.CruiseType.JP_STUDENT,
-    "ar24": Cruise.CruiseType.OOI_PIONEER,
-    "ar28": Cruise.CruiseType.OOI_PIONEER,
-    "ar31": Cruise.CruiseType.OOI_PIONEER,
-    "ar32": Cruise.CruiseType.JP_STUDENT,
-    "ar34": Cruise.CruiseType.OOI_PIONEER,
-    "ar38": Cruise.CruiseType.JP_STUDENT,
-    "ar39": Cruise.CruiseType.OOI_PIONEER,
-    "ar44": Cruise.CruiseType.OOI_PIONEER,
-    "ar45": Cruise.CruiseType.OOI_PIONEER,
-    "ar48": Cruise.CruiseType.OOI_PIONEER,
-    "ar52": Cruise.CruiseType.OOI_PIONEER,
-    "ar61": Cruise.CruiseType.OOI_PIONEER,
-    "ar62": Cruise.CruiseType.OOI_PIONEER,
-    "ar63": Cruise.CruiseType.JP_STUDENT,
-    "ar66": Cruise.CruiseType.OOI_PIONEER,
-    "ar70": Cruise.CruiseType.OOI_PIONEER,
-    "ar75": Cruise.CruiseType.OPPORTUNISTIC,
-    "ar77": Cruise.CruiseType.NESLTER,
-    "ar78": Cruise.CruiseType.OOI_PIONEER,
-    "ar79": Cruise.CruiseType.NESLTER,
-    "ar80": Cruise.CruiseType.JP_STUDENT,
-    "ar82": Cruise.CruiseType.OOI_PIONEER,
-    "ar87": Cruise.CruiseType.OOI_PIONEER,
-    "ar88": Cruise.CruiseType.NESLTER,
-    "ar91": Cruise.CruiseType.OPPORTUNISTIC,
-    "ar92": Cruise.CruiseType.NESLTER,
-    "ar95": Cruise.CruiseType.NESLTER,
-    "ar96": Cruise.CruiseType.JP_STUDENT,
-    "ar98": Cruise.CruiseType.OOI_PIONEER,
-    "ar99": Cruise.CruiseType.NESLTER,
-    "ar100": Cruise.CruiseType.OOI_PIONEER,
-}
+from io import BytesIO
 
 class Command(BaseCommand):
     help = 'Create Cruise Model. If Cruise Name is not supplied, all Cruises will be created.'
+
+    UNDERWAY_SPEED_COLUMN = {
+        "ar": "spd",
+        "hrs": "sog_kts",
+        "ae": "sog_kts",
+        "en": "gps_furuno_smg",
+        "at": "spd",
+    }
 
     logger = logging.getLogger('management')
 
     def add_arguments(self, parser):
         parser.add_argument('--cruise_name', type=str, help='Optional name of the cruise.', default=None)
+
+    def load_cruise_types(self):
+        file = f'/vast/raw/all/metadata/NES-LTER_cruise_types.csv'
+        df = pd.read_csv(file)
+
+        valid_types = set(Cruise.CruiseType.values)
+        cruise_types = {}
+
+        for _, row in df.iterrows():
+            cruise = str(row["Cruise"]).strip().lower()
+            cruise_type = str(row["Cruise Type"]).strip()
+
+            if cruise_type not in valid_types:
+                raise ValueError(
+                    f"Invalid cruise type '{cruise_type}' for cruise '{cruise}'"
+                )
+
+            cruise_types[cruise] = cruise_type
+        return cruise_types
 
     def parse_elog(self, file_pattern):
         matching_files = glob.glob(file_pattern)
@@ -71,8 +64,51 @@ class Command(BaseCommand):
             return start_time, end_time
         return None, None
 
+
+    def get_underway_start(self, vessel_code, csv_buffer):
+        speed_col = self.UNDERWAY_SPEED_COLUMN[vessel_code.lower()]
+        # Return the first underway record where speed > 2.
+        #Assumes the CSV is already sorted by ascending time.
+
+        df = pd.read_csv(
+            csv_buffer,
+            usecols=["date", speed_col],
+            low_memory=False,
+        )
+
+        df[speed_col] = pd.to_numeric(df[speed_col], errors="coerce")
+
+        underway = df[df[speed_col] > 2] 
+
+        if underway.empty:
+            return None
+
+        return underway.iloc[0]["date"]
+
+    def get_underway_end(self, vessel_code, csv_buffer):
+        speed_col = self.UNDERWAY_SPEED_COLUMN[vessel_code.lower()]
+        # Return the last underway record where speed > 2.
+        #Assumes the CSV is already sorted by ascending time.
+
+        df = pd.read_csv(
+            csv_buffer,
+            usecols=["date", speed_col],
+            low_memory=False,
+        )
+
+        df[speed_col] = pd.to_numeric(df[speed_col], errors="coerce")
+
+        underway = df[df[speed_col] > 2]
+
+        if underway.empty:
+            return None
+
+        return underway.iloc[-1]["date"]
+
     def handle(self, *args, **options):
         cruise_name = options['cruise_name']
+
+        cruise_types = self.load_cruise_types()
 
         if cruise_name is None:
             parent_dir = Path('/vast/raw')
@@ -85,14 +121,17 @@ class Command(BaseCommand):
                 vessel = Vessel.objects.get(code__istartswith=cruise_name[:2])
                 # assign cruise type
                 cruise_name = cruise_name.strip().lower()
-                if vessel.code == 'ar':
-                    base_name = re.sub(r"[a-z]$", "", cruise_name)  #remove trailing letter for cruises
-                    if base_name not in cruise_types:
+                if vessel.code == 'ar': 
+                    if cruise_name not in cruise_types:
                         self.stdout.write(self.style.WARNING(f'Cruise {cruise_name} type not defined.'))
                         self.logger.error((f'Cruise {cruise_name} type not defined.'))
-                    cruise_type = cruise_types.get(base_name, Cruise.CruiseType.NESLTER)
-                else:    # en, ae, hrs, at cruises are all NESLTER
-                    cruise_type = Cruise.CruiseType.NESLTER
+                        cruise_type = Cruise.CruiseType.NESLTER
+                    else:
+                        cruise_type = cruise_types.get(cruise_name)
+                elif cruise_name == 'en685':
+                    cruise_type = Cruise.CruiseType.OPPORTUNISTIC
+                else:
+                    cruise_type = Cruise.CruiseType.NESLTER   # en, ae, hrs, at cruises are all NESLTER
                 # get the cruise start and end times from the elog
                 directory = f'/vast/corrected/{cruise_name}/elog/'
                 file_pattern = os.path.join(directory, '*_elog.csv')
@@ -111,14 +150,7 @@ class Command(BaseCommand):
                             self.stdout.write(self.style.SUCCESS(f'Cruise {cruise_name} event log not found.'))
                             self.logger.error((f'Cruise {cruise_name} event log not found.'))
 
-                if start_time is None:
-                    self.stdout.write(self.style.WARNING(f'Cruise {cruise_name} startCruise event not found.'))
-                    self.logger.error((f'Cruise {cruise_name} startCruise event not found.'))
-                if end_time is None:
-                    self.stdout.write(self.style.WARNING(f'Cruise {cruise_name} stopCruise event not found.'))
-                    self.logger.error((f'Cruise {cruise_name} stopCruise event not found.'))
-
-                Cruise.objects.update_or_create(
+                cruise, created = Cruise.objects.update_or_create(
                     name=cruise_name,
                     defaults={
                        "vessel": vessel,
@@ -127,6 +159,57 @@ class Command(BaseCommand):
                        "end_time": end_time,
                     }
                 )
+
+                csv_buffer = None
+                if start_time is None or end_time is None:
+                    if Underway.objects.filter(cruise=cruise).exists():
+                        object_key = f"{cruise_name.lower()}{'_underway.csv'}"
+
+                        with get_store() as store:
+                            try:
+                                data = store.get(object_key)
+                            except Exception as e:
+                                print(e, flush=True)
+                                raise
+
+                        csv_buffer = BytesIO(data)
+                
+                if csv_buffer is not None:
+                    if start_time is None:
+                        # Obtain the start time from the underway data speed
+                        csv_buffer.seek(0)
+                        start_time = self.get_underway_start(vessel.code, csv_buffer)
+                        if start_time is None:
+                            self.stdout.write(self.style.WARNING(f'Cruise {cruise_name} startCruise datetime could not determined.'))
+                            self.logger.error((f'Cruise {cruise_name} startCruise datetime could not be determined.'))
+                        else:
+                            Cruise.objects.update_or_create(
+                                name=cruise_name,
+                                defaults={
+                                    "vessel": vessel,
+                                    "type": cruise_type,
+                                    "start_time": start_time,
+                                    "end_time": end_time,
+                                }
+                            )
+
+                    if end_time is None:
+                        # Obtain the end time from the underway data speed
+                        csv_buffer.seek(0)
+                        end_time = self.get_underway_end(vessel.code, csv_buffer)
+                        if end_time is None:
+                            self.stdout.write(self.style.WARNING(f'Cruise {cruise_name} endCruise datetime could not be determined.'))
+                            self.logger.error((f'Cruise {cruise_name} endCruise datetime could not be determined..'))
+                        else:
+                            Cruise.objects.update_or_create(
+                                name=cruise_name,
+                                defaults={
+                                    "vessel": vessel,
+                                    "type": cruise_type,
+                                    "start_time": start_time,
+                                    "end_time": end_time,
+                                }
+                            )
 
                 self.stdout.write(self.style.SUCCESS(f'Cruise {cruise_name} successfully imported.'))
                 self.logger.error((f'Cruise {cruise_name} successfully imported.'))

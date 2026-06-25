@@ -151,7 +151,7 @@ class Command(BaseCommand):
             parent_dir = Path('/vast/raw')
             cruises = [f.name for f in parent_dir.iterdir() if f.is_dir() and f.name != "all"]
         else:
-            cruises = [cruise_name]
+            cruises = [cruise_name.lower()]
 
         for cruise_name in cruises:
             try:
@@ -159,19 +159,32 @@ class Command(BaseCommand):
                 cruise = Cruise.objects.get(name__iexact=cruise_name)
 
                 directory = f'/vast/raw/{cruise_name}/ctd/'
-                btl_files = sorted(
-                    f for f in glob.glob(os.path.join(directory, '*.btl'))
-                    if not f.endswith('_original.btl')
-                )
-                if cruise_name.lower() == "en627":
-                    added_dir = os.path.join(directory, "cast_1_files_used_for_corrected_cast_2")
-                    btl_files += sorted(glob.glob(os.path.join(added_dir, '*.btl')))
+                if os.path.isdir(directory):
+                    btl_files = sorted(
+                        str(f) for f in Path(directory).iterdir()
+                        if (
+                            f.is_file()
+                            and f.suffix.lower() == ".btl"
+                            and not f.name.lower().endswith("_original.btl")
+                        )
+                    )
+                if cruise_name == "en627":
+                    added_dir = Path(directory) / "cast_1_files_used_for_corrected_cast_2"
+
+                    if added_dir.exists():
+                        btl_files += sorted(
+                            str(f) for f in added_dir.iterdir()
+                            if (
+                                f.is_file()
+                                and f.suffix.lower() == ".btl"
+                                and not f.name.lower().endswith("_original.btl")
+                            )
+                        )
 
                 # track seen niskin numbers for each cast
                 seen_niskins: dict[int, set[int]] = defaultdict(set)
 
                 for file in btl_files:
-
                     filename = os.path.basename(file).lower()
                     if cruise_name == 'ar24a':
                         cruise_pattern = re.escape(cruise_name[:-1])  
@@ -245,7 +258,7 @@ class Command(BaseCommand):
                     if qs[0] > 0:
                         self.stdout.write(self.style.WARNING(f'Deleted {qs[0]} niskins for cast id {cast_id} not present in current bottle files.'))
 
-                if glob.glob(os.path.join(directory, "*.btl")) and dfs:
+                if btl_files and dfs:
                     dfs = [df for df in dfs if not df.empty]  #remove empty dataframes
                     compiled_df = pd.concat(dfs, sort=False)
                     # 3 digit casts needed for sorting
