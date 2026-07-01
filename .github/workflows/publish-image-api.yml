@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - "main"
-      - "ctd-case-sensitive-filenames"
+      - "remove-ms-from-cruise-times"
 
 env:
   IMAGE_NAME: nes-lter-api-2

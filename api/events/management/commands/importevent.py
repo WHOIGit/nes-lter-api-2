@@ -103,7 +103,10 @@ class Command(BaseCommand):
                else:
                    directory = f'/vast/raw/{cruise_name}/elog/'
                    file_pattern = os.path.join(directory, 'R2R_ELOG*FINAL*')  # do not read corrections or additions files in elog dir
-                   matching_file = glob.glob(file_pattern)
+                   matching_file = [
+                            f for f in glob.glob(file_pattern)
+                            if 'original' not in os.path.basename(f)
+                   ]
                    if matching_file:
                        file_path = matching_file[0]
                        df = pd.read_csv(file_path, encoding='latin1',parse_dates=[DATETIME], dtype={'Station': str, 'Cast': str})

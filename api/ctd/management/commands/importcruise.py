@@ -179,6 +179,8 @@ class Command(BaseCommand):
                         # Obtain the start time from the underway data speed
                         csv_buffer.seek(0)
                         start_time = self.get_underway_start(vessel.code, csv_buffer)
+                        start_time = pd.to_datetime(start_time, utc=True)
+                        start_time = start_time.strftime("%Y-%m-%dT%H:%M:%SZ")  #strip milliseconds
                         if start_time is None:
                             self.stdout.write(self.style.WARNING(f'Cruise {cruise_name} startCruise datetime could not determined.'))
                             self.logger.error((f'Cruise {cruise_name} startCruise datetime could not be determined.'))
@@ -197,6 +199,8 @@ class Command(BaseCommand):
                         # Obtain the end time from the underway data speed
                         csv_buffer.seek(0)
                         end_time = self.get_underway_end(vessel.code, csv_buffer)
+                        end_time = pd.to_datetime(end_time, utc=True)
+                        end_time = end_time.strftime("%Y-%m-%dT%H:%M:%SZ")  #strip milliseconds
                         if end_time is None:
                             self.stdout.write(self.style.WARNING(f'Cruise {cruise_name} endCruise datetime could not be determined.'))
                             self.logger.error((f'Cruise {cruise_name} endCruise datetime could not be determined..'))

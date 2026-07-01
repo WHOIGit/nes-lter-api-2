@@ -130,7 +130,11 @@ class Command(BaseCommand):
             try:
                 cruise = Cruise.objects.get(name__iexact=cruise_name)
                 directory = f'/vast/raw/{cruise_name}/ctd/'
-                hdr_files = sorted(glob.glob(os.path.join(directory, '*.hdr')))
+                file_pattern = os.path.join(directory, '*.hdr')
+                hdr_files = sorted(
+                    f for f in glob.glob(file_pattern)
+                    if 'original' not in os.path.basename(f).lower()
+                )
                 if cruise_name == "en627":
                     added_dir = os.path.join(directory, "cast_1_files_used_for_corrected_cast_2")
                     hdr_files += sorted(glob.glob(os.path.join(added_dir, '*.hdr')))

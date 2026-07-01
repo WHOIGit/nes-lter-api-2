@@ -79,7 +79,10 @@ def file_upload_view(request):
         overwrite = request.POST.get('overwrite', 'false').lower() == 'true'
         if upload_path.exists() and not overwrite:
             return JsonResponse({
-                'error': f"The file '{filename}' already exists in {destination_dir}.",
+                'error': (
+                   f"The file '{filename}' already exists in {destination_dir}.\n"
+                   "Please double check the Cruise Name and selected File Type before continuing."
+                ),
                 'conflict': True  # Flag for frontend to prompt user
             }, status=409)
 
