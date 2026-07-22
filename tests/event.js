@@ -4,10 +4,10 @@ console.log("Running Event Test.");
 
 const cruises = ["ar77", "en617", "hrs2303", "ae2426", "at46"];
 
-const getCounts = { ar77: 166, en617: 111, hrs2303: 159, ae2426: 168, at46: 266 };
-const instCounts = { ar77: 18, en617: 19, hrs2303: 20, ae2426: 21, at46: 19 };
+const getCounts = { ar77: 166, en617: 166, hrs2303: 159, ae2426: 168, at46: 266 };
+const instCounts = { ar77: 18, en617: 18, hrs2303: 20, ae2426: 21, at46: 19 };
 const r2rEvent = {
-    ar77: '20231011.1311.001', en617: 'en617-SE-20180720.1404.001', hrs2303: '20230502.1302.001',
+    ar77: '20231011.1311.001', hrs2303: '20230502.1302.001',
     ae2426: '20241106.1442.001', at46: 'at46-SE-20220216.1627.001'
 };
 const readme = {
@@ -153,45 +153,47 @@ try {
         console.error('Error:', err);
     }
 
-    const r2r = r2rEvent[cruise];
+    if (cruise != 'en617') {    /* en617 corrected elog does not have r2r_events */
+        const r2r = r2rEvent[cruise];
 
-    try {
-        const response = await fetch(`${url}/api/events/edit/${cruise}/${r2r}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                "message_id": 1,
-                "instrument": "Ship",
-                "action": "startCruise",
-                "station": "",
-                "cast": "",
-                "latitude": 41.493007,
-                "longitude": -70.680232,
-                "comment": "",
-                "datetime": null
-            })
-        });
+        try {
+            const response = await fetch(`${url}/api/events/edit/${cruise}/${r2r}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    "message_id": 1,
+                    "instrument": "Ship",
+                    "action": "startCruise",
+                    "station": "",
+                    "cast": "",
+                    "latitude": 41.493007,
+                    "longitude": -70.680232,
+                    "comment": "",
+                    "datetime": null
+                })
+            });
 
-        const data = await response.json();
+            const data = await response.json();
 
-        if (!response.ok) {
-            console.log(data.detail);
-            throw new Error('HTTP error ' + response.status);
+            if (!response.ok) {
+                console.log(data.detail);
+                throw new Error('HTTP error ' + response.status);
+            }
+
+            if (data.instrument === 'Ship') {
+                console.log(`${cruise} Edit Event test successful.`);
+            } else {
+                console.log(`${cruise} Edit Event test failed.`);
+            }
+
         }
-
-        if (data.instrument === 'Ship') {
-            console.log(`${cruise} Edit Event test successful.`);
-        } else {
+        catch (err) {
             console.log(`${cruise} Edit Event test failed.`);
+            console.error('Error:', err);
         }
-
-    }
-    catch (err) {
-        console.log(`${cruise} Edit Event test failed.`);
-        console.error('Error:', err);
     }
 }
 
