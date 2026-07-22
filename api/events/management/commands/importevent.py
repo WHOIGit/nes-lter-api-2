@@ -93,7 +93,7 @@ class Command(BaseCommand):
                directory = f'/vast/corrected/{cruise_name}/elog/'
                file_pattern = os.path.join(directory, '*_elog.csv')
                matching_file = glob.glob(file_pattern)
-               if matching_file and cruise_name.lower() not in ['en608', 'en617', 'en627']:  # serve the original elogs for these cruises
+               if matching_file:
                    file_path = matching_file[0]
                    df = pd.read_csv(file_path, parse_dates=[DATETIME], dtype={'Station': str, 'Cast': str})
                    try:
@@ -129,24 +129,35 @@ class Command(BaseCommand):
                        raw_instrument = row['Instrument']
                        instrument = INSTRUMENT_MAPPING.get(raw_instrument, raw_instrument)
 
-                       message_id = int(row[MESSAGE_ID]) if pd.notna(row[MESSAGE_ID]) else None  # Nan is a float
-                       
-                       event, created = Event.objects.update_or_create(
-                               cruise=cruise,
-                               r2r_event=row[R2R_EVENT],
-                               defaults={
-                                   "message_id": message_id,
-                                   "instrument":instrument,
-                                   "action":row['Action'],
-                                   "station":row['Station'],
-                                   "cast":row['Cast'],
-                                   "comment":row['Comment'],
-                                   "geolocation":geolocation,
-                                   "datetime":row[DATETIME],
-                                   }
-                               )
+                       message_id = int(row[MESSAGE_ID]) if MESSAGE_ID in row and pd.notna(row[MESSAGE_ID]) else None  # Nan is a float
+                       r2r_event = None if pd.isna(row.get(R2R_EVENT)) else row.get(R2R_EVENT)
 
-                       seen_events[cruise.id].add(row[R2R_EVENT])
+                       defaults = {
+                            "message_id": message_id,
+                            "instrument": instrument,
+                            "action": row["Action"],
+                            "station": row["Station"],
+                            "cast": row["Cast"],
+                            "comment": row["Comment"],
+                            "geolocation": geolocation,
+                            "datetime": row[DATETIME],
+                        }
+
+                       if r2r_event is not None:
+                            event, created = Event.objects.update_or_create(
+                                cruise=cruise,
+                                r2r_event=r2r_event,
+                                defaults=defaults,
+                            )
+                       else:      # en608,en617,en627 elogs in corrected folder don't have r2r_events
+                            event, created = Event.objects.update_or_create(
+                                cruise=cruise,
+                                datetime=row[DATETIME],
+                                defaults={**defaults, "r2r_event": None},
+                            )
+
+                       if r2r_event is not None:
+                           seen_events[cruise.id].add(r2r_event)
 
                        csv_data.append({
                            R2R_EVENT: event.r2r_event,
@@ -163,8 +174,13 @@ class Command(BaseCommand):
 
                    # delete events from model not in the current elog files
                    for cruise_id, keep_events in seen_events.items():
-                       qs = Event.objects.filter(cruise_id=cruise_id).exclude(r2r_event__in=keep_events).delete()
-                       if qs[0] > 0:
+                        qs = (
+                            Event.objects
+                            .filter(cruise_id=cruise_id, r2r_event__isnull=False)
+                            .exclude(r2r_event__in=keep_events)
+                            .delete()
+                        )
+                        if qs[0] > 0:
                            self.stdout.write(self.style.WARNING(f'Deleted {qs[0]} events for cruise id {cruise_id} not present in elog files.'))
                        
                    # duplicate r2r_events not stored in the model

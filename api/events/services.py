@@ -16,8 +16,8 @@ DATETIME = 'dateTime8601'
 MESSAGE_ID = 'Message ID'  
 
 class EventOutput(BaseModel):
-    r2r_event: str
-    message_id: int
+    r2r_event: Optional[str] = None
+    message_id: Optional[int] = None
     instrument: str
     action: str
     station: str

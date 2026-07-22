@@ -1,6 +1,5 @@
 import os
 import glob
-import re
 from django.core.management.base import BaseCommand, CommandError
 import pandas as pd
 from core.models import Cruise, Vessel, Underway
@@ -149,6 +148,11 @@ class Command(BaseCommand):
                         if start_time is None and end_time is None:
                             self.stdout.write(self.style.SUCCESS(f'Cruise {cruise_name} event log not found.'))
                             self.logger.error((f'Cruise {cruise_name} event log not found.'))
+
+                if start_time is not None:
+                    start_time = pd.to_datetime(start_time, utc=True).to_pydatetime()
+                if end_time is not None:
+                    end_time = pd.to_datetime(end_time, utc=True).to_pydatetime()
 
                 cruise, created = Cruise.objects.update_or_create(
                     name=cruise_name,
