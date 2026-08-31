@@ -111,8 +111,16 @@ def file_upload_view(request):
         message += f' File type: {file_type}.\n'
         try:
             commands = command_lookup.get(file_type, [])
+            if cruise_name and 'importcruise' not in commands:
+                # every cruise-scoped import looks up an existing Cruise, so
+                # create it first from the elog and the cruise types file
+                commands = ['importcruise'] + commands
+            if file_type == 'underway':
+                # a second pass fills in start and end times from the underway
+                # speed record when the elog did not supply them
+                commands = commands + ['importcruise']
             for cmd in commands:
-                if file_type == 'station_list':
+                if cmd == 'importstations':
                     call_command(cmd, stdout=buffer)
                 else:
                     call_command(cmd, cruise_name=cruise_name, stdout=buffer)
