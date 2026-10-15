@@ -12,7 +12,7 @@ from pydantic import BaseModel
 
 from core.models import Vessel, Cruise, Cast, Niskin
 
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.http import Http404
 from ninja.errors import HttpError
 from django.http import HttpResponse
@@ -272,18 +272,22 @@ class CtdService:
         except Cruise.DoesNotExist:
             raise Http404(f"Cruise {cruise_name} not found.")
 
+    CRUISE_TYPES_FILE = Path('/vast/raw/all/metadata/NES-LTER_cruise_types.csv')
+
     @classmethod
     def update_cruise_type_file(cls, cruise_name: str, cruise_type: str):
+        cruise_name = cruise_name.strip().lower()
         rows = []
         found = False
-        file = Path('/vast/raw/all/metadata/NES-LTER_cruise_types.csv')
-        with file.open("r", newline="") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if row["Cruise"].lower() == cruise_name:
-                    row["Cruise Type"] = cruise_type
-                    found = True
-                rows.append(row)
+        file = cls.CRUISE_TYPES_FILE
+        if file.exists():
+            with file.open("r", newline="") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    if row["Cruise"].strip().lower() == cruise_name:
+                        row["Cruise Type"] = cruise_type
+                        found = True
+                    rows.append(row)
 
         if not found:
             rows.append({
@@ -301,15 +305,17 @@ class CtdService:
         try:
             vessel = Vessel.objects.get(name__iexact=input.vessel_name)
             cruise_name = input.name.lower()
-            new_cruise = Cruise.objects.create(
-                name=cruise_name,
-                vessel=vessel,
-                type=input.type,
-                start_time=input.start_time,
-                end_time=input.end_time
-            )  
-            print(cruise_name, flush=True)
-            cls.update_cruise_type_file(cruise_name, input.type)
+            # one transaction: if the types file can't be written, the cruise
+            # isn't created, so the DB and the file can't diverge
+            with transaction.atomic():
+                new_cruise = Cruise.objects.create(
+                    name=cruise_name,
+                    vessel=vessel,
+                    type=input.type,
+                    start_time=input.start_time,
+                    end_time=input.end_time
+                )
+                cls.update_cruise_type_file(cruise_name, input.type)
 
             return cls.serialize_cruise(new_cruise)
         except IntegrityError:
@@ -329,9 +335,9 @@ class CtdService:
                 cruise.type = input.type
                 cruise.start_time = input.start_time
                 cruise.end_time = input.end_time
-                cruise.save()
-
-                cls.update_cruise_type_file(cruise_name, input.type)
+                with transaction.atomic():
+                    cruise.save()
+                    cls.update_cruise_type_file(cruise_name, input.type)
 
                 return cls.serialize_cruise(cruise)
             except Vessel.DoesNotExist:
