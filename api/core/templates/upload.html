@@ -72,6 +72,15 @@
     </div>
 
 
+    <!-- Batch controls -->
+    <div id="upload-controls" style="margin: 1em 0; display: flex; gap: 0.5em; align-items: center;">
+        <button type="button" id="select-folder-btn">Select folder…</button>
+        <button type="button" id="upload-all-btn" disabled>Upload all (0)</button>
+        <button type="button" id="clear-btn" disabled>Clear</button>
+        <input type="file" id="folder-input" webkitdirectory multiple hidden>
+        <span style="color: #666;">Drop files or a folder below (or click the box to pick files), then click Upload all.</span>
+    </div>
+
     <!-- Dropzone form -->
     <form action="{% url 'file-upload' %}" class="dropzone" id="myDropzone" enctype="multipart/form-data">
         {% csrf_token %}
@@ -105,12 +114,77 @@
             paramName: "file",
             maxFilesize: 100, // MB
             dataType: 'json',
+            // Queue files and send them one at a time: the server runs the
+            // cruise imports on every upload, so parallel requests would race.
+            autoProcessQueue: false,
+            parallelUploads: 1,
+            addRemoveLinks: true,
             headers: {
                 "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
             },
             init: function () {
-                // Get CSRF token once
-                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                const dz = this;
+                const messagesDiv = document.getElementById("upload-messages-text");
+                const uploadBtn = document.getElementById("upload-all-btn");
+                const clearBtn = document.getElementById("clear-btn");
+                const folderBtn = document.getElementById("select-folder-btn");
+                const folderInput = document.getElementById("folder-input");
+
+                let uploading = false;
+                let overwrite = false;
+                let conflicts = [];
+
+                function addLine(text, color, detail) {
+                    const el = document.createElement(detail ? "details" : "p");
+                    if (detail) {
+                        const summary = document.createElement("summary");
+                        summary.textContent = text;
+                        el.appendChild(summary);
+                        const body = document.createElement("div");
+                        body.textContent = detail;
+                        el.appendChild(body);
+                    } else {
+                        el.textContent = text;
+                    }
+                    if (color) el.style.color = color;
+                    messagesDiv.appendChild(el);
+                }
+
+                function refreshControls() {
+                    const n = dz.getQueuedFiles().length;
+                    uploadBtn.textContent = `Upload all (${n})`;
+                    uploadBtn.disabled = uploading || n === 0;
+                    clearBtn.disabled = uploading || dz.files.length === 0;
+                    folderBtn.disabled = uploading;
+                }
+
+                function startUpload() {
+                    const fileType = document.getElementById("file-type").value;
+                    const cruiseName = document.getElementById("cruise-name").value.trim();
+                    if (["ctd", "elog", "underway"].includes(fileType) && !cruiseName) {
+                        alert("Cruise name is required for " + fileType + " files.");
+                        return;
+                    }
+                    uploading = true;
+                    overwrite = false;
+                    conflicts = [];
+                    messagesDiv.innerHTML = "";
+                    refreshControls();
+                    dz.processQueue();
+                }
+
+                uploadBtn.addEventListener("click", startUpload);
+                clearBtn.addEventListener("click", function () { dz.removeAllFiles(true); });
+                folderBtn.addEventListener("click", function () { folderInput.click(); });
+                folderInput.addEventListener("change", function () {
+                    Array.from(folderInput.files).forEach(function (f) {
+                        if (!f.name.startsWith(".")) dz.addFile(f);  // skip .DS_Store etc.
+                    });
+                    folderInput.value = "";
+                });
+
+                this.on("addedfile", refreshControls);
+                this.on("removedfile", refreshControls);
 
                 this.on("sending", function (file, xhr, formData) {
                     const fileType = document.getElementById("file-type").value;
@@ -118,88 +192,69 @@
 
                     formData.append("file_type", fileType);
                     formData.append("cruise_name", cruiseName);
-                    formData.append("overwrite", "false");  // Default
+                    formData.append("overwrite", overwrite ? "true" : "false");
 
-                    // Show "Please wait..." message
-                    const messagesDiv = document.getElementById("upload-messages-text");
-                    messagesDiv.innerHTML = "";
-
-                    const waitMsg = document.createElement("p");
-                    waitMsg.textContent = "⏳ Please wait... Uploading and processing your file.";
-                    waitMsg.style.fontStyle = "italic";
-                    messagesDiv.appendChild(waitMsg);
+                    const n = dz.getQueuedFiles().length + dz.getUploadingFiles().length;
+                    const waitMsg = document.getElementById("upload-wait");
+                    if (waitMsg) waitMsg.remove();
+                    const wait = document.createElement("p");
+                    wait.id = "upload-wait";
+                    wait.style.fontStyle = "italic";
+                    wait.textContent = `⏳ Please wait... Uploading and processing ${file.name} (${n} remaining).`;
+                    messagesDiv.appendChild(wait);
                 });
 
-
                 this.on("success", function (file, response) {
-                    console.log("RESPONSE:", response);  // confirm JSON
-
-                    const messagesDiv = document.getElementById("upload-messages-text");
-
-                    // Clear any previous content
-                    messagesDiv.innerHTML = "";
-
-                    // Show the main message
-                    const msg = document.createElement("p");
-                    msg.textContent = response.message;
-                    messagesDiv.appendChild(msg);
+                    addLine("✓ " + file.name, null, response.message);
                 });
 
                 this.on("error", function (file, errorMessage, xhr) {
-                    const messagesDiv = document.getElementById("upload-messages-text");
-                    const msg = document.createElement("p");
-                    msg.style.color = 'red';
-
+                    let text = typeof errorMessage === "string" ? errorMessage : "Upload failed.";
                     if (xhr && xhr.response) {
                         try {
                             const responseJson = JSON.parse(xhr.response);
-
-                            // If conflict, prompt to overwrite
                             if (responseJson.conflict) {
-                                const confirmOverwrite = confirm(responseJson.error + "\n\nDo you want to overwrite it?");
-                                if (confirmOverwrite) {
-                                    const fileType = document.getElementById("file-type").value;
-                                    const cruiseName = document.getElementById("cruise-name").value;
-
-                                    const retryFormData = new FormData();
-                                    retryFormData.append("file", file);
-                                    retryFormData.append("file_type", fileType);
-                                    retryFormData.append("cruise_name", cruiseName);
-                                    retryFormData.append("overwrite", "true");
-                                    retryFormData.append("csrfmiddlewaretoken", csrfToken); // Add CSRF token
-
-                                    fetch("{% url 'file-upload' %}", {
-                                        method: "POST",
-                                        body: retryFormData,
-                                        headers: {
-                                            "X-CSRFToken": csrfToken
-                                        }
-                                    })
-                                        .then(res => res.json())
-                                        .then(data => {
-                                            const overwriteMsg = document.createElement("p");
-                                            overwriteMsg.textContent = data.message || "File overwritten successfully.";
-                                            messagesDiv.appendChild(overwriteMsg);
-                                        })
-                                        .catch(() => {
-                                            const failMsg = document.createElement("p");
-                                            failMsg.textContent = "Failed to overwrite the file.";
-                                            messagesDiv.appendChild(failMsg);
-                                        });
-
-                                    return; // Prevent default error display
-                                }
+                                // collect; ask once when the whole batch is done
+                                conflicts.push(file);
+                                addLine("⚠ " + file.name + ": already exists", "#a05a00");
+                                return;
                             }
-
-                            msg.textContent = responseJson.error || "Upload failed.";
+                            text = responseJson.error || "Upload failed.";
                         } catch (e) {
-                            msg.textContent = "Unexpected upload error.";
+                            text = "Unexpected upload error.";
                         }
-                    } else {
-                        msg.textContent = errorMessage;
                     }
+                    addLine("✗ " + file.name + ": " + text, "red");
+                });
 
-                    messagesDiv.appendChild(msg);
+                this.on("complete", function () {
+                    if (dz.getQueuedFiles().length > 0) {
+                        dz.processQueue();
+                    }
+                });
+
+                this.on("queuecomplete", function () {
+                    const wait = document.getElementById("upload-wait");
+                    if (wait) wait.remove();
+
+                    if (conflicts.length > 0 && !overwrite) {
+                        const names = conflicts.map(f => f.name);
+                        const shown = names.slice(0, 10).join("\n") + (names.length > 10 ? `\n...and ${names.length - 10} more` : "");
+                        if (confirm(`${names.length} file(s) already exist:\n\n${shown}\n\nDo you want to overwrite them?`)) {
+                            overwrite = true;
+                            const retry = conflicts;
+                            conflicts = [];
+                            retry.forEach(function (f) {
+                                f.status = Dropzone.ADDED;
+                                if (f.previewElement) f.previewElement.classList.remove("dz-error");
+                                dz.enqueueFile(f);
+                            });
+                            dz.processQueue();
+                            return;
+                        }
+                    }
+                    uploading = false;
+                    refreshControls();
                 });
             }
         };
