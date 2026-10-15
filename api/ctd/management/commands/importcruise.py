@@ -108,7 +108,18 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         cruise_name = options['cruise_name']
 
-        cruise_types = self.load_cruise_types()
+        try:
+            cruise_types = self.load_cruise_types()
+        except Exception as e:
+            if cruise_name is None:
+                # bulk run (cruise_types upload): surface the bad file
+                raise CommandError(f'Could not load cruise types: {str(e)}')
+            # single-cruise run (ctd/elog/underway upload): don't let a bad or
+            # missing cruise types file block it; AR cruises keep their existing
+            # type (or get the default if the cruise is new)
+            self.stdout.write(self.style.WARNING(f'Could not load cruise types, keeping existing types: {str(e)}'))
+            self.logger.error(f'Could not load cruise types, keeping existing types: {str(e)}')
+            cruise_types = None
 
         if cruise_name is None:
             parent_dir = Path('/vast/raw')
@@ -121,8 +132,12 @@ class Command(BaseCommand):
                 vessel = Vessel.objects.get(code__istartswith=cruise_name[:2])
                 # assign cruise type
                 cruise_name = cruise_name.strip().lower()
-                if vessel.code == 'ar': 
-                    if cruise_name not in cruise_types:
+                if vessel.code == 'ar':
+                    if cruise_types is None:
+                        # types file unavailable: don't clobber a known type
+                        existing = Cruise.objects.filter(name=cruise_name).values_list('type', flat=True).first()
+                        cruise_type = existing or Cruise.CruiseType.NESLTER
+                    elif cruise_name not in cruise_types:
                         self.stdout.write(self.style.WARNING(f'Cruise {cruise_name} type not defined.'))
                         self.logger.error((f'Cruise {cruise_name} type not defined.'))
                         cruise_type = Cruise.CruiseType.NESLTER
