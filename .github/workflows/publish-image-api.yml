@@ -1,17 +1,16 @@
 name: Create and publish a package
+# Manual only: run from the Actions tab and pick the branch to build.
+# Automated CI is disabled until the test suite is reworked.
 on:
-  push:
-    branches:
-      - "main"
-      - "ctd-case-sensitive-filenames"
+  workflow_dispatch:
 
 env:
   IMAGE_NAME: nes-lter-api-2
 
 jobs:
-  # NES-LTER API 2 Automated Testing and Tagging
+  # NES-LTER API 2 Build and Tagging
   setup-build-publish:
-    name: NES-LTER API 2 Setup, Build, and Publish
+    name: NES-LTER API 2 Build and Publish
     permissions:
       contents: read
       packages: write
@@ -22,47 +21,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      # Legacy tests (incl. UI tests) disabled: unmaintained. Remove `if: false`
-      # here and on the teardown step below to re-enable.
-      - name: Running Automated tests
-        if: false
-        run: |
-
-          # Build and run development version
-          # Use in memory store for CI/tests; no network
-          mv dotenv.template .env
-          sed -i 's|^VAST_DATA_DIR=.*|VAST_DATA_DIR=./tests|' .env
-          sed -i 's|^USE_DICTSTORE=FALSE$|USE_DICTSTORE=TRUE|' .env
-
-          docker compose -f docker-compose-testing.yml build
-
-          docker compose -f docker-compose-testing.yml up --detach
-          sleep 30
-
-          # Run migrations
-          docker compose -f docker-compose-testing.yml exec -T api python manage.py migrate --noinput
-
-          sh -c "until curl -Is http://localhost:8000; do echo 'waiting for http://localhost:8000'; sleep 10; done"
-          echo "localhost:8000 running"
-
-          # Create admin user and capture token
-          docker compose -f docker-compose-testing.yml exec -T api \
-          python manage.py shell -c "from django.contrib.auth import get_user_model;from rest_framework.authtoken.models import Token;from pathlib import Path;User = get_user_model();u, _ = User.objects.get_or_create(username='admin');u.set_password('admin');u.is_superuser = u.is_staff = True;u.save();token, _ = Token.objects.get_or_create(user=u);Path('/data/token.txt').write_text(token.key)"
-
-
-          # Import the test cruise and CTD data
-          docker compose -f docker-compose-testing.yml exec -T api python manage.py importall --cruise_name ar77
-          docker compose -f docker-compose-testing.yml exec -T api python manage.py importall --cruise_name en617
-          docker compose -f docker-compose-testing.yml exec -T api python manage.py importall --cruise_name hrs2303
-          docker compose -f docker-compose-testing.yml exec -T api python manage.py importall --cruise_name ae2426
-          docker compose -f docker-compose-testing.yml exec -T api python manage.py importall --cruise_name at46
-
-          # Run automated tests
-          docker compose -f docker-compose-testing.yml run -e GITHUB_ACTIONS=true tests ./RunAllTests-Docker.bat
-
       - name: Build, Tag & Push Production Image
-        if: contains(github.ref, 'main')
-
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
@@ -92,7 +51,3 @@ jobs:
           docker image ls
 
           docker push $IMAGE_ID:v$VERSION
-
-      - name: Stopping API 2 application
-        if: false
-        run: docker compose --file docker-compose-testing.yml down
