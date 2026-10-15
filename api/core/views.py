@@ -23,30 +23,19 @@ def is_staff(user):
 def file_upload_view(request):
     if request.method == 'POST':
 
-        if _use_dictstore():
-            dest_dir_lookup = {
-                'ctd': lambda cruise_name: Path(f'/data/raw/{cruise_name}/ctd'),
-                'elog': lambda cruise_name: Path(f'/data/raw/{cruise_name}/elog'),
-                'underway': lambda cruise_name: Path(f'/data/raw/{cruise_name}/underway'),
-                'nutrient': Path('/data/raw/all/nut'),
-                'sample_log': Path('/data/raw/all'),
-                'station_list' : Path('/data/raw/all/metadata'),
-                'cruise_types' : Path('/data/raw/all/metadata'),
-                'hplc' : Path('/data/raw/all/hplc'),
-                'chlorophyll': Path('/data/raw/all/chl'),
-            }
-        else:
-            dest_dir_lookup = {
-                'ctd': lambda cruise_name: Path(f'/vast/raw/{cruise_name}/ctd'),
-                'elog': lambda cruise_name: Path(f'/vast/raw/{cruise_name}/elog'),
-                'underway': lambda cruise_name: Path(f'/vast/raw/{cruise_name}/underway'),
-                'nutrient': Path('/vast/raw/all/nut'),
-                'sample_log': Path('/vast/raw/all'),
-                'station_list' : Path('/vast/raw/all/metadata'),
-                'cruise_types' : Path('/vast/raw/all/metadata'),
-                'hplc' : Path('/vast/raw/all/hplc'),
-                'chlorophyll': Path('/vast/raw/all/chl'),
-            }    
+        # Uploads must land under /vast/raw in every mode: cruise validation
+        # and all the importers read from there.
+        dest_dir_lookup = {
+            'ctd': lambda cruise_name: Path(f'/vast/raw/{cruise_name}/ctd'),
+            'elog': lambda cruise_name: Path(f'/vast/raw/{cruise_name}/elog'),
+            'underway': lambda cruise_name: Path(f'/vast/raw/{cruise_name}/underway'),
+            'nutrient': Path('/vast/raw/all/nut'),
+            'sample_log': Path('/vast/raw/all'),
+            'station_list' : Path('/vast/raw/all/metadata'),
+            'cruise_types' : Path('/vast/raw/all/metadata'),
+            'hplc' : Path('/vast/raw/all/hplc'),
+            'chlorophyll': Path('/vast/raw/all/chl'),
+        }
 
         file_obj = request.FILES['file']
         cruise_name = request.POST.get('cruise_name', '').strip().lower()
