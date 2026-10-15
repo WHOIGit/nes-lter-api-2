@@ -185,7 +185,8 @@
                     folderInput.value = "";
                 });
 
-                this.on("addedfile", refreshControls);
+                // addedfile fires before the file is queued, so refresh after it is
+                this.on("addedfile", function () { setTimeout(refreshControls, 0); });
                 this.on("removedfile", refreshControls);
 
                 this.on("sending", function (file, xhr, formData) {
