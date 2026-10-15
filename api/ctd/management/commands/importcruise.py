@@ -115,7 +115,7 @@ class Command(BaseCommand):
                 # bulk run (cruise_types upload): surface the bad file
                 raise CommandError(f'Could not load cruise types: {str(e)}')
             # single-cruise run (ctd/elog/underway upload): don't let a bad or
-            # missing cruise types file block it; AR cruises keep their existing
+            # missing cruise types file block it; cruises keep their existing
             # type (or get the default if the cruise is new)
             self.stdout.write(self.style.WARNING(f'Could not load cruise types, keeping existing types: {str(e)}'))
             self.logger.error(f'Could not load cruise types, keeping existing types: {str(e)}')
@@ -130,23 +130,18 @@ class Command(BaseCommand):
         for cruise_name in cruises:
             try:
                 vessel = Vessel.objects.get(code__istartswith=cruise_name[:2])
-                # assign cruise type
                 cruise_name = cruise_name.strip().lower()
-                if vessel.code == 'ar':
-                    if cruise_types is None:
-                        # types file unavailable: don't clobber a known type
-                        existing = Cruise.objects.filter(name=cruise_name).values_list('type', flat=True).first()
-                        cruise_type = existing or Cruise.CruiseType.NESLTER
-                    elif cruise_name not in cruise_types:
+                # assign cruise type: the cruise types file applies to every
+                # vessel; without a row, keep the cruise's existing type
+                existing = Cruise.objects.filter(name=cruise_name).values_list('type', flat=True).first()
+                if cruise_types is not None and cruise_name in cruise_types:
+                    cruise_type = cruise_types[cruise_name]
+                else:
+                    if cruise_types is not None and vessel.code == 'ar':
+                        # AR cruises are expected to have a row
                         self.stdout.write(self.style.WARNING(f'Cruise {cruise_name} type not defined.'))
                         self.logger.error((f'Cruise {cruise_name} type not defined.'))
-                        cruise_type = Cruise.CruiseType.NESLTER
-                    else:
-                        cruise_type = cruise_types.get(cruise_name)
-                elif cruise_name == 'en685':
-                    cruise_type = Cruise.CruiseType.OPPORTUNISTIC
-                else:
-                    cruise_type = Cruise.CruiseType.NESLTER   # en, ae, hrs, at cruises are all NESLTER
+                    cruise_type = existing or Cruise.CruiseType.NESLTER
                 # get the cruise start and end times from the elog
                 directory = f'/vast/corrected/{cruise_name}/elog/'
                 file_pattern = os.path.join(directory, '*_elog.csv')
