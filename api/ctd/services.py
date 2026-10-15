@@ -693,6 +693,20 @@ class CtdService:
         except Cruise.DoesNotExist:
            raise Http404(f"Cruise {cruise_name} not found.")    
 
+    BROADSCALE_CRUISE_LIST_FILE = Path('/vast/raw/all/metadata/NESLTER_broadscale_cruise_list.csv')
+
+    @classmethod
+    def get_broadscale_cruise_list(cls) -> FileResponse:
+        try:
+            return FileResponse(
+                open(cls.BROADSCALE_CRUISE_LIST_FILE, 'rb'),
+                as_attachment=True,
+                filename=cls.BROADSCALE_CRUISE_LIST_FILE.name,
+                content_type='text/csv',
+            )
+        except FileNotFoundError:
+            raise Http404("Broadscale cruise list file not found.")
+
     @classmethod
     def get_bathymetry(cls) -> FileResponse:
         filepath = '/vast/raw/all/bathymetry/neslter_bathymetry.csv'

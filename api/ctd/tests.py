@@ -125,3 +125,33 @@ class UpdateCruiseTypeFileTests(TestCase):
         self.file.write_text('Cruise,Cruise Type\nar22,JP Student\n')
         CtdService.update_cruise_type_file('en700', 'OOI-NES')
         self.assertEqual(self.rows()[-1], {'Cruise': 'en700', 'Cruise Type': 'OOI-NES'})
+
+
+class BroadscaleCruiseListTests(TestCase):
+    URL = '/api/ctd/broadscale_cruise_list.csv'
+
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.dir.cleanup)
+        self.file = Path(self.dir.name) / 'NESLTER_broadscale_cruise_list.csv'
+        patcher = mock.patch.object(CtdService, 'BROADSCALE_CRUISE_LIST_FILE', self.file)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_downloads_file_as_csv_attachment(self):
+        self.file.write_text('cruise,note\nar77,ok\n')
+        response = self.client.get(self.URL)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'text/csv')
+        self.assertEqual(
+            response['Content-Disposition'],
+            'attachment; filename="NESLTER_broadscale_cruise_list.csv"',
+        )
+        self.assertEqual(b''.join(response.streaming_content), b'cruise,note\nar77,ok\n')
+
+    def test_missing_file_is_404(self):
+        self.assertEqual(self.client.get(self.URL).status_code, 404)
+
+    def test_landing_page_links_to_download(self):
+        response = self.client.get('/')
+        self.assertContains(response, self.URL)
