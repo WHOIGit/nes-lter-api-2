@@ -176,6 +176,10 @@ def get_bottle_summary(request, cruise_name: str):
 def get_metadata(request, cruise_name: str):
     return CtdService.get_metadata(cruise_name)
 
+@router.get("/broadscale_cruise_list.csv", tags=["Users"])
+def get_broadscale_cruise_list(request):
+    return CtdService.get_broadscale_cruise_list()
+
 @router.get("/bathymetry_file.csv", tags=["Users"])
 def get_bathymetry(request):
     return CtdService.get_bathymetry()
