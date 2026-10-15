@@ -18,6 +18,47 @@ from django.db.models.functions import ExtractYear, ExtractMonth, Coalesce
 def is_staff(user):
     return user.is_staff
 
+COMMAND_LOOKUP = {
+    'ctd': ['importcast', 'importniskin'],
+    'elog': ['importevent'],
+    'underway': ['importunderwaydata'],
+    'nutrient' : ['importnut'],
+    'sample_log' : ['importnut'],
+    'station_list' : ['importstations'],
+    'cruise_types' : ['importcruise'],
+    'hplc' : ['importhplc'],
+    'chlorophyll' : ['importchl']
+}
+
+def run_imports(file_type, cruise_name):
+    """Run the import commands for a file type and return a JsonResponse."""
+    buffer = io.StringIO()
+    message = f'Cruise name: {cruise_name},'
+    message += f' File type: {file_type}.\n'
+    try:
+        commands = COMMAND_LOOKUP.get(file_type, [])
+        if cruise_name and 'importcruise' not in commands:
+            # every cruise-scoped import looks up an existing Cruise, so
+            # create it first from the elog and the cruise types file
+            commands = ['importcruise'] + commands
+        if file_type == 'underway':
+            # a second pass fills in start and end times from the underway
+            # speed record when the elog did not supply them
+            commands = commands + ['importcruise']
+        for cmd in commands:
+            if cmd == 'importstations':
+                call_command(cmd, stdout=buffer)
+            else:
+                call_command(cmd, cruise_name=cruise_name, stdout=buffer)
+
+        output = buffer.getvalue()
+        buffer.close()
+        import_message = output + '\nImport completed successfully.'
+        message += import_message
+    except Exception as e:
+        return JsonResponse({'error': f'{COMMAND_LOOKUP.get(file_type)} failed: {str(e)}'}, status=500)
+    return JsonResponse({'message': message})
+
 @login_required
 @user_passes_test(is_staff)
 def file_upload_view(request):
@@ -48,11 +89,22 @@ def file_upload_view(request):
                 'chlorophyll': Path('/vast/raw/all/chl'),
             }    
 
-        file_obj = request.FILES['file']
+        # Batch uploads: send each file with skip_import=true, then one
+        # import_only=true request (no file) to run the imports once.
+        import_only = request.POST.get('import_only', 'false').lower() == 'true'
+        skip_import = request.POST.get('skip_import', 'false').lower() == 'true'
+
         cruise_name = request.POST.get('cruise_name', '').strip().lower()
-        filename = file_obj.name.lower()
-        
         file_type = request.POST.get('file_type', '').lower()
+
+        if import_only:
+            if file_type not in COMMAND_LOOKUP:
+                return JsonResponse({'error': f"Unknown file type '{file_type}'."}, status=400)
+        elif 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file provided.'}, status=400)
+        else:
+            file_obj = request.FILES['file']
+            filename = file_obj.name.lower()
 
         # If cruise name is required but missing
         if file_type in ['ctd', 'elog', 'underway']: 
@@ -67,6 +119,9 @@ def file_upload_view(request):
         
         if file_type in ['ctd', 'elog', 'underway'] and cruise_name not in valid_cruises:
             return JsonResponse({'error': f"Cruise '{cruise_name}' not found in /vast/raw/."}, status=400)
+
+        if import_only:
+            return run_imports(file_type, cruise_name)
 
         # determine file destination from type
         if file_type in ['ctd', 'elog', 'underway']:
@@ -95,43 +150,10 @@ def file_upload_view(request):
         except Exception as e:
             return JsonResponse({'error': f'Failed to save file: {str(e)}'}, status=500)
 
-        buffer = io.StringIO()
-        command_lookup = {
-            'ctd': ['importcast', 'importniskin'],
-            'elog': ['importevent'],
-            'underway': ['importunderwaydata'],
-            'nutrient' : ['importnut'],
-            'sample_log' : ['importnut'],
-            'station_list' : ['importstations'],
-            'cruise_types' : ['importcruise'],
-            'hplc' : ['importhplc'],
-            'chlorophyll' : ['importchl']
-        }
-        message = f'Cruise name: {cruise_name},'
-        message += f' File type: {file_type}.\n'
-        try:
-            commands = command_lookup.get(file_type, [])
-            if cruise_name and 'importcruise' not in commands:
-                # every cruise-scoped import looks up an existing Cruise, so
-                # create it first from the elog and the cruise types file
-                commands = ['importcruise'] + commands
-            if file_type == 'underway':
-                # a second pass fills in start and end times from the underway
-                # speed record when the elog did not supply them
-                commands = commands + ['importcruise']
-            for cmd in commands:
-                if cmd == 'importstations':
-                    call_command(cmd, stdout=buffer)
-                else:
-                    call_command(cmd, cruise_name=cruise_name, stdout=buffer)
+        if skip_import:
+            return JsonResponse({'message': f'Saved {filename}; import deferred.'})
 
-            output = buffer.getvalue()
-            buffer.close()
-            import_message = output + '\nImport completed successfully.'
-            message += import_message
-        except Exception as e:
-            return JsonResponse({'error': f'{command_lookup.get(file_type)} failed: {str(e)}'}, status=500)
-        return JsonResponse({'message': message})
+        return run_imports(file_type, cruise_name)
 
     return render(request, 'upload.html')
 

@@ -133,6 +133,7 @@
                 let uploading = false;
                 let overwrite = false;
                 let conflicts = [];
+                let savedCount = 0;
 
                 function addLine(text, color, detail) {
                     const el = document.createElement(detail ? "details" : "p");
@@ -168,6 +169,7 @@
                     uploading = true;
                     overwrite = false;
                     conflicts = [];
+                    savedCount = 0;
                     messagesDiv.innerHTML = "";
                     refreshControls();
                     dz.processQueue();
@@ -193,6 +195,7 @@
                     formData.append("file_type", fileType);
                     formData.append("cruise_name", cruiseName);
                     formData.append("overwrite", overwrite ? "true" : "false");
+                    formData.append("skip_import", "true");  // import once after the whole batch
 
                     const n = dz.getQueuedFiles().length + dz.getUploadingFiles().length;
                     const waitMsg = document.getElementById("upload-wait");
@@ -205,7 +208,8 @@
                 });
 
                 this.on("success", function (file, response) {
-                    addLine("✓ " + file.name, null, response.message);
+                    savedCount++;
+                    addLine("✓ " + file.name + " saved");
                 });
 
                 this.on("error", function (file, errorMessage, xhr) {
@@ -253,9 +257,51 @@
                             return;
                         }
                     }
-                    uploading = false;
-                    refreshControls();
+                    runImport();
                 });
+
+                // One import for the whole batch, after every file is saved.
+                function runImport() {
+                    if (savedCount === 0) {
+                        uploading = false;
+                        refreshControls();
+                        return;
+                    }
+                    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                    const body = new FormData();
+                    body.append("file_type", document.getElementById("file-type").value);
+                    body.append("cruise_name", document.getElementById("cruise-name").value);
+                    body.append("import_only", "true");
+                    body.append("csrfmiddlewaretoken", csrfToken);
+
+                    const wait = document.createElement("p");
+                    wait.style.fontStyle = "italic";
+                    wait.textContent = `⏳ Please wait... Importing ${savedCount} saved file(s).`;
+                    messagesDiv.appendChild(wait);
+
+                    fetch("{% url 'file-upload' %}", {
+                        method: "POST",
+                        body: body,
+                        headers: { "X-CSRFToken": csrfToken }
+                    })
+                        .then(res => res.json().then(data => ({ ok: res.ok, data: data })))
+                        .then(function (r) {
+                            wait.remove();
+                            if (r.ok) {
+                                addLine("✓ Import complete", null, r.data.message);
+                            } else {
+                                addLine("✗ Import failed: " + (r.data.error || "unknown error"), "red");
+                            }
+                        })
+                        .catch(function () {
+                            wait.remove();
+                            addLine("✗ Import request failed.", "red");
+                        })
+                        .finally(function () {
+                            uploading = false;
+                            refreshControls();
+                        });
+                }
             }
         };
     </script>
