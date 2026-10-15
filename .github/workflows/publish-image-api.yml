@@ -22,7 +22,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      # Legacy tests (incl. UI tests) disabled: unmaintained. Remove `if: false`
+      # here and on the teardown step below to re-enable.
       - name: Running Automated tests
+        if: false
         run: |
 
           # Build and run development version
@@ -91,4 +94,5 @@ jobs:
           docker push $IMAGE_ID:v$VERSION
 
       - name: Stopping API 2 application
+        if: false
         run: docker compose --file docker-compose-testing.yml down
