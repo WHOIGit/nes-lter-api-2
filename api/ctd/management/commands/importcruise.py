@@ -37,12 +37,16 @@ class Command(BaseCommand):
             cruise = str(row["Cruise"]).strip().lower()
             cruise_type = str(row["Cruise Type"]).strip()
 
-            if cruise_type not in valid_types:
-                raise ValueError(
-                    f"Invalid cruise type '{cruise_type}' for cruise '{cruise}'"
-                )
-
-            cruise_types[cruise] = cruise_type
+            # skip bad rows so one typo doesn't discard the rest of the file
+            if pd.isna(row["Cruise"]) or not cruise:
+                msg = f'Skipping cruise types row with no cruise name: {row.to_dict()}'
+            elif cruise_type not in valid_types:
+                msg = f"Skipping invalid cruise type '{cruise_type}' for cruise '{cruise}'"
+            else:
+                cruise_types[cruise] = cruise_type
+                continue
+            self.stdout.write(self.style.WARNING(msg))
+            self.logger.error(msg)
         return cruise_types
 
     def parse_elog(self, file_pattern):
